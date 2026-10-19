@@ -46,7 +46,7 @@ Per-face original 16px pixel art now distinguishes grass sides/bottom, log end g
 
 ## Local resource packs
 
-Settings → Resource Packs accepts an extracted `assets/minecraft/textures` folder. Supported block textures, legacy-named item PNGs, and `gui/widgets.png` button/hotbar crops are applied and stored only in that browser. This is not a full pack loader, and no original assets are included.
+Settings → Resource Packs accepts a 1.8 resource-pack ZIP, a local `1.8.9.jar`, or an extracted `assets/minecraft/textures` folder. ZIP entries are decoded locally; no game code is executed or uploaded. Supported block textures, legacy-named item PNGs, and `gui/widgets.png` button/hotbar crops are applied and stored only in that browser. This is not a full pack loader, and no original assets are included.
 
 ## Dimensions, structures and creatures
 
@@ -70,3 +70,11 @@ The repository root now has `index.html` redirecting to `public/` and `.nojekyll
 Overworld/Nether terrain streams in 16×16 chunks as the player moves, including negative X/Z. Distant meshes unload; up to 400 generated chunks are cached and block edits survive eviction/save/rejoin. X/Z are bounded at ±29,999,984 and terrain height remains 40 blocks. The 1.8-inspired End remains a central island surrounded by void. Generator 4 uses smooth seeded terrain and regional structure candidates filtered by biome/slope. This is not vanilla 1.8.9 seed parity; structures remain compact independent templates.
 
 Mobile uses a left directional pad with sneak in the middle, right jump, and separate build/break buttons. Double-tap jump or use Flight to toggle creative flight; hold jump/sneak to ascend/descend. Canvas touch-action is disabled and one captured pointer owns look independently of movement touches. Input lifecycle tests cover simultaneous fingers/cancellation; physical phone visual testing is still pending.
+
+## Building interaction update
+
+Hold left click to mine; hold right click to place repeatedly (200ms). Creative mining repeats at 200ms; survival mining uses the exported legacy hardness/material/harvest-tool data and 20Hz tool-speed timing, resets on target/tool changes, and waits 250ms between ordinary breaks. A ten-stage crack overlay replaces the separate progress bar; resource-pack destroy stages override the fallback. Mobile short taps use/place at the crosshair; a stationary 350ms hold mines until released. Dragging does not place. Dedicated buttons remain available. Middle click selects a targeted block in creative.
+
+This does not implement every vanilla interaction: underwater/airborne mining penalties, enchantments, dropped-item entities, placement orientation/state and full non-cube geometry remain incomplete. Original source PNGs are not bundled. Imported single-layer item sprites are displayed unchanged; potion/leather/egg tint layers and animated item models are not fully reproduced. A ZIP import does not guarantee every vanilla texture/model has been implemented.
+
+Mining data: PrismarineJS/minecraft-data 1.8.9, with hardness/tool timing informed by https://github.com/PrismarineJS/prismarine-block .
