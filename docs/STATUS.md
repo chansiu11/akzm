@@ -17,3 +17,9 @@
 2. 브라우저에서 최초 청크 렌더/마우스 포인터 고정/이동/점프/설치/파괴/새로고침 저장을 실제 확인하고 오류 수정.
 3. Render 워크스페이스 승인 후 서비스 목록에서 `akzm` 연결 서비스를 식별하여 기존 설정을 보존. 다른 서비스를 건드리지 않음.
 4. 0.2 바이옴/동굴, 0.3 제작/도구, 0.4 몬스터 AI 순으로 진행.
+
+
+## GitHub 게시 및 HTTP 정적 리소스 추가 확인
+- GitHub `main`에 첫 버전 11개 파일을 올린 커밋: `ede4ddc677fe1579d75e0994e23f7269ab18a585` (부모: `41622b24310000cc8322de6afb5abbb65effa13e`), 히스토리 보존, 강제 푸시 없음.
+- PASS: 단순 HTTP 서버에서 `/`, `/src/main.js`, `/src/atlas.js`, `/src/terrain.js`, `/style.css`, `/docs/STATUS.md`가 HTTP 200을 반환.
+- NOT VERIFIED: GitHub Pages 사이트가 이 커밋을 반영했는지와 브라우저 WebGL/원격 Three.js CDN 정상 동작 여부.
