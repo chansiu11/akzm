@@ -41,3 +41,7 @@ This is a creative alpha, not a complete Minecraft 1.8.9 reimplementation. Survi
 ## Render deployment
 
 Use a Node web service linked to `chansiu11/akzm`, branch `main`, build `npm ci`, start `npm start`, health path `/health`. One instance. Select **manual deploy** (auto-deploy off). No secret variables required. The service hosts both the client and WebSocket endpoint, so use the Render URL for both singleplayer and multiplayer. GitHub Pages alone cannot run this server.
+
+## Visual update
+
+Per-face original 16px pixel art now distinguishes grass sides/bottom, log end grain, crafting-table faces and bookshelves. Cutout foliage/glass and separately rendered translucent water replace solid placeholders. Textured isometric inventory/hotbar icons, held blocks with swing animation, a compact classic hotbar and F3-toggle debug display are included. These are original approximations, not pixel-identical Minecraft textures. Browser visual verification remains pending.
