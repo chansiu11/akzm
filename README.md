@@ -78,3 +78,11 @@ Hold left click to mine; hold right click to place repeatedly (200ms). Creative 
 This does not implement every vanilla interaction: underwater/airborne mining penalties, enchantments, dropped-item entities, placement orientation/state and full non-cube geometry remain incomplete. Original source PNGs are not bundled. Imported single-layer item sprites are displayed unchanged; potion/leather/egg tint layers and animated item models are not fully reproduced. A ZIP import does not guarantee every vanilla texture/model has been implemented.
 
 Mining data: PrismarineJS/minecraft-data 1.8.9, with hardness/tool timing informed by https://github.com/PrismarineJS/prismarine-block .
+
+## Commands, combat and touch HUD
+
+PC T opens chat; `/` opens commands prefilled with slash. Mobile top buttons open chat, pause and commands; Pause also links to commands. Examples fill the input, and Apply/Send executes it. Singleplayer updates save immediately; multiplayer retains host-only command authority. Added `/fill` (4096 blocks, height 1–39), `/kill @e`, and `/kill @e[type=Zombie]` alongside the existing supported subset.
+
+Mobile tapping a targeted mob attacks it; the Attack button also attacks/mines while held. Body hitboxes replace thin model-mesh targeting and validate reach/walls on both paths. A red hurt flash confirms damage. Use remains separate for feeding/trading/milking. Buckets collect and place water/lava, with inventory conservation; Nether water evaporates. Milk clears the implemented poison state.
+
+Fallback pixel sprites now distinguish food, armor, buckets, bow, arrows, bottles, eggs, shears, books and bones instead of lettered boxes. These drawings are original approximations. User-imported resource-pack textures still take precedence; no claim of pixel identity or complete original item mechanics is made. Full bow/fishing/potion/enchantment mechanics and physical mobile visual QA remain outstanding.

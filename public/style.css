@@ -30,3 +30,12 @@
 .mobile #touch #touchInv{right:10px;bottom:2px;height:38px}
 .mobile #touch button[hidden]{display:none}
 @media(max-height:420px){.mobile #touch [data-key=forward]{bottom:138px}.mobile #touch [data-key=left],.mobile #touch [data-key=right],.mobile #touch [data-key=down]{bottom:88px}.mobile #touch [data-key=back]{bottom:38px}}
+
+.mobile #touch #touchChat{top:8px;left:calc(50% - 78px);height:36px;font-size:11px}
+.mobile #touch #touchCommands{top:8px;left:calc(50% + 30px);height:36px;font-size:20px}
+.mobile #touch #touchBreak{right:88px;bottom:108px;width:58px;height:58px}
+.mobile #touch #touchPlace{right:88px;bottom:48px;width:58px}
+.mobile #touch #touchInv{right:max(8px,calc(50% - 202px));bottom:2px;width:40px;font-size:24px}
+#ui.chat-mode{justify-content:flex-end;align-items:flex-start;padding:12px;background:#0003;z-index:3}
+.chat-mode .panel{background:#111d;padding:12px;width:min(680px,100%);text-align:left;border:1px solid #888;max-height:85dvh;overflow:auto}
+.chat-mode h2{font-size:16px;margin:0}.chat-mode .field{margin:8px 0}.chat-mode input{font-size:16px}.command-examples{display:flex;gap:4px;overflow-x:auto}.command-examples button{flex:none;font-size:12px;min-height:30px;padding:4px 8px}.chat-mode p{margin:5px 0;font-size:12px}

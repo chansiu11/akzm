@@ -1,0 +1,19 @@
+// Original 16px fallback sprites; supplied resource-pack PNGs take precedence.
+export function fallbackItemSprite(name){
+ const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d'),r=(color,x,y,w,h)=>{g.fillStyle=color;g.fillRect(x,y,w,h);},line=(color,pts)=>{g.strokeStyle=color;g.lineWidth=1;g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x+.5,y+.5):g.moveTo(x+.5,y+.5));g.stroke();};
+ if(/bucket/.test(name)){r('#303638',3,5,10,8);r('#aeb9bc',4,6,8,7);r('#e2e8e8',4,6,2,5);r('#657477',10,6,2,6);r('#aeb9bc',5,13,6,1);line('#b9c3c7',[[3,5],[4,2],[11,2],[12,5]]);r(name==='water_bucket'?'#326bd8':name==='lava_bucket'?'#fa8b18':name==='milk_bucket'?'#f7f4dd':'#4f5c61',4,5,8,3);}
+ else if(name==='bow'||name==='fishing_rod'){line('#44321d',[[5,1],[9,3],[11,7],[9,11],[5,14]]);line('#bd985a',[[6,1],[10,3],[12,7],[10,11],[6,14]]);line('#dfd8bc',[[5,1],[5,14]]);if(name==='fishing_rod')line('#d6d6cc',[[6,2],[14,7],[14,13]]);}
+ else if(name==='arrow'){line('#543721',[[2,13],[12,3]]);line('#bd9c5c',[[3,13],[13,3]]);r('#c7d3d3',10,1,5,2);r('#c7d3d3',13,2,2,4);r('#e1ded0',1,10,3,3);r('#e1ded0',3,13,3,2);}
+ else if(name==='potion'||name==='glass_bottle'||name==='experience_bottle'){r('#62553c',7,1,3,2);r('#afced3',6,3,5,4);r('#afced3',4,7,9,6);r('#afced3',5,13,7,1);r(name==='glass_bottle'?'#758e9733':name==='experience_bottle'?'#9cd84b':'#9844a7',5,8,7,5);r('#edf8ef',5,7,2,4);}
+ else if(name==='egg'||name==='spawn_egg'){r('#786f54',5,2,6,12);r(name==='spawn_egg'?'#b8a875':'#eee2bd',4,5,9,7);r(name==='spawn_egg'?'#b8a875':'#fff3d1',6,3,4,3);r('#c5b68d',6,12,5,2);if(name==='spawn_egg'){r('#65523a',5,6,2,3);r('#65523a',9,9,3,2);}}
+ else if(name.includes('apple')){r('#442618',8,1,2,3);r('#589038',10,2,3,1);r('#542824',3,6,11,6);r(name==='golden_apple'?'#efc634':'#c82b31',4,4,9,9);r(name==='golden_apple'?'#fff49b':'#f8706b',5,5,2,3);r('#7e3022',6,13,5,1);}
+ else if(/fish/.test(name)){r('#4a4b42',2,6,11,5);r(name==='cooked_fish'?'#ac763e':'#b6b991',3,5,9,5);r('#e1dfba',8,5,4,3);r('#252d2c',10,6,1,1);r('#8f9a75',1,4,2,8);r('#d5c69c',5,10,4,2);}
+ else if(/beef|porkchop|chicken|mutton|rabbit|rotten_flesh/.test(name)){const cooked=name.startsWith('cooked'),color=cooked?'#98542f':name==='rotten_flesh'?'#779142':'#cf6e68';r('#553a29',4,3,9,9);r(color,3,4,10,7);r(cooked?'#bd8143':'#e5a29a',5,4,6,3);r('#e2caa5',2,11,3,3);r('#f7e4bc',1,12,4,2);}
+ else if(/bread|cookie|potato|carrot|melon/.test(name)){const carrot=name.includes('carrot'),melon=name==='melon';r('#6b4722',3,5,11,7);r(carrot?'#ee952d':melon?'#dd5353':'#c19249',4,4,9,8);r(carrot?'#ffd05a':melon?'#f0a18a':'#e2bd78',5,5,7,2);if(carrot)r('#5d963c',10,1,3,4);if(melon)r('#63a347',3,11,11,2);if(name==='cookie')for(const [x,y]of [[5,6],[9,9],[11,5],[6,10]])r('#68452c',x,y,1,2);}
+ else if(/helmet|chestplate|leggings|boots/.test(name)){const color=name.startsWith('diamond')?'#53d2cd':name.startsWith('golden')?'#dfc246':name.startsWith('leather')?'#966139':'#b7c3c8';if(name.endsWith('helmet')){r('#39444a',2,3,12,9);r(color,3,3,10,7);g.clearRect(5,7,6,5);}else if(name.endsWith('chestplate')){r(color,2,3,12,5);r(color,4,7,8,7);g.clearRect(6,3,4,3);}else if(name.endsWith('leggings')){r(color,3,2,10,5);r(color,3,7,4,7);r(color,9,7,4,7);}else{r(color,3,5,3,8);r(color,10,5,3,8);r(color,1,11,5,3);r(color,10,11,5,3);}r('#ffffff66',4,4,2,3);}
+ else if(name==='shears'){line('#adb8b9',[[3,2],[10,11],[13,11],[13,14],[10,14],[6,8]]);line('#dde6e5',[[13,2],[6,11],[3,11],[3,14],[6,14],[10,8]]);}
+ else if(/book/.test(name)){r('#452c24',2,2,12,12);r('#8f4f36',3,2,10,11);r('#efe3ba',5,3,7,9);r('#bbaf8e',5,10,7,1);r('#945d42',3,3,2,10);}
+ else if(name==='stick'||name==='bone'){line(name==='bone'?'#f1e8c7':'#91673b',[[3,13],[12,3]]);line(name==='bone'?'#bcb89d':'#ba8950',[[4,13],[13,3]]);}
+ else return null;
+ return c.toDataURL();
+}
