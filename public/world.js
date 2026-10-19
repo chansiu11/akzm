@@ -8,3 +8,8 @@ export function generate(seed,flat=false){const a=new Uint8Array(SIZE*SIZE*HEIGH
 export function sanitizeEdits(edits){if(!Array.isArray(edits)||edits.length>SIZE*SIZE*HEIGHT)throw Error('월드 변경 데이터가 너무 큽니다.');const out=[];for(const e of edits){if(!Array.isArray(e)||e.length!==2||!Number.isInteger(e[0])||e[0]<0||e[0]>=SIZE*SIZE*HEIGHT||!Number.isInteger(e[1])||e[1]<0||e[1]>=BLOCKS.length)throw Error('잘못된 블록 데이터');out.push(e);}return out;}
 
 export function decorate(blocks,seed){const s=hashSeed(seed);for(let x=1;x<SIZE-1;x++)for(let z=1;z<SIZE-1;z++)for(let y=1;y<18;y++){const i=index(x,y,z);if(blocks[i]!==3)continue;let n=noise(x,y*79+z,s+73);if(n>.978)blocks[i]=y<5?30:y<8?29:y<12?28:27;else if(n>.963)blocks[i]=27;else if(n<.007&&y<8)blocks[i]=31;else if(n<.011&&y<10)blocks[i]=33;}return blocks;}
+// Append IDs to preserve every previously saved voxel index.
+BLOCKS.push(['용암','#ef6919'],['네더 차원문','#9d41ce'],['엔드 차원문','#10252b'],['엔드 차원문 틀','#6b8769'],['이끼 낀 조약돌','#64805a'],['프리즈머린','#639d91'],['바다 랜턴','#b1ded1'],['몬스터 생성기','#323c47'],['거미줄','#dddddd'],['네더 석영 광석','#a67a72'],['눈이 꽂힌 엔드 틀','#4a715b'],['횃불','#efc561'],['위더 스켈레톤 해골','#363636']);
+export const NON_SOLID=new Set([0,21,44,45,46,52,55]);
+export const isSolid=b=>!NON_SOLID.has(b);
+export const DIMENSIONS={overworld:{name:'오버월드',sky:'#8abce0'},nether:{name:'네더',sky:'#421814'},end:{name:'디 엔드',sky:'#15121f'}};

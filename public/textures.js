@@ -24,6 +24,16 @@ export function createTextures(){
  if(b===25){rect('#3a3b3b',2,2,12,4);rect('#252627',3,9,10,5);rect('#a1a09a',2,8,12,1);}
  if(b===26){rect('#513715',0,5,16,2);rect('#513715',0,0,1,16);rect('#513715',15,0,1,16);if(face===0)rect('#d7d7bd',7,5,2,5);}
  if(b===24){rect('#b28b51',0,0,16,16);if(face===0){for(let y=2;y<14;y+=7){rect('#382b20',1,y,14,5);for(let x=1;x<15;x+=2){rect(['#b54437','#637d9d','#d3b35e','#68944a'][(x+y)%4],x,y+1,1,4);}}}}
+ if(b===44){for(let y=0;y<16;y+=3)rect('#ffc13c',Math.floor(noise(y,0,4)*6),y,9,1);}
+ if(b===45||b===46){rect(b===45?'#52246f':'#07151b',0,0,16,16);for(let i=0;i<32;i++){const x=Math.floor(noise(i,0,b)*16),y=Math.floor(noise(i,1,b)*16);rect(b===45?'#bd63f2':'#8bbcb5',x,y,1,b===45?3:1);}}
+ if(b===47||b===54){rect(face===1?'#859a70':'#35665a',1,1,14,14);if(face===1){rect('#263a2b',4,4,8,8);if(b===54){rect('#4cae89',5,5,6,6);rect('#12251e',7,5,2,6);}}}
+ if(b===48){for(let i=0;i<22;i++)rect('#3e6739',Math.floor(noise(i,1,b)*16),Math.floor(noise(i,2,b)*16),3,2);}
+ if(b===49||b===50){for(let x=0;x<16;x+=4)for(let y=0;y<16;y+=4){rect(b===50?'#e6f6df':'#7daf9f',x+1,y+1,3,3);}}
+ if(b===51){rect('#151a20',0,0,16,16);for(let n=1;n<16;n+=4){rect('#65727c',n,0,1,16);rect('#4e5b64',0,n,16,1);}rect('#78a56e',6,5,4,5);}
+ if(b===52){g.clearRect(0,0,16,16);for(let n=0;n<16;n++){rect('#dedede',n,n,1,1);rect('#dedede',15-n,n,1,1);rect('#dedede',8,n,1,1);rect('#dedede',n,8,1,1);}g.strokeStyle='#dedede';g.strokeRect(3.5,3.5,9,9);}
+ if(b===53){for(let i=0;i<8;i++)rect('#e1d5c3',Math.floor(noise(i,1,b)*13),Math.floor(noise(i,2,b)*13),2,3);}
+ if(b===55){g.clearRect(0,0,16,16);rect('#815528',6,4,4,12);rect('#ef9a21',5,1,6,5);rect('#ffff9e',6,1,4,3);}
+ if(b===56&&face===0){rect('#181818',2,5,4,3);rect('#181818',10,5,4,3);rect('#181818',7,8,2,3);rect('#111111',4,12,8,2);}
  tiles.push(c);a.drawImage(c,(b*3+face)*16,0);
  }
  const makeIcons=()=>BLOCKS.map((_,b)=>{const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;function face(tile,transform,shade){g.save();g.setTransform(...transform);g.drawImage(tiles[tile],0,0,16,16);if(shade){g.fillStyle=`rgba(0,0,0,${shade})`;g.fillRect(0,0,16,16)}g.restore();}face(tileFor(b,1),[1.4,.7,-1.4,.7,24,2],0);face(tileFor(b,0),[1.4,.7,0,1.4,2,13.2],.13);face(tileFor(b,0),[1.4,-.7,0,1.4,24,24.4],.3);return c.toDataURL();});

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test test/*.test.js",
-    "export-data": "node scripts/export-data.cjs"
+    "export-data": "node scripts/export-data.cjs",
+    "prepare:static": "node scripts/prepare-static.cjs"
   },
   "repository": {
     "type": "git",

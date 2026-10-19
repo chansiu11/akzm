@@ -38,7 +38,7 @@ See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for exact boundaries. A
 
 ## Render deployment
 
-Use a Node web service linked to `chansiu11/akzm`, branch `main`, build `npm ci`, start `npm start`, health path `/health`. One instance. Select **manual deploy** (auto-deploy off). No secret variables required. The service hosts both the client and WebSocket endpoint, so use the Render URL for both singleplayer and multiplayer. GitHub Pages alone cannot run this server.
+Use a Node web service linked to `chansiu11/akzm`, branch `main`, build `npm ci`, start `npm start`, health path `/health`. One instance. Select **manual deploy** (auto-deploy off). No secret variables required. The service hosts both the client and WebSocket endpoint, so use the Render URL for both singleplayer and multiplayer. GitHub Pages can run singleplayer via the included root entry and vendored Three.js files. It cannot host WebSocket rooms; use the Render URL directly or enter it under Settings → Multiplayer Server on the Pages client.
 
 ## Visual update
 
@@ -47,3 +47,20 @@ Per-face original 16px pixel art now distinguishes grass sides/bottom, log end g
 ## Local resource packs
 
 Settings → Resource Packs accepts an extracted `assets/minecraft/textures` folder. Supported block textures, legacy-named item PNGs, and `gui/widgets.png` button/hotbar crops are applied and stored only in that browser. This is not a full pack loader, and no original assets are included.
+
+## Dimensions, structures and creatures
+
+Create a **new world** for generator 3 structures. Existing worlds keep their previous terrain. Overworld structures include a village, desert/jungle temples, witch hut, stronghold, dungeon, mineshaft, ocean monument and desert well. The Nether has lava, quartz and a fortress; the End has an island, pillars, crystals and a Dragon. These are compact independent templates, not original seed-compatible layouts.
+
+- Build a 4×5 obsidian frame (2×3 opening), then use flint and steel inside. Stay in the active portal to travel.
+- Fill all twelve stronghold portal frames with Eyes of Ender. Kill the Dragon to open its return portal; living crystals heal it.
+- Creative: Escape → 차원 이동, or E → 생물 소환. Spawn eggs work in either game mode. `/summon` accepts legacy names and selected variant tags (`SkeletonType:1`, `Elder:1`, horse `Type`, etc.).
+- Extra convenience commands: `/dimension overworld|nether|end`, `/locate stronghold` (or another structure identifier). These extensions are not vanilla 1.8 commands.
+- Right-click creatures to milk cows, shear sheep, feed/breed compatible animals, tame wolves/ocelots/horses, saddle/mount horses or use the two basic villager trades. Sneak to dismount. Snow/iron golem and Wither block arrangements can summon their mob.
+- Settings → Controls → **PC / 모바일** explicitly selects keyboard/mouse or touch controls, saved per browser.
+
+The registry includes all concrete base mob names in the 1.8.9 dataset and major variants (40 mob/variant entries, plus End crystal). It does **not** mean every original AI behavior, texture, loot table or boss phase is identical. Detailed differences are documented in IMPLEMENTATION_STATUS.md. Redstone remains deferred.
+
+## Static entry fix
+
+The repository root now has `index.html` redirecting to `public/` and `.nojekyll`; it no longer depends on README rendering as the Pages entry. The game uses relative bundled Three.js URLs. `npm run prepare:static` refreshes those vendor files when dependencies change.
