@@ -18,16 +18,34 @@
 3. Render 워크스페이스 승인 후 서비스 목록에서 `akzm` 연결 서비스를 식별하여 기존 설정을 보존. 다른 서비스를 건드리지 않음.
 4. 0.2 바이옴/동굴, 0.3 제작/도구, 0.4 몬스터 AI 순으로 진행.
 
-
 ## GitHub 게시 및 HTTP 정적 리소스 추가 확인
 - GitHub `main`에 첫 버전 11개 파일을 올린 커밋: `ede4ddc677fe1579d75e0994e23f7269ab18a585` (부모: `41622b24310000cc8322de6afb5abbb65effa13e`), 히스토리 보존, 강제 푸시 없음.
 - PASS: 단순 HTTP 서버에서 `/`, `/src/main.js`, `/src/atlas.js`, `/src/terrain.js`, `/style.css`, `/docs/STATUS.md`가 HTTP 200을 반환.
 - NOT VERIFIED: GitHub Pages 사이트가 이 커밋을 반영했는지와 브라우저 WebGL/원격 Three.js CDN 정상 동작 여부.
 
-## 단계 1.1 — 2026-10-20 모바일 조작·로컬 JAR 텍스처
-- CODED: 터치 시점 드래그, 이동 스틱, 점프/파괴/설치/가방/메뉴, PC 조작 유지.
-- CODED: 이용자가 JAR/ZIP을 직접 선택하면 브라우저에서 16개 블록 PNG와 잔디 오버레이를 로드. 로컬 Atlas 저장/복원/초기화. 외부 재배포 없이 원본 보존.
-- FACT: 제공된 JAR에 16개 대응 블록 PNG 경로가 모두 있음. 다른 제공 ZIP은 소리/언어 객체 위주.
-- PASS: 로컬 Node 테스트 7개(기존 4 + 모바일 시점/조이스틱/텍스처 경로 3), 구문 검사 통과.
-- NOT VERIFIED: 실제 스마트폰 WebGL 및 로컬 JAR의 전체 이미지 디코딩 E2E. 이 환경에서 Playwright의 로컬 HTTP 요청이 관리자 정책으로 차단됨.
-- RENDER: 승인된 워크스페이스에서는 qoxmfvlfem과 rpggame에 연결된 서비스만 존재. akzm 서비스 없음; Render 미변경.
+## 단계 1.1 — 2026-10-20 모바일 조작·사용자 제공 텍스처 불러오기
+- CODED: 터치 월드 화면 드래그로 yaw/pitch 시점 조절, 이동 조이스틱, 점프·파괴·설치·가방·메뉴 버튼. PC 포인터 잠금 조작 유지.
+- CODED: 사용자가 자기 기기에서 `.jar`/`.zip`을 선택하여 `assets/minecraft/textures/blocks/*.png` 16 슬롯과 잔디 오버레이를 로드. 선택한 아카이브는 네트워크로 전송하지 않음. 생성된 Atlas를 브라우저 localStorage에 저장·복원·삭제. 70MB 파일 크기 제한.
+- FACT: 제공 JAR의 대응하는 16개 블록 텍스처 파일 경로 모두 확인, ZIP는 사운드/언어용 객체 데이터로 블록 텍스처 없음.
+- PASS: `node --test` 7개(기존 4, 추가 터치 시점/조이스틱/파일 경로 3). `node --check` 구문 검사 통과. 로컬 HTTP 정적 파일 200 확인.
+- NOT VERIFIED: 실제 스마트폰·WebGL·CDN·JAR 텍스처 렌더링 E2E. 로컬 Playwright 방문 시 환경에서 `net::ERR_BLOCKED_BY_ADMINISTRATOR`로 localhost 접속 거부.
+- LIMITATIONS: JAR를 공개 호스팅하지 않으므로 사용자가 직접 골라야 함. 전 블록/모델/아이템까지 동일한 리소스팩 지원 아님. 원본 JAR에 포함된 텍스처를 이 저장소에 복사하지 않음.
+- RENDER: 승인된 `chanjoo's workspace` 서비스 `breach-qoxmfvlfem`(qoxmfvlfem), `echoes-world-server`(rpggame) 2개, `akzm` 직접 연결 없음. Render 작업 없음.
+- NEXT: 실제 모바일 터치 검사, 로컬 JAR 업로드/다시 방문 시 텍스처 복원, 1.8.9 모델/투명 블록/아이템 아틀라스 렌더링 확장.
+
+
+## v0.3 — texture auto-loading and inventory visuals
+- Implemented local-only `tools/prepare_local_resources.py` extracting all PNG files from a user-supplied Java JAR into gitignored `local-resources/`. This folder is not committed or published.
+- Added automatic atlas loading from `local-resources/manifest.json` on page load; no pack chooser is shown. Existing 16 atlas tiles and optional grass side overlay resolve through the manifest.
+- Hotbar and inventory now display the atlas pixels, rather than unrelated flat colored squares.
+- If local originals are unavailable on a public deployment, preserve the independent generated textures; legacy browser-cached atlas is a fallback.
+- Tests: Node tests and local Python extraction against a supplied 1.8.9.jar; real mobile browser graphics not yet conclusively verified.
+- Scope limit: the original 1044 PNGs can be extracted locally but the game currently only renders its 16 existing block texture slots. Minecraft originals are NOT shipped through GitHub.
+
+## 2026-10-20 — v0.4 menu + world selection + local textures
+- 이전 원본 파일과 Git 기록 보존. GitHub 내 권한 범위는 `chansiu11/akzm`에 한정.
+- 타이틀, 세계 선택/생성/삭제, 일시 정지, 설정 (FOV, 렌더 거리, 감도, 좌표 표시), 도움말을 코딩함.
+- 사용자 보유 JAR 텍스처 16 슬롯을 private `local-resources/` 폴더로 준비한 경우 자동 적용. 원본 에셋은 GitHub Pages에 포함하지 않음.
+- PC 1365×768 및 모바일 390×844 HTML/CSS 메뉴 Chromium 확인; 메뉴 전환 및 설정 동작 확인.
+- Node.js 자동 테스트, JS 문법 검사 통과. WebGL 통합 테스트는 외부 three.js CDN 접근 제한으로 미완료.
+- 미구현: 원작 수준의 모든 블록·아이템·사운드·월드 생성·제작·전투·AI·멀티플레이, 원작과 동일한 메뉴 아트.

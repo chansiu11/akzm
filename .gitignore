@@ -1,0 +1,4 @@
+# Locally extracted proprietary game images; never commit to a public repository.
+/local-resources/
+__pycache__/
+*.pyc
