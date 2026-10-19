@@ -28,15 +28,13 @@ WASD move, mouse look, Space jump, F toggle creative flight, Space/Shift ascend/
 
 ## Implemented
 
-- Main menu, world selection/create/rename/delete/import/export, pause, LAN and multiplayer entry screens.
-- Functional video/FOV/brightness/render-distance/resolution/cloud/bobbing settings, sound volume, rebinding and touch controls, saved locally.
-- Deterministic custom terrain / flat worlds, trees, 25 block entries including air, face-culled chunk meshes, collision and creative flight.
-- Block selection/placement/removal, local world persistence and room synchronization.
-- Input validation, room collision handling, message size/rate limits, heartbeat, health endpoint.
+Survival/creative selection, saved 36-slot inventory, 2×2 / 3×3 crafting with exported legacy recipes, timed smelting, shared chests, health/hunger/food, mining and tool durability, simple animals/zombies, day/night, rain, a documented command subset, and classic-inspired UI.
 
-## Not implemented / compatibility boundaries
+See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for exact boundaries. A searchable item ID is not a claim that all of that item's original behaviors work. This is not a complete Minecraft reimplementation.
 
-This is a creative alpha, not a complete Minecraft 1.8.9 reimplementation. Survival, recipes, inventory stacks, mobs, damage, redstone machinery, physics for fluids/sand, dimensions, original seeds and all original settings/screens are not implemented. The map is finite (64×64×40); decorative TNT/workbench/bookshelf blocks have no machinery behavior. No Minecraft account, client or server protocol compatibility. Multiplayer is casual shared building, not an anti-cheat-secured competitive server. Room numbers are shared join credentials, not account authentication.
+## Data
+
+`npm run export-data` regenerates `public/catalog.json` from pinned minecraft-data 3.100.0. The committed JSON is served directly; that development dependency is not required at runtime. See THIRD_PARTY_NOTICES.md.
 
 ## Render deployment
 

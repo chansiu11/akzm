@@ -20,9 +20,12 @@ export function createTextures(){
  if(b===21){for(let y=1;y<16;y+=4)rect('#93c6ec55',(y+face)%5,y,9,1);}
  if(b===22){if(face===0){rect('#e2d5bd',0,5,16,6);g.fillStyle='#282523';g.font='bold 7px monospace';g.fillText('TNT',1,11);}else{for(let x=1;x<16;x+=5)for(let y=1;y<16;y+=5){rect('#862e22',x,y,4,4);rect('#dc7651',x+1,y+1,2,2);}rect('#333',7,6,2,4);}}
  if(b===23){rect('#a27b47',0,0,16,16);rect('#5a3c22',0,0,16,2);rect('#5a3c22',0,14,16,2);if(face===1){for(let n=3;n<=12;n+=4){rect('#4c321e',n,3,1,10);rect('#4c321e',3,n,10,1);}}else if(face===0){rect('#593b24',2,3,2,10);rect('#593b24',12,3,2,10);rect('#c9c3ac',4,5,7,2);rect('#574532',7,5,2,8);}}
+ if(b>=27&&b<=33){for(let i=0;i<7;i++){const x=Math.floor(noise(i,1,b)*13),y=Math.floor(noise(i,2,b)*13);rect(['#252525','#d2b29a','#e4cf4e','#5de1df','#d02925','#39bf52','#294dae'][b-27],x,y,2,2);}}
+ if(b===25){rect('#3a3b3b',2,2,12,4);rect('#252627',3,9,10,5);rect('#a1a09a',2,8,12,1);}
+ if(b===26){rect('#513715',0,5,16,2);rect('#513715',0,0,1,16);rect('#513715',15,0,1,16);if(face===0)rect('#d7d7bd',7,5,2,5);}
  if(b===24){rect('#b28b51',0,0,16,16);if(face===0){for(let y=2;y<14;y+=7){rect('#382b20',1,y,14,5);for(let x=1;x<15;x+=2){rect(['#b54437','#637d9d','#d3b35e','#68944a'][(x+y)%4],x,y+1,1,4);}}}}
  tiles.push(c);a.drawImage(c,(b*3+face)*16,0);
  }
- const icons=BLOCKS.map((_,b)=>{const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;function face(tile,transform,shade){g.save();g.setTransform(...transform);g.drawImage(tiles[tile],0,0,16,16);if(shade){g.fillStyle=`rgba(0,0,0,${shade})`;g.fillRect(0,0,16,16)}g.restore();}face(tileFor(b,1),[1.4,.7,-1.4,.7,24,2],0);face(tileFor(b,0),[1.4,.7,0,1.4,2,13.2],.13);face(tileFor(b,0),[1.4,-.7,0,1.4,24,24.4],.3);return c.toDataURL();});
- return {atlas,tiles,icons};
+ const makeIcons=()=>BLOCKS.map((_,b)=>{const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;function face(tile,transform,shade){g.save();g.setTransform(...transform);g.drawImage(tiles[tile],0,0,16,16);if(shade){g.fillStyle=`rgba(0,0,0,${shade})`;g.fillRect(0,0,16,16)}g.restore();}face(tileFor(b,1),[1.4,.7,-1.4,.7,24,2],0);face(tileFor(b,0),[1.4,.7,0,1.4,2,13.2],.13);face(tileFor(b,0),[1.4,-.7,0,1.4,24,24.4],.3);return c.toDataURL();});
+ const icons=makeIcons();return {atlas,tiles,icons,refresh(){tiles.forEach((t,i)=>{a.clearRect(i*16,0,16,16);a.drawImage(t,i*16,0)});icons.splice(0,icons.length,...makeIcons());}};
 }
