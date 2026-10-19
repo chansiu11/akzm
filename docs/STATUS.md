@@ -23,3 +23,11 @@
 - GitHub `main`에 첫 버전 11개 파일을 올린 커밋: `ede4ddc677fe1579d75e0994e23f7269ab18a585` (부모: `41622b24310000cc8322de6afb5abbb65effa13e`), 히스토리 보존, 강제 푸시 없음.
 - PASS: 단순 HTTP 서버에서 `/`, `/src/main.js`, `/src/atlas.js`, `/src/terrain.js`, `/style.css`, `/docs/STATUS.md`가 HTTP 200을 반환.
 - NOT VERIFIED: GitHub Pages 사이트가 이 커밋을 반영했는지와 브라우저 WebGL/원격 Three.js CDN 정상 동작 여부.
+
+## 단계 1.1 — 2026-10-20 모바일 조작·로컬 JAR 텍스처
+- CODED: 터치 시점 드래그, 이동 스틱, 점프/파괴/설치/가방/메뉴, PC 조작 유지.
+- CODED: 이용자가 JAR/ZIP을 직접 선택하면 브라우저에서 16개 블록 PNG와 잔디 오버레이를 로드. 로컬 Atlas 저장/복원/초기화. 외부 재배포 없이 원본 보존.
+- FACT: 제공된 JAR에 16개 대응 블록 PNG 경로가 모두 있음. 다른 제공 ZIP은 소리/언어 객체 위주.
+- PASS: 로컬 Node 테스트 7개(기존 4 + 모바일 시점/조이스틱/텍스처 경로 3), 구문 검사 통과.
+- NOT VERIFIED: 실제 스마트폰 WebGL 및 로컬 JAR의 전체 이미지 디코딩 E2E. 이 환경에서 Playwright의 로컬 HTTP 요청이 관리자 정책으로 차단됨.
+- RENDER: 승인된 워크스페이스에서는 qoxmfvlfem과 rpggame에 연결된 서비스만 존재. akzm 서비스 없음; Render 미변경.

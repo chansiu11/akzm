@@ -1,6 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
 import {createAtlas,tileFor,uvFor} from './atlas.js';
+import {loadLocalResourcePack,saveLocalAtlas,restoreLocalAtlas,clearLocalAtlas} from './resource-pack.js';
+import {lookDelta,joystickDelta} from './touch.js';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport'); const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -15,7 +17,10 @@ const world=new World(readSave()?.world), saved=readSave();const inventory=saved
 let selected=Number.isInteger(saved?.selected)?Math.max(0,Math.min(8,saved.selected)):0;
 const player={x:saved?.player?.x??3.5,y:saved?.player?.y??heightAt(3,3)+3,z:saved?.player?.z??3.5,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
 let running=false,inventoryOpen=false,day=saved?.day??.21,clickHold=false,damage=0,aimKey='',saveTimer=0,noticeTimer=0;
-const keys=new Set(),meshes=new Map(),pending=[],queued=new Set();const size=16,renderRadius=2;let lastChunk='';
+const keys=new Set(),meshes=new Map(),pending=[],queued=new Set();
+const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
+if(touchMode)document.body.classList.add('touch-ui');
+const mobileMove={forward:0,strafe:0};let mobileJump=false;let activeLook=null;const size=16,renderRadius=2;let lastChunk='';
 const faces=[
  {d:[0,0,1],v:[[0,0,1],[1,0,1],[1,1,1],[0,1,1]]},
  {d:[0,0,-1],v:[[1,0,0],[0,0,0],[0,1,0],[1,1,0]]},
@@ -35,9 +40,9 @@ function loadArea(){const cx=Math.floor(player.x/size),cz=Math.floor(player.z/si
 function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))enqueue(cx+dx,cz+dz)}
 function collides(x,y,z){const r=.29,eps=.001;for(let bx=Math.floor(x-r);bx<=Math.floor(x+r);bx++)for(let by=Math.floor(y+eps);by<=Math.floor(y+1.8-eps);by++)for(let bz=Math.floor(z-r);bz<=Math.floor(z+r);bz++)if(SOLID(world.get(bx,by,bz)))return true;return false}
 function moveAxis(axis,delta){if(!delta)return;const steps=Math.ceil(Math.abs(delta)/.09),d=delta/steps;for(let i=0;i<steps;i++){const nv=player[axis]+d;if(collides(axis==='x'?nv:player.x,axis==='y'?nv:player.y,axis==='z'?nv:player.z)){if(axis==='y'){if(d<0)player.onGround=true;player.vy=0}return}player[axis]=nv}}
-function stepPhysics(dt){let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0),strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0);let speed=keys.has('ShiftLeft')?2:keys.has('ControlLeft')?5.7:4.4;if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;moveAxis('x',(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*dt*speed);moveAxis('z',(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*dt*speed)}
+function stepPhysics(dt){let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;let speed=keys.has('ShiftLeft')?2:keys.has('ControlLeft')?5.7:4.4;if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;moveAxis('x',(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*dt*speed);moveAxis('z',(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*dt*speed)}
  const water=world.get(Math.floor(player.x),Math.floor(player.y+.7),Math.floor(player.z))===BLOCK.WATER;
- if(keys.has('Space')&&(player.onGround||water)){player.vy=water?4:8.2;player.onGround=false}
+ if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:8.2;player.onGround=false}
  player.vy=Math.max(-24,player.vy-(water?6:22)*dt);player.onGround=false;moveAxis('y',player.vy*dt);
  if(player.y<-8){player.x=3.5;player.z=3.5;player.y=heightAt(3,3)+4;player.vy=0}
  camera.position.set(player.x,player.y+1.62,player.z);camera.rotation.set(player.pitch,player.yaw,0);}
@@ -52,14 +57,34 @@ const SWATCH=['#222','#70a84a','#7e5232','#747a80','#cfbf81','#916a45','#487341'
 function breakBlock(t){if(!t||t.id===BLOCK.BEDROCK||t.id===BLOCK.WATER)return;if(world.set(t.x,t.y,t.z,0)){updateNearBlock(t.x,t.z);let item=inventory.find(a=>a.id===t.id);if(item)item.count=Math.min(999,item.count+1);updateUI();saveTimer=7}}
 function placeBlock(t){if(!t)return;const item=inventory[selected];if(!item||item.count<=0)return;const {x,y,z}=t, n=t.normal;const nx=x+n.x,ny=y+n.y,nz=z+n.z;if(world.get(nx,ny,nz)!==BLOCK.AIR&&world.get(nx,ny,nz)!==BLOCK.WATER)return;if(ny<=0||ny>MAX_Y)return;const prev=world.get(nx,ny,nz);world.set(nx,ny,nz,item.id);if(collides(player.x,player.y,player.z)){world.set(nx,ny,nz,prev);return}item.count--;updateNearBlock(nx,nz);updateUI();saveTimer=7}
 function hardness(id){return ({1:.6,2:.55,3:1.6,4:.5,5:1.2,6:.25,7:.8,9:1.7,10:1.9,11:.15,12:1.7})[id]??1}
-function openInventory(){inventoryOpen=true;running=false;clickHold=false;document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI()}
+function openInventory(){inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI()}
 function closeInventory(){inventoryOpen=false;el('inventory').classList.add('hidden');el('overlay').classList.add('show')}
-function requestPlay(){el('overlay').classList.remove('show');el('inventory').classList.add('hidden');inventoryOpen=false;canvas.requestPointerLock?.()}
-const onPointer=()=>{running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running&&!inventoryOpen)el('overlay').classList.add('show');clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
-document.addEventListener('mousemove',e=>{if(!running)return;player.yaw-=e.movementX*.0024;player.pitch=Math.max(-Math.PI/2+.02,Math.min(Math.PI/2-.02,player.pitch-e.movementY*.0024))});
+function requestPlay(){el('overlay').classList.remove('show');el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}canvas.requestPointerLock?.()}
+function pauseGame(){running=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.();el('overlay').classList.add('show')}
+const onPointer=()=>{if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running&&!inventoryOpen)el('overlay').classList.add('show');clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
+document.addEventListener('mousemove',e=>{if(!running||touchMode)return;Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY))});
+canvas.addEventListener('pointerdown',e=>{if(!touchMode||e.pointerType==='mouse'||!running||activeLook)return;e.preventDefault();activeLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture?.(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!running||!activeLook||activeLook.id!==e.pointerId)return;e.preventDefault();const dx=e.clientX-activeLook.x,dy=e.clientY-activeLook.y;activeLook.x=e.clientX;activeLook.y=e.clientY;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,.0035))});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>{if(activeLook?.id===e.pointerId)activeLook=null});
 window.addEventListener('keydown',e=>{if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(e.button===0){clickHold=true;damage=0;aimKey=''}if(e.button===2)placeBlock(look())});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
+// On touch devices the scene is swipe-look; joystick and actions own their pointer captures.
+const stick=el('joystick'),thumb=el('stickThumb');let stickPointer=null;
+const resetStick=()=>{stickPointer=null;mobileMove.forward=mobileMove.strafe=0;thumb.style.transform='translate(-50%,-50%)'};
+function trackStick(e){const r=stick.getBoundingClientRect(),d=joystickDelta(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2),46);mobileMove.forward=d.forward;mobileMove.strafe=d.strafe;thumb.style.transform='translate(calc(-50% + '+d.thumbX+'px),calc(-50% + '+d.thumbY+'px))'}
+stick.addEventListener('pointerdown',e=>{if(!running||stickPointer!==null)return;e.preventDefault();stickPointer=e.pointerId;stick.setPointerCapture?.(e.pointerId);trackStick(e)});
+stick.addEventListener('pointermove',e=>{if(stickPointer!==e.pointerId)return;e.preventDefault();trackStick(e)});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(type,e=>{if(stickPointer===e.pointerId)resetStick()});
+function holdAction(id,onStart,onEnd){const b=el(id);let heldPointer=null;b.addEventListener('pointerdown',e=>{if(!running||heldPointer!==null)return;e.preventDefault();heldPointer=e.pointerId;b.setPointerCapture?.(e.pointerId);onStart()});for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,e=>{if(e.pointerId===heldPointer){heldPointer=null;onEnd?.()}})}
+holdAction('touchBreak',()=>{clickHold=true;damage=0;aimKey=''},()=>{clickHold=false;damage=0});
+holdAction('touchJump',()=>{mobileJump=true},()=>{mobileJump=false});
+holdAction('touchPlace',()=>{placeBlock(look())},()=>{});
+el('touchBag').addEventListener('click',()=>{if(running)openInventory()});
+el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
+restoreLocalAtlas().then(atlas=>{if(atlas){texture.image=atlas;texture.needsUpdate=true;el('packStatus').textContent='이 기기에 저장한 텍스처 적용됨';}});
+el('packFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;el('packStatus').textContent='리소스팩 파일을 기기에서 읽는 중…';try{const result=await loadLocalResourcePack(file);texture.image=result.canvas;texture.needsUpdate=true;const persisted=saveLocalAtlas(result.canvas);el('packStatus').textContent=result.fileName+': 블록 텍스처 '+result.loaded+'개 로드'+(persisted?' · 기기에 저장됨':' · 일시 적용');notify('선택한 리소스팩을 적용했습니다.')}catch(err){el('packStatus').textContent=err.message;notify('리소스팩 읽기 실패')}finally{e.target.value=''}});
+el('packReset').addEventListener('click',()=>{clearLocalAtlas();texture.image=createAtlas();texture.needsUpdate=true;el('packStatus').textContent='기본 텍스처로 돌아왔습니다';notify('기본 텍스처 적용')});
 el('start').addEventListener('click',requestPlay);el('closeInventory').addEventListener('click',closeInventory);
 el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 el('invItems').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
