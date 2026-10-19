@@ -30,3 +30,7 @@ The expanded suite additionally covers armor persistence and mitigation, drownin
 ## Dimension / creature update validation
 
 Tests cover deterministic dimension generation and safe spawn, preserving generators 1/2, twelve-frame End activation, both Nether frame orientations, all base entity-name mappings and model bounds, projectiles/line-of-sight, Creeper blast, creature interactions, constructed mobs and Dragon exit. Real WebSocket clients test dimension-isolated broadcasts, travel, edit retention and snapshot restoration. No browser screenshot comparison was performed.
+
+### Built-in resource update
+
+All 1058 texture files plus model/blockstate JSON are preserved from the user-supplied 1.8.9 JAR. Default loading replaces the previously optional-only original resource workflow. 176 modeled block variants and 20 AI-inheriting mob texture variants were appended. Extraction completeness is distinct from full engine support: entity UV fidelity, animated textures, all GUI layouts, biome tinting, block states/orientation, interactive workstations and original AI parity remain incomplete. See README for exact boundaries.

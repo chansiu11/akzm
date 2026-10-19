@@ -1,7 +1,7 @@
 import {worldValid,SIZE,HEIGHT,index,valid,generate,decorate,hashSeed,noise,isSolid} from './world.js';
 export const STRUCTURE_NAMES={village:'마을',desert_temple:'사막 사원',jungle_temple:'정글 사원',witch_hut:'마녀 오두막',dungeon:'던전',mineshaft:'폐광',stronghold:'요새',ocean_monument:'해저 유적',desert_well:'사막 우물',nether_fortress:'네더 요새',end_pillars:'흑요석 기둥',exit_portal:'엔드 출구'};
 export function groundAt(get,x,z){for(let y=HEIGHT-4;y>=0;y--)if(isSolid(get(x,y,z))&&!isSolid(get(x,y+1,z))&&!isSolid(get(x,y+2,z))&&![21,44].includes(get(x,y+1,z)))return y+1;return 8;}
-export function generateDimension(seed,dimension='overworld',flat=false,generator=3){const a=dimension==='overworld'?generate(seed,flat):new Uint8Array(SIZE*SIZE*HEIGHT),s=hashSeed(seed+dimension),structures=[],chests={},spawns=[];
+export function generateDimension(seed,dimension='overworld',flat=false,generator=3){const a=dimension==='overworld'?generate(seed,flat):new Uint16Array(SIZE*SIZE*HEIGHT),s=hashSeed(seed+dimension),structures=[],chests={},spawns=[];
 const get=(x,y,z)=>valid(x,y,z)?a[index(x,y,z)]:0,put=(x,y,z,b)=>{if(valid(x,y,z))a[index(x,y,z)]=b;},box=(x,y,z,w,h,d,b)=>{for(let dx=0;dx<w;dx++)for(let dy=0;dy<h;dy++)for(let dz=0;dz<d;dz++)put(x+dx,y+dy,z+dz,b);};
 const record=(type,x,y,z)=>structures.push({type,name:STRUCTURE_NAMES[type]||type,pos:[x,y,z]});
 const chest=(x,y,z,loot)=>{put(x,y,z,26);chests[[x,y,z].join(',')]=Array.from({length:27},(_,i)=>loot[i]?{key:loot[i][0],count:loot[i][1]}:null);};

@@ -5,7 +5,7 @@
 - https://github.com/PrismarineJS/node-minecraft-data
 - https://github.com/PrismarineJS/minecraft-data
 
-The file contains item, block, food and crafting recipe facts. Item names remain English where a Korean translation is not provided. Some upstream metadata includes cross-version annotations; only the exported 1.8 item IDs and recipe entries are used. This is not a certification of exact engine parity. Proprietary Minecraft textures, sound recordings, fonts and logos are not included. Resource packs selected by a player are decoded and stored only in that player's browser.
+The file contains item, block, food and crafting recipe facts. Item names remain English where a Korean translation is not provided. Some upstream metadata includes cross-version annotations; only the exported 1.8 item IDs and recipe entries are used. This is not a certification of exact engine parity. The built-in resource bundles now contain textures (including font/logo images), model JSON and block-state JSON extracted from the user-supplied Minecraft 1.8.9 client JAR. These assets remain the property of Mojang/Microsoft and are not covered by this project’s code license. No Java class files or sound recordings are bundled. Source SHA256 and per-file hashes are recorded in public/builtin-pack/manifest.json. Additional packs selected by a player remain local to that browser.
 
 Three.js and ws retain their own license notices in npm dependencies.
 

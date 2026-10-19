@@ -3,7 +3,7 @@ import {BLOCKS,noise} from './world.js';
 export const TILES=BLOCKS.length*3;
 export const tileFor=(b,dy)=>b*3+(dy===1?1:dy===-1?2:0);
 export function createTextures(){
- const atlas=document.createElement('canvas');atlas.width=TILES*16;atlas.height=16;const a=atlas.getContext('2d');const tiles=[];
+ const atlas=document.createElement('canvas');atlas.width=32*16;atlas.height=Math.ceil(TILES/32)*16;const a=atlas.getContext('2d');const tiles=[];
  for(let b=0;b<BLOCKS.length;b++)for(let face=0;face<3;face++){
  const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');const rect=(color,x,y,w,h)=>{g.fillStyle=color;g.fillRect(x,y,w,h)};
  let base=b===1&&face!==1?'#79543a':BLOCKS[b][1];rect(base,0,0,16,16);
@@ -34,8 +34,8 @@ export function createTextures(){
  if(b===53){for(let i=0;i<8;i++)rect('#e1d5c3',Math.floor(noise(i,1,b)*13),Math.floor(noise(i,2,b)*13),2,3);}
  if(b===55){g.clearRect(0,0,16,16);rect('#815528',6,4,4,12);rect('#ef9a21',5,1,6,5);rect('#ffff9e',6,1,4,3);}
  if(b===56&&face===0){rect('#181818',2,5,4,3);rect('#181818',10,5,4,3);rect('#181818',7,8,2,3);rect('#111111',4,12,8,2);}
- tiles.push(c);a.drawImage(c,(b*3+face)*16,0);
+ tiles.push(c);a.drawImage(c,((b*3+face)%32)*16,Math.floor((b*3+face)/32)*16);
  }
  const makeIcons=()=>BLOCKS.map((_,b)=>{const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;function face(tile,transform,shade){g.save();g.setTransform(...transform);g.drawImage(tiles[tile],0,0,16,16);if(shade){g.fillStyle=`rgba(0,0,0,${shade})`;g.fillRect(0,0,16,16)}g.restore();}face(tileFor(b,1),[1.4,.7,-1.4,.7,24,2],0);face(tileFor(b,0),[1.4,.7,0,1.4,2,13.2],.13);face(tileFor(b,0),[1.4,-.7,0,1.4,24,24.4],.3);return c.toDataURL();});
- const icons=makeIcons();return {atlas,tiles,icons,refresh(){tiles.forEach((t,i)=>{a.clearRect(i*16,0,16,16);a.drawImage(t,i*16,0)});icons.splice(0,icons.length,...makeIcons());}};
+ const icons=makeIcons();return {atlas,tiles,icons,cols:32,get rows(){return Math.ceil(tiles.length/32)},refresh(){atlas.height=Math.ceil(tiles.length/32)*16;tiles.forEach((t,i)=>{a.drawImage(t,(i%32)*16,Math.floor(i/32)*16)});icons.splice(0,icons.length,...makeIcons());}};
 }

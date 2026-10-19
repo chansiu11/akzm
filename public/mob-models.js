@@ -1,3 +1,4 @@
+import {applyMobSkin} from './mob-skins.js';
 import * as T from 'three';
 import {MOB_TYPES} from './mobs.js';
 export function createMobModel(m){const d=MOB_TYPES[m.type],g=new T.Group();g.userData.limbs=[];g.userData.wings=[];g.userData.type=m.type;g.userData.variant=[m.size,m.baby,m.sheared,m.tamed,m.saddled].join(':');const color=d.color;
@@ -20,5 +21,5 @@ else if(shape==='snowman'){box([.8,.8,.8],[0,.4,0]);box([.6,.6,.6],[0,1.1,0]);bo
 else if(shape==='wither'){box([.3,1.5,.3],[0,1.2,0]);box([1.6,.25,.3],[0,1.8,0]);for(const x of [-.65,0,.65]){box([.5,.5,.5],[x,x===0?2.2:1.9,0]);for(const ex of [-.1,.1])box([.08,.08,.02],[x+ex,x===0?2.25:1.95,.26],0xc1c3ce);}for(const y of [.8,1.1,1.4])box([.85,.1,.25],[0,y,0]);}
 else if(shape==='dragon'){box([1.5,1.4,3.6],[0,1,0]);box([.7,.7,2],[0,1.3,2.4]);box([1,.7,1.3],[0,1.45,3.6]);box([.65,.35,1],[0,1.2,4.5]);for(const x of [-.4,.4])box([.18,.1,.15],[x,1.7,4.1],0xc665ff);for(const sign of [-1,1]){const wing=box([5,.06,2.5],[sign*3,1.8,-.1],0x3e324c,'wing');wing.rotation.z=sign*.12;box([.25,.3,4],[sign*3,1.85,-.3],0x72617d);box([.4,1,.4],[sign*.9,.3,-.8],color,'leg');}for(let i=0;i<5;i++){box([.6-i*.08,.6-i*.08,1.2],[0,1,-2.2-i],color);box([.15,.3,.2],[0,1.6,-2-i],0xb1a9b8);}}
 else if(shape==='crystal'){box([.9,.9,.9],[0,.7,0],0xefb3e9);const frame=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1.3,1.3,1.3)),new T.LineBasicMaterial({color:0xffffff}));frame.position.y=.7;g.add(frame);}
-g.scale.setScalar((d.scale||1)*(m.size||1));return g;}
+applyMobSkin(g,m,d);g.scale.setScalar((d.scale||1)*(m.size||1));return g;}
 export function animateMob(g,m,time,dt){const d=MOB_TYPES[m.type];const moving=g.position.distanceTo(new T.Vector3(m.x,m.y,m.z))>.015;g.position.lerp(new T.Vector3(m.x,m.y,m.z),Math.min(1,dt*15));g.rotation.y=m.yaw;for(const [i,limb]of g.userData.limbs.entries())limb.rotation.x=moving?Math.sin(time*9+i%2*Math.PI)*.5:0;for(const [i,wing]of g.userData.wings.entries()){if(d.shape==='blaze'){wing.position.x=Math.sin(time*2+i*Math.PI/2)*.6;wing.position.z=Math.cos(time*2+i*Math.PI/2)*.6;}else wing.rotation.z=Math.sin(time*(d.shape==='dragon'?3:10))*.5*(i%2?1:-1);}if(d.hop)g.position.y+=Math.max(0,Math.sin(time*6))*.25;if(d.crystal){g.rotation.y=time;g.rotation.z=Math.sin(time)*.2;}if(m.fuse)g.scale.setScalar((d.scale||1)*(m.size||1)*(1+Math.sin(time*25)*.06));}

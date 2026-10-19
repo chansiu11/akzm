@@ -39,3 +39,5 @@
 #ui.chat-mode{justify-content:flex-end;align-items:flex-start;padding:12px;background:#0003;z-index:3}
 .chat-mode .panel{background:#111d;padding:12px;width:min(680px,100%);text-align:left;border:1px solid #888;max-height:85dvh;overflow:auto}
 .chat-mode h2{font-size:16px;margin:0}.chat-mode .field{margin:8px 0}.chat-mode input{font-size:16px}.command-examples{display:flex;gap:4px;overflow-x:auto}.command-examples button{flex:none;font-size:12px;min-height:30px;padding:4px 8px}.chat-mode p{margin:5px 0;font-size:12px}
+
+#ui.dirt{background-image:var(--builtin-dirt);background-size:64px 64px;image-rendering:pixelated}

@@ -1,0 +1,8 @@
+export const builtinAssets=new Map(),builtinImages=new Map();
+export let builtinModels={},builtinStates={};
+let ready;
+export function loadBuiltinAssets(){return ready??=(async()=>{const root=new URL('./builtin-pack/',import.meta.url),manifest=await (await fetch(new URL('manifest.json',root))).json();const bundles=await Promise.all(manifest.parts.map(async p=>(await fetch(new URL(p,root))).json()));for(const part of bundles)for(const [k,v]of Object.entries(part))builtinAssets.set(k,v);[builtinModels,builtinStates]=await Promise.all(['models.json','blockstates.json'].map(async p=>(await fetch(new URL(p,root))).json()));return manifest;})();}
+export function assetURL(path){return builtinAssets.get('textures/'+path.replace(/^textures\//,'').replace(/\.png$/,'')+'.png')||null;}
+export async function assetImage(path){if(!path)return null;const key=path.replace(/^textures\//,'').replace(/\.png$/,'');if(builtinImages.has(key))return builtinImages.get(key);const url=assetURL(key);if(!url)return null;const img=new Image();img.src=url;await img.decode();builtinImages.set(key,img);return img;}
+export function resolveModel(name,seen=new Set()){if(seen.has(name))return {};seen.add(name);const m=builtinModels[name];if(!m)return {};const parent=m.parent&&!m.parent.startsWith('builtin/')?resolveModel(m.parent,seen):{};return {...parent,...m,textures:{...parent.textures,...m.textures},display:{...parent.display,...m.display},elements:m.elements||parent.elements};}
+export function resolveTexture(model,ref){const seen=new Set();while(ref?.startsWith('#')){if(seen.has(ref))return null;seen.add(ref);ref=model.textures?.[ref.slice(1)];}return ref;}
