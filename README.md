@@ -28,7 +28,7 @@ WASD move, mouse look, Space jump, F toggle creative flight, Space/Shift ascend/
 
 ## Implemented
 
-Survival/creative selection, saved 36-slot inventory, 2×2 / 3×3 crafting with exported legacy recipes, timed smelting, shared chests, health/hunger/food, mining and tool durability, simple animals/zombies, day/night, rain, a documented command subset, and classic-inspired UI.
+Survival/creative selection, saved 36-slot inventory, 2×2 / 3×3 crafting with exported legacy recipes, shared position-based furnaces, shared chests, four-slot armor with defense/durability, tool repair, swimming/air/drowning/suffocation/fall damage, health/hunger/food, mining and tool durability, simple animals/zombies, day/night, rain, a documented command subset, and classic-inspired UI.
 
 See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for exact boundaries. A searchable item ID is not a claim that all of that item's original behaviors work. This is not a complete Minecraft reimplementation.
 
@@ -43,3 +43,7 @@ Use a Node web service linked to `chansiu11/akzm`, branch `main`, build `npm ci`
 ## Visual update
 
 Per-face original 16px pixel art now distinguishes grass sides/bottom, log end grain, crafting-table faces and bookshelves. Cutout foliage/glass and separately rendered translucent water replace solid placeholders. Textured isometric inventory/hotbar icons, held blocks with swing animation, a compact classic hotbar and F3-toggle debug display are included. These are original approximations, not pixel-identical Minecraft textures. Browser visual verification remains pending.
+
+## Local resource packs
+
+Settings → Resource Packs accepts an extracted `assets/minecraft/textures` folder. Supported block textures, legacy-named item PNGs, and `gui/widgets.png` button/hotbar crops are applied and stored only in that browser. This is not a full pack loader, and no original assets are included.
