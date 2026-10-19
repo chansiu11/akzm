@@ -1,0 +1,7 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#14202a"><title>Voxel Frontier — Prototype 0.1</title><link rel="stylesheet" href="./style.css"></head><body>
+<canvas id="viewport" aria-label="3D voxel world"></canvas>
+<div id="crosshair" aria-hidden="true">+</div><div id="target"></div><div id="status"></div><div id="hotbar"></div>
+<div id="gameNotice" role="status"></div>
+<div id="overlay" class="show"><div class="panel"><div class="eyebrow">ORIGINAL WEB VOXEL PROJECT · v0.1</div><h1>VOXEL <span>FRONTIER</span></h1><p>탐험하고, 땅을 파고, 블록을 쌓는 독립 제작 복셀 샌드박스입니다.</p><button id="start">월드 입장하기</button><div class="controls">W A S D 이동 · 마우스 시점 · Space 점프 · Shift 천천히 걷기<br>왼쪽 길게 누르기 파괴 · 오른쪽 설치 · 1~9 선택 · 휠 슬롯 변경<br>E 가방 · Esc 일시정지 · P 월드 저장</div><small>데이터는 이 브라우저에만 저장됩니다. 서버 멀티플레이는 아직 지원하지 않습니다.</small></div></div>
+<div id="inventory" class="hidden"><div class="inventory-head"><strong>가방 · 9칸 빠른 선택</strong><button id="closeInventory">닫기 ×</button></div><div id="invItems"></div><p>파괴한 블록은 가방에 들어갑니다. 배치한 블록은 소비됩니다.</p></div>
+<script type="module" src="./src/main.js"></script></body></html>
