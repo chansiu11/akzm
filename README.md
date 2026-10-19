@@ -24,7 +24,7 @@ The number is an application room code, **not a TCP port**. No router configurat
 
 ## Controls
 
-WASD move, mouse look, Space jump, F toggle creative flight, Space/Shift ascend/descend, left click break, right click place, E inventory, 1–9 hotbar, T multiplayer chat, Escape menu. Controls can be rebound. Touch controls and drag-to-look are included.
+WASD move, mouse look, Space jump, double-tap Space or F toggle creative flight, Space/Shift ascend/descend, left click break, right click place, E inventory, 1–9 hotbar, T multiplayer chat, Escape menu. Controls can be rebound. Touch controls and drag-to-look are included.
 
 ## Implemented
 
@@ -50,7 +50,7 @@ Settings → Resource Packs accepts an extracted `assets/minecraft/textures` fol
 
 ## Dimensions, structures and creatures
 
-Create a **new world** for generator 3 structures. Existing worlds keep their previous terrain. Overworld structures include a village, desert/jungle temples, witch hut, stronghold, dungeon, mineshaft, ocean monument and desert well. The Nether has lava, quartz and a fortress; the End has an island, pillars, crystals and a Dragon. These are compact independent templates, not original seed-compatible layouts.
+Create a **new world** for generator 4 seeded structures. Existing worlds keep their original central terrain; their surroundings now stream as well. Overworld structures include a village, desert/jungle temples, witch hut, stronghold, dungeon, mineshaft, ocean monument and desert well. The Nether has lava, quartz and a fortress; the End has an island, pillars, crystals and a Dragon. These are compact independent templates, not original seed-compatible layouts.
 
 - Build a 4×5 obsidian frame (2×3 opening), then use flint and steel inside. Stay in the active portal to travel.
 - Fill all twelve stronghold portal frames with Eyes of Ender. Kill the Dragon to open its return portal; living crystals heal it.
@@ -64,3 +64,9 @@ The registry includes all concrete base mob names in the 1.8.9 dataset and major
 ## Static entry fix
 
 The repository root now has `index.html` redirecting to `public/` and `.nojekyll`; it no longer depends on README rendering as the Pages entry. The game uses relative bundled Three.js URLs. `npm run prepare:static` refreshes those vendor files when dependencies change.
+
+## Streaming and mobile controls
+
+Overworld/Nether terrain streams in 16×16 chunks as the player moves, including negative X/Z. Distant meshes unload; up to 400 generated chunks are cached and block edits survive eviction/save/rejoin. X/Z are bounded at ±29,999,984 and terrain height remains 40 blocks. The 1.8-inspired End remains a central island surrounded by void. Generator 4 uses smooth seeded terrain and regional structure candidates filtered by biome/slope. This is not vanilla 1.8.9 seed parity; structures remain compact independent templates.
+
+Mobile uses a left directional pad with sneak in the middle, right jump, and separate build/break buttons. Double-tap jump or use Flight to toggle creative flight; hold jump/sneak to ascend/descend. Canvas touch-action is disabled and one captured pointer owns look independently of movement touches. Input lifecycle tests cover simultaneous fingers/cancellation; physical phone visual testing is still pending.

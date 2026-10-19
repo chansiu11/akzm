@@ -3,10 +3,10 @@ import {equip} from './equipment.js';
 import {furnaceAction,collectStack} from './furnaces.js';
 import {add,take,item,parse,craft,eat,moveStack,stepSmelt} from './survival.js';
 import {blockItems,itemToBlock,dropFor,needsPick,toolTier,harvestable} from './items.js';
-import {valid,index} from './world.js';
+import {valid,index,worldValid} from './world.js';
 export function miningTime(b,k,creative){if(creative)return 0;if([20,45,46,47,54].includes(b))return Infinity;const name=item(k)?.name||'',pick=toolTier(k),wood=[5,6,23,24,26].includes(b),dirt=[1,2,8,19,37].includes(b);let base=needsPick.has(b)?1.5:wood?1:dirt?.6:.35;if(b===17)base=9;if(pick&&needsPick.has(b))base/=pick*1.2;if(wood&&name.endsWith('_axe'))base/=3;if(dirt&&name.endsWith('_shovel'))base/=3;return Math.max(.12,base);}
 export function applyAction(state,a,ctx){
- const fail=s=>{throw Error(s)},near=(p,range=7)=>Array.isArray(p)&&valid(...p)&&Math.hypot(ctx.pos[0]-p[0],ctx.pos[1]-p[1],ctx.pos[2]-p[2])<=range;
+ const fail=s=>{throw Error(s)},near=(p,range=7)=>Array.isArray(p)&&worldValid(...p)&&Math.hypot(ctx.pos[0]-p[0],ctx.pos[1]-p[1],ctx.pos[2]-p[2])<=range;
  if(a.selected!==undefined){if(!Number.isInteger(a.selected)||a.selected<0||a.selected>8)fail('잘못된 슬롯');state.selected=a.selected;}
  if(state.hp<=0&&a.kind!=='respawn')fail('먼저 리스폰하세요.');
  const held=()=>state.slots[state.selected];
