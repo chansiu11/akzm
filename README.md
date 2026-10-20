@@ -128,3 +128,7 @@ v1.0 로컬 ZIP에서 별도로 개발한 **코드 전용 업데이트**입니�
 최신 작업본에는 그래픽 면 밝기·밤하늘·물 UV, 신규 생성기 4의 월드 보존 경로, 모래·자갈 중력 틱, 난이도별 굶주림, 좌우 계단 제작, 원거리 시험 생물 투사체, 초기 업적 연계, 실험용 서버 저장 기능이 추가되었습니다. **모든 항목은 부분 구현**이며 원작 1.8.9와 100% 동일하거나 실제 3D 인게임에서 확인된 상태가 아닙니다.
 
 작업·재검토 상세 기록: [`docs/STAGED_JAVA_189_V12.md`](docs/STAGED_JAVA_189_V12.md). 전체 명령어와 Tab 자동완성 확장은 멀티플레이를 비롯한 앞 단계들을 완성한 뒤 최종 단계에서 진행합니다. GitHub·Render 배포는 하지 않았습니다.
+
+## v1.6 — original pixel-art visual overhaul
+
+The title menu, world selection, settings, pause screen, HUD, hotbar, inventory palette, mobile controls, procedural block atlas, and first-person held block were restyled using **original generated art and authored code**. No proprietary game textures, icons, fonts or sounds are included. See [docs/V16_VISUAL_AUDIT.md](docs/V16_VISUAL_AUDIT.md). The XP strip is currently cosmetic, and full WebGL in-game screenshot validation remains unavailable in the automated environment.

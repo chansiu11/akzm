@@ -1,0 +1,118 @@
+/* V1.6 -- entirely original pixel-art interface; no upstream game UI assets. */
+:root{--ui-ink:#111519;--ui-paper:#e8e9e3;--ui-panel:#c0bfb7;--ui-light:#f4f4ee;--ui-edge:#303236;--ui-shadow:#111215;--ui-key:#858783;font-family:'Trebuchet MS','Malgun Gothic',system-ui,sans-serif;color:var(--ui-paper)}
+body{background:#92bde2;color:#f3f3ed}
+button,input,select{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fcf7c9;outline-offset:2px}
+#viewport{image-rendering:pixelated}
+/* Sky and voxel landscape are drawn locally; no network assets. */
+#menuPanorama{display:none;position:fixed;inset:-2%;width:104%;height:104%;object-fit:cover;image-rendering:pixelated;z-index:4;filter:brightness(.68) saturate(.94);pointer-events:none}
+body.menu-open #menuPanorama{display:block}
+#overlay{background:linear-gradient(180deg,#26302d17 0,#0c191c21 65%,#02070d8a 100%);backdrop-filter:none;z-index:5}
+#overlay .menu-page{width:min(760px,95vw);padding:7vh 10px 70px;min-height:100dvh;justify-content:flex-start}
+#overlay .title-page{padding-top:max(5vh,24px)}
+#overlay .brand-shadow{filter:none;margin:3vh auto clamp(20px,5vh,62px);transform:rotate(-1.5deg);max-width:95%}
+#overlay .brand-shadow h1{font-family:Impact,'Arial Black',system-ui,sans-serif;font-weight:1000;font-size:clamp(48px,9.5vw,108px);letter-spacing:.006em;color:#d4d9d3;line-height:.80;-webkit-text-stroke:1px #343a3b;text-shadow:1px 1px #fff,3px 3px #b3bab6,5px 5px #778281,7px 7px #3a4341,9px 9px #161f20,11px 12px #0c1112}
+#overlay .brand-shadow h1 span{color:#afcaab;text-shadow:1px 1px #f1f7dd,3px 3px #819b77,5px 5px #537a52,7px 7px #304f37,9px 9px #192c24}
+#overlay .brand-shadow i{color:#fbe89a;right:-4px;bottom:-22px;font-weight:900;font-size:clamp(12px,1.7vw,17px);text-shadow:2px 3px #3c3327}
+#overlay .menu-stack{width:min(414px,92vw);gap:7px;margin:16px auto 0}
+#overlay .menu-duo{gap:7px}
+#overlay button.stone-button{height:43px;min-height:43px;line-height:1.15;font-family:'Trebuchet MS','Malgun Gothic',sans-serif;font-weight:600;font-size:16px;color:#f8f9f8;border:2px solid;border-color:#e0dfd9 #39393c #292a2f #dfded8;background:linear-gradient(180deg,#999b97 0%,#757875 12%,#777976 51%,#666965 52%,#646764 100%);text-shadow:1px 1px #393a39;box-shadow:inset 0 1px #bbbdb7,0 2px 0 #151617,1px 3px 0 #0007;border-radius:0;padding:8px 14px}
+#overlay button.stone-button:hover:not(:disabled),#overlay button.stone-button:focus-visible{background:linear-gradient(#9ea9d6,#7787bc);border-color:#f3f0ee #273057 #222a50 #e1e9ff}
+#overlay button.stone-button:active:not(:disabled){background:linear-gradient(#6b75a0,#6675a5);box-shadow:inset 0 2px 4px #1e2543}
+#overlay button.stone-button:disabled{filter:grayscale(.8);opacity:.67}
+#overlay h2{font-size:clamp(22px,4vw,30px);font-weight:800;margin:3vh 0 23px;text-shadow:2px 3px #1b1f21;letter-spacing:0}
+#overlay .menu-footer{background:linear-gradient(transparent,#0007);font-size:10px;color:#f6f9f3;padding:23px 12px 8px;gap:12px}
+#overlay #packStatus{font-size:11px;max-width:480px;margin-top:16px;opacity:.85}
+#overlay .menu-hint{font-size:13px}
+#overlay .world-list{max-height:41vh;min-height:185px;width:min(550px,100%);background:#1b2227db;box-shadow:inset 0 0 0 1px #7e878d;border:2px solid #15191e;padding:7px}
+#overlay .world-row{background:#303b43be;border:2px solid transparent;padding:9px 12px}
+#overlay .world-row.selected{border-color:#d6e3f7;background:#687c91b8}
+#overlay .world-row strong{font-size:16px}
+#overlay .world-row small{font-size:11px;color:#d5dcd7}
+#overlay .world-input{background:#11151be9;color:white;border:2px solid #bbc0b8;height:42px;font-size:16px}
+#overlay .world-details{background:#131a1ec9;border:2px solid #7480787d;font-size:12px}
+#overlay .checkbox-line{color:white;text-shadow:0 1px #333}
+#overlay .help-text{background:#10171ccf;border:2px solid #798283;line-height:1.9;text-align:left;padding:16px;font-size:13px;max-height:55vh;overflow:auto}
+#overlay .settings-grid{background:#1b2227d9;border:2px solid #a1a6a4;padding:15px;gap:15px}
+#overlay input[type=range]{accent-color:#a6c48f}
+/* Survival hotbar, inspired by voxel game ergonomics, own CSS pixel design. */
+#crosshair{font-size:0!important;color:transparent;width:21px;height:21px;transform:translate(-50%,-50%);z-index:2;filter:drop-shadow(1px 1px 0 #000b)}
+#crosshair:before,#crosshair:after{content:'';display:block;position:absolute;background:#f7f7f3;box-shadow:0 0 0 1px #15191a9c}
+#crosshair:before{width:2px;height:19px;left:9px;top:0}
+#crosshair:after{height:2px;width:19px;left:0;top:9px}
+#target{top:calc(50% + 19px);font-family:monospace;font-size:11px;color:#fff;text-shadow:1px 1px #000,0 0 3px #000;max-width:80vw;white-space:nowrap}
+#status{font-family:monospace;left:10px;top:8px;border:0;background:transparent;font-size:12px;line-height:1.5;text-shadow:1px 1px #060606,2px 2px #060606;padding:0;color:#fafafa;pointer-events:none;border-radius:0}
+#hotbar{bottom:max(9px,env(safe-area-inset-bottom));gap:0;transform:translateX(-50%);background:#202125dd;border:3px solid;border-color:#969995 #202024 #151516 #828683;border-radius:0;padding:2px;box-shadow:0 2px 0 #080809af;z-index:2;white-space:nowrap}
+#hotbar .slot{width:44px;height:44px;background:#6c6d68aa;border:2px solid;border-color:#242728 #979a94 #8f918a #2c3030;box-shadow:inset 0 2px #484b49;cursor:pointer;padding:0;display:grid;place-items:center;color:white;border-radius:0;position:relative}
+#hotbar .slot.active{border:3px solid #f5f5ef;box-shadow:0 0 0 1px #fff4,inset 0 1px 0 #c5c7c3;background:#91938d8c;z-index:3}
+#hotbar .slot small{display:none}
+#hotbar .slot .tileIcon{width:29px;height:29px;border:0;transform:none;box-shadow:none;image-rendering:pixelated}
+#hotbar .slot span{position:absolute;bottom:1px;right:3px;color:#fff;font:13px monospace;text-shadow:1px 1px #000,-1px -1px #000}
+#survivalHud{width:402px;max-width:calc(100vw - 18px);bottom:67px;left:50%;transform:translateX(-50%);display:block;font-size:0;pointer-events:none;z-index:2}
+.vitals-top{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.vital-hearts,.vital-food,.vital-air{display:flex;align-items:center;gap:1px;height:15px}
+.vital-food{justify-content:flex-end}
+.vital-air{height:12px;justify-content:flex-end;margin-top:-4px}
+.pixel-vital{position:relative;display:inline-block;flex:none;width:17px;height:15px;image-rendering:pixelated;--fill:100%;filter:drop-shadow(1px 1px 0 #050609)}
+.pixel-vital.heart{background:#35202a;clip-path:polygon(10% 15%,30% 0%,50% 17%,70% 0%,90% 15%,100% 40%,50% 100%,0% 40%)}
+.pixel-vital.heart:before{content:'';position:absolute;inset:1px 1px 1px 1px;background:linear-gradient(to right,#e84753 0 var(--fill),#54262a var(--fill) 100%);clip-path:inherit}
+.pixel-vital.heart:after{content:'';position:absolute;left:3px;top:2px;width:3px;height:4px;background:#ffb4ad;opacity:.7}
+.pixel-vital.food{width:17px;height:15px;transform:rotate(-30deg);background:linear-gradient(to right,#986e43 0 var(--fill),#463d38 var(--fill) 100%);clip-path:polygon(52% 0%,78% 9%,100% 26%,100% 61%,80% 74%,54% 77%,36% 69%,18% 98%,0 80%,22% 59%,21% 35%,30% 14%)}
+.pixel-vital.food:before{content:'';position:absolute;left:6px;top:3px;width:6px;height:4px;background:#deb88b}
+.pixel-vital.food.empty{opacity:.5}
+.pixel-vital.bubble{width:10px;height:10px;margin-top:1px;border:2px solid #a1d9ed;background:linear-gradient(to right,#a2d7eb 0 var(--fill),transparent var(--fill) 100%);border-radius:30% 45% 35% 40%}
+.pixel-xp-track{height:6px;margin-top:3px;width:100%;border:1px solid #10140e;background:#282f20;box-shadow:inset 0 1px #56664b,0 1px #fff4}
+.pixel-xp-fill{height:100%;width:0;background:repeating-linear-gradient(90deg,#6fb334 0 4px,#3d871f 4px 5px);transition:width .1s}
+#miningIndicator{position:fixed;left:50%;top:calc(50% + 45px);transform:translateX(-50%);width:110px;height:7px;background:#252b2dc9;border:1px solid #000b;z-index:3;opacity:0;pointer-events:none}
+#miningIndicator.visible{opacity:1}
+#miningIndicator:before{content:'';display:block;background:repeating-linear-gradient(90deg,#f7f7f0 0 6px,#a0aca4 6px 8px);width:var(--break-progress,0);height:100%}
+#gameNotice{top:18%;color:#f5f0c9;text-shadow:2px 2px #20201d;font-weight:700;font-size:15px;max-width:85vw;text-align:center}
+/* Stone-panel inventory, crafting, container and command interfaces. */
+#inventory{background:linear-gradient(135deg,#c8c7bc,#a7a9a0);border:4px solid;border-color:#efeee7 #3d4141 #3b3c40 #ededdf;box-shadow:0 0 0 100vmax #0009,0 12px 0 #090c0b96;color:#252a2a;width:min(710px,95vw);max-height:86dvh;padding:17px;border-radius:0;z-index:6}
+.inventory-head strong{font-size:18px;color:#343633}
+.inventory-head button,#inventory button:not(.item):not(.catalog-item),#tileContents button,.command-panel button{background:linear-gradient(#9b9d98,#747873);border:2px solid;border-color:#d9dbd4 #454947 #343738 #e4e5dc;color:#f8f9f5;text-shadow:1px 1px #262c2b;padding:6px 10px;font-size:12px;border-radius:0}
+#invItems{gap:3px;margin-top:11px}
+#invItems .item{background:#757972;border:2px solid;border-color:#303433 #d3d6cd #bec4b6 #373d3a;color:#fff;min-height:49px;cursor:pointer;padding:3px}
+#invItems .item.selected{border:2px solid #fff2a8;background:#8d9383}
+#invItems .item span{font-size:9px;text-shadow:1px 1px #20211b}
+#inventory h3{color:#343a37;font-size:15px;margin:14px 0 7px}
+#inventory p,#inventory .catalog-hint{color:#313938;font-size:11px}
+#progressionPanel{background:#b1b3a8;border:2px solid #7a8076;color:#313931}
+#progressionPanel span{border-color:#808478}
+#craftGrid button{background:#777a73!important;border:2px solid!important;border-color:#353937 #d1d2c7 #bfc3b5 #363c37!important;color:white!important;padding:3px!important}
+#craftOutput{max-width:190px!important;min-height:61px!important}
+#blockCatalog{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
+#blockCatalog .catalog-item{font-size:10px;background:#7b8578;border:2px solid #49554c;color:#fff;text-shadow:1px 1px #233329}
+#tilePanel{background:#b2b8a9;color:#283329;border-color:#555d55}
+.command-panel{border:3px solid #bdbfb7;background:#171c1bbf;color:#f7f8ec}
+.command-output{background:#0d1011bc}
+#deathScreen{background:#2b1216cf}
+/* Mobile retains separate hit targets; the appearance is newly designed pixel art. */
+#touchControls button{background:#6c767ac4;color:#fff;border:3px solid;border-color:#d8e1e4 #283237 #24323a #e7e8e3;border-radius:0;box-shadow:inset 0 2px #dbe3df2f,0 3px #1115;font-family:monospace;font-weight:900;text-shadow:1px 2px #242c30;min-width:0}
+#touchControls button:active,#touchControls button.pressed{background:#a0afadcb;border-color:#fff #505b5c #434e4d #fff}
+#touchDpad{left:max(15px,env(safe-area-inset-left));bottom:max(83px,calc(env(safe-area-inset-bottom) + 78px));gap:2px}
+#touchActions{bottom:max(103px,calc(env(safe-area-inset-bottom) + 98px))}
+#touchTop button{font-size:19px;width:43px;height:41px;background:#373f42bf}
+body.touch-ui #hotbar{bottom:max(11px,env(safe-area-inset-bottom))}
+body.touch-ui #survivalHud{bottom:max(59px,calc(env(safe-area-inset-bottom) + 58px));width:min(400px,90vw)}
+body.touch-ui #status{font-size:9px;left:8px;top:max(7px,env(safe-area-inset-top));max-width:42vw}
+body.touch-ui .vital-hearts,body.touch-ui .vital-food{gap:0}
+body.touch-ui .pixel-vital{width:clamp(9px,2.45vw,16px);height:clamp(9px,2.3vw,15px)}
+body.touch-ui #target{display:none}
+body.touch-ui #touchDpad button{font-size:24px}
+body.touch-ui #touchSneak{font-size:20px}
+@media(max-width:680px){
+ #hotbar .slot{width:min(9.4vw,40px);height:min(10vw,40px)}
+ #hotbar .slot .tileIcon{width:23px;height:23px}
+ #survivalHud{bottom:63px}
+ #overlay .menu-page{padding-top:max(7vh,27px);padding-bottom:64px}
+ #overlay .brand-shadow{margin:5vh auto 7vh}
+ #overlay .brand-shadow h1{font-size:clamp(43px,11vw,74px)}
+ #overlay button.stone-button{font-size:15px}
+ #overlay .menu-footer{font-size:9px;flex-wrap:wrap;justify-content:center;text-align:center}
+ #overlay .world-details{font-size:11px}
+ #invItems .item{min-height:42px}
+}
+@media(max-height:510px) and (orientation:landscape){#overlay .title-page{padding-top:8px}#overlay .brand-shadow{margin:1vh auto 12px}#overlay .brand-shadow h1{font-size:48px}#overlay .menu-stack{gap:4px;margin:5px auto 0}#overlay button.stone-button{height:37px;min-height:37px;padding:5px}#overlay #packStatus{margin:6px 0;font-size:10px}#overlay .menu-footer{padding:3px;font-size:9px}}
+
+body.menu-open #survivalHud,body.menu-open #miningIndicator{visibility:hidden}
