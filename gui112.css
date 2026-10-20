@@ -133,3 +133,9 @@ html.gui112-furnace body #inventory .furnace-flame{position:absolute;left:calc(5
 #inventory[data-container].recipe-open:not(.recipe-narrow){transform:translate(calc(-50% + 77px * var(--gui-scale)),-50%)}
 #inventory[data-container]:not(.recipe-narrow) #recipeBook112{right:calc(100% + 3px * var(--gui-scale));width:calc(147px * var(--gui-scale))}
 #inventory[data-container].recipe-narrow #recipeBook112{right:0;width:100%}
+
+/* Vanilla Java 1.12.2 inventory screen doesn't leave the normal survival HUD,
+   crosshair, mining UI or touch gameplay controls visible behind its panel. */
+body.inventory-open :is(#hotbar,#survivalHud,#crosshair,#miningIndicator,#target,#touchControls,#gameNotice){
+ display:none!important
+}

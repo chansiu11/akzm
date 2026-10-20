@@ -34,11 +34,13 @@ async function review(viewport,label,touch=false){
   });
   if(!result.spriteApplied)throw Error('Imported GUI sprite CSS did not activate on <html>.');
   await page.locator('#worldPlay').click({timeout:30000});
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(7000);
   await page.screenshot({path:'site-review/'+label+'-gameplay.png'});
   // Opening inventory also checks the interactive JavaScript hooks for the 1.12.2 GUI.
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
   await page.locator('#inventory').waitFor({state:'visible',timeout:12000});
+  const overlayHud=await page.locator('#hotbar').evaluate(el=>getComputedStyle(el).display);
+  if(overlayHud!=='none')throw Error('Vanilla inventory regression: gameplay HUD is still visible.');
   await page.screenshot({path:'site-review/'+label+'-inventory.png'});
   console.log(JSON.stringify({label,menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok'}));
  }catch(e){failures.push(label+': '+e.message);await page.screenshot({path:'site-review/'+label+'-failure.png'}).catch(()=>{});}

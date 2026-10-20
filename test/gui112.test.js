@@ -34,7 +34,7 @@ test('owner sprite selectors target <html>, matching applyGui112(document.docume
  assert.match(css,/html\.gui112-chest body #inventory/);
  assert.match(css,/html\.gui112-furnace body #inventory/);
  assert.doesNotMatch(css,/body\.gui112-(?:assets|chest|furnace)/);
- assert.match(html,/gui112\.css\?v=1\.3/);
+ assert.match(html,/gui112\.css\?v=1\.4/);
 });
 test('owner-supplied four PNGs activate the root class and CSS properties',()=>{
  const names=new Set(),props={};
@@ -45,4 +45,16 @@ test('owner-supplied four PNGs activate the root class and CSS properties',()=>{
  assert.ok(!names.has('gui112-chest'));
  assert.ok(!names.has('gui112-furnace'));
  assert.match(props['--gui112-widgets'],/data:image\/png/);
+});
+
+test('inventory overlay hides the gameplay HUD and restores it when closed',()=>{
+ const css=readFileSync(new URL('../gui112.css',import.meta.url),'utf8');
+ const js=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(css,/body\.inventory-open :is\(#hotbar,#survivalHud,#crosshair/);
+ assert.match(css,/display:none!important/);
+ assert.match(js,/inventoryOpen=true;document\.body\.classList\.add\('inventory-open'\)/);
+ assert.match(js,/function closeInventory\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
+ assert.match(js,/function requestPlay\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
+ assert.match(html,/gui112\.css\?v=1\.4/);
 });
