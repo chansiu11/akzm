@@ -5,7 +5,7 @@ import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-regis
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {beginChunk,progressChunk} from './chunk-builder.js';
-import {restoreLocalAtlas} from './resource-pack.js';
+import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
@@ -39,7 +39,8 @@ import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js';
 import {createFirstPerson} from './first-person.js';
-import {applyGuiScale} from './gui189-layout.js';
+import {applyGui112Scale} from './gui112-layout.js';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -86,7 +87,7 @@ const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInte
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 if(touchMode)document.body.classList.add('touch-ui');
-applyGuiScale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
+applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
 const mobileMove={forward:0,strafe:0};let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=settings.renderDistance;let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
@@ -345,13 +346,30 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // Automatically use every supported existing tile from locally prepared resources.
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
+const storedGui112=restoreGui112(document.documentElement);
+el('loadJar112').addEventListener('click',()=>el('jar112Input').click());
+el('jar112Input').addEventListener('change',async event=>{
+ const jar=event.target.files?.[0];if(!jar)return;
+ const button=el('loadJar112'),status=el('packStatus');button.disabled=true;status.textContent='1.12.2.jar 검증 중…';
+ try{
+  const {assets,JSZip}=await readOwner112Jar(jar);
+  if(!applyGui112(document.documentElement,assets))throw Error('원본 HUD 이미지 적용 실패');
+  const stored=storeGui112(assets);
+  window.JSZip=JSZip;
+  const atlas=await loadLocalResourcePack(jar);
+  showAtlas(atlas.canvas);
+  const atlasStored=saveLocalAtlas(atlas.canvas);
+  status.textContent=`원본 1.12.2 HUD 4종 · 블록 이미지 ${atlas.loaded}/${atlas.total} 적용`+(stored&&atlasStored?' · 이 기기에 저장됨':' · 저장공간 부족 가능');
+ }catch(error){status.textContent='JAR 불러오기 실패: '+(error?.message??String(error));}
+ finally{button.disabled=false;event.target.value='';}
+});
 (async()=>{
  const status=el('packStatus');
  const auto=await loadAutomaticTextures();
- if(auto){showAtlas(auto.canvas);status.textContent=`로컬 원본 텍스처 자동 적용: ${auto.loaded}/${auto.total} 블록 슬롯 · ${auto.available}개 이미지 확인`;return;}
+ if(auto){showAtlas(auto.canvas);status.textContent=`로컬 블록 텍스처 적용: ${auto.loaded}/${auto.total}`+(storedGui112?' · 저장된 1.12.2 HUD 적용':'');return;}
  const cached=await restoreLocalAtlas();
- if(cached){showAtlas(cached);status.textContent='이 브라우저에 이전에 저장된 텍스처 자동 적용';return;}
- status.textContent='기본 독립 제작 텍스처 사용 · 원본 파일은 공개 웹사이트에 포함되지 않음';
+ if(cached){showAtlas(cached);status.textContent='저장된 블록 텍스처 복원'+(storedGui112?' · 1.12.2 HUD 적용':'');return;}
+ status.textContent=storedGui112?'1.12.2 HUD 복원 · 블록은 기본 텍스처':'정품 1.12.2.jar를 선택하면 개인 브라우저에서 원본 HUD·블록 이미지를 적용합니다.';
 })();
 const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=settings.renderDistance;camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
 const palette=el('blockCatalog');
@@ -414,7 +432,7 @@ palette.addEventListener('click',e=>{if(gameMode==='survival')return;const butto
 el('closeInventory').addEventListener('click',closeInventory);
 el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGuiScale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});});
 function loop(now){requestAnimationFrame(loop);
  if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){

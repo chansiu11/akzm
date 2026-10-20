@@ -8,7 +8,7 @@ export function vitalsModel(health,hunger,air=300){
 }
 function icon(type,fill){
  const s=document.createElement('span');s.className=`pixel-vital ${type}`+(fill===0?' empty':'');
- s.style.setProperty('--fill',`${fill*100}%`);s.setAttribute('aria-hidden','true');return s;
+ s.style.setProperty('--fill',`${fill*100}%`);s.dataset.fill=String(fill);s.setAttribute('aria-hidden','true');return s;
 }
 export function createHud(element){
  if(!element)return {update(){}};
@@ -21,7 +21,7 @@ export function createHud(element){
  return {update(health,hunger,air=300,xp=0){
   const state=vitalsModel(health,hunger,air),key=JSON.stringify([state,xp]);if(key===previous)return;previous=key;
   healthRow.replaceChildren(...state.hearts.map(v=>icon('heart',v)));
-  foodRow.replaceChildren(...state.food.map(v=>icon('food',v)));
+  foodRow.replaceChildren(...state.food.map(v=>icon('food',v)).reverse());
   airRow.replaceChildren(...state.bubbles.map(v=>icon('bubble',v)));
   fill.style.width=`${clamp(xp,1)*100}%`;
   element.setAttribute('aria-label',`체력 ${health} / 20, 허기 ${hunger} / 20${air<300?`, 산소 ${Math.ceil(air/30)} / 10`:''}`);
