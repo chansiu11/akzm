@@ -27,3 +27,9 @@ Base: 94ed8f6d15868ad6ee79a37b733a78131d1d30d5 (includes the work after 542b600)
 - Raised and moved the held block/tool to the lower-right view area, raised the empty arm, and limited touch GUI scale by available height including the external close control. These are independently chosen transforms, not measured vanilla transforms.
 - Added an explicit close-button bounds assertion and a short-screen scale regression. Local suite: 181 passed.
 - Desktop Chromium screenshots looked vertically upward after pointer lock; they do not validate world terrain appearance. Mobile screenshots show terrain. Camera input and same-seed vanilla screenshot comparison remain open.
+
+## Third correction from screenshot inspection
+- 3a79ed9 passed deployed Chromium run 39514569217 in all three sizes. Its screenshots confirm the landscape close button is fully visible and the desktop held block was raised.
+- Reviewing those screenshots exposed the pre-existing UV vertex-order error: world quads use perimeter order but Three BoxGeometry uses rows. Corrected the mapping to prevent folded/diagonally stretched textures.
+- Portrait screenshots exposed the held item clipped at the right edge. Give the view-model camera a minimum horizontal FOV on narrow screens instead of stretching the model or changing the world camera.
+- Local regression: 183 passed. Added UV corner and portrait projection tests. Vanilla pose and exact model transforms remain unverified.

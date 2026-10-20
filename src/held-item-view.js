@@ -10,3 +10,11 @@ export function heldItemView(id){
  const block=item.blockId!==null;
  return {id,kind:block?'block':'item',tiles:BOX_FACE_NORMALS.map(n=>block?tileForBlock(item.blockId,n):item.iconTile)};
 }
+
+// The world quad uses perimeter order; Three BoxGeometry uses two rows.
+export const boxGeometryUV=corners=>[corners[3],corners[2],corners[0],corners[1]];
+// Keep a minimum horizontal view for the hand on portrait screens, without
+// stretching the model. World camera FOV is unaffected.
+export function firstPersonFov(aspect){
+ return 2*Math.atan(Math.tan(35*Math.PI/180)*Math.max(1,1.4/Math.max(.1,aspect)))*180/Math.PI;
+}

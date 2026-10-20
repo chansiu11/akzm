@@ -1,13 +1,13 @@
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {uvFor} from './atlas.js?v=1.6';
-import {heldItemView,BOX_FACE_NORMALS} from './held-item-view.js';
+import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov} from './held-item-view.js?v=1.1';
 const skin=new THREE.MeshLambertMaterial({color:'#d9ab86'});
 const sleeve=new THREE.MeshLambertMaterial({color:'#477c92'});
 function cube(w,h,d,material){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material)}
 function textureBoxUV(mesh,tiles){const attr=mesh.geometry.attributes.uv;
  // BoxGeometry uses 4 vertices per face.
- for(let face=0;face<BOX_FACE_NORMALS.length;face++){const uv=uvFor(tiles[face]);for(let j=0;j<4;j++)attr.setXY(face*4+j,uv[j][0],uv[j][1]);}attr.needsUpdate=true;
+ for(let face=0;face<BOX_FACE_NORMALS.length;face++){const uv=boxGeometryUV(uvFor(tiles[face]));for(let j=0;j<4;j++)attr.setXY(face*4+j,uv[j][0],uv[j][1]);}attr.needsUpdate=true;
 }
 export function createFirstPerson(renderer,atlasTexture){
  const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(70,1,.01,10);
@@ -40,7 +40,7 @@ export function createFirstPerson(renderer,atlasTexture){
   group.rotation.x=-swing*.45-(mining?.07:0);group.rotation.y=swing*.16;
  }
  function swing(){swingRemaining=.27;}
- function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.updateProjectionMatrix();
+ function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.fov=firstPersonFov(camera.aspect);camera.updateProjectionMatrix();
   const old=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(scene,camera);renderer.autoClear=old;
  }
  return {setItem,update,swing,render,dispose(){for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};

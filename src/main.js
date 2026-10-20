@@ -38,7 +38,7 @@ import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngre
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js';
-import {createFirstPerson} from './first-person.js?v=1.2';
+import {createFirstPerson} from './first-person.js?v=1.3';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
