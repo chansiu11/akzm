@@ -1,13 +1,13 @@
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-import {tileFor,uvFor} from './atlas.js?v=1.6';
-import {itemDefinition} from './item-registry.js';
+import {uvFor} from './atlas.js?v=1.6';
+import {heldItemView,BOX_FACE_NORMALS} from './held-item-view.js';
 const skin=new THREE.MeshLambertMaterial({color:'#d9ab86'});
 const sleeve=new THREE.MeshLambertMaterial({color:'#477c92'});
 function cube(w,h,d,material){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material)}
-function textureBoxUV(mesh,tile){const attr=mesh.geometry.attributes.uv,uv=uvFor(tile);
+function textureBoxUV(mesh,tiles){const attr=mesh.geometry.attributes.uv;
  // BoxGeometry uses 4 vertices per face.
- for(let face=0;face<6;face++)for(let j=0;j<4;j++)attr.setXY(face*4+j,uv[j][0],uv[j][1]);attr.needsUpdate=true;
+ for(let face=0;face<BOX_FACE_NORMALS.length;face++){const uv=uvFor(tiles[face]);for(let j=0;j<4;j++)attr.setXY(face*4+j,uv[j][0],uv[j][1]);}attr.needsUpdate=true;
 }
 export function createFirstPerson(renderer,atlasTexture){
  const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(70,1,.01,10);
@@ -24,11 +24,14 @@ export function createFirstPerson(renderer,atlasTexture){
  const shaft=cube(.072,.46,.09,stickMat);shaft.position.y=-.05;toolGroup.add(shaft);
  const head=cube(.38,.10,.12,toolMaterials[110]);head.position.y=.17;toolGroup.add(head);
  const tip=cube(.09,.09,.12,toolMaterials[110]);tip.position.set(-.14,.11,0);toolGroup.add(tip);
- let itemId=0,age=0,swingRemaining=0;
- function setItem(id){if(itemId===id)return;itemId=id;const tool=Object.hasOwn(toolMaterials,id);toolGroup.visible=tool;held.visible=id>0&&!tool;
-  if(tool){head.material=tip.material=toolMaterials[id];return;}
-  if(id>0)textureBoxUV(held,itemDefinition(id)?.iconTile??tileFor(id,[0,1,0]));
+ let itemId=null,age=0,swingRemaining=0;
+ function setItem(id){const view=heldItemView(id);if(itemId===view.id)return;itemId=view.id;
+  toolGroup.visible=view.kind==='tool';held.visible=view.kind==='block'||view.kind==='item';
+  arm.visible=cuff.visible=view.kind==='empty';
+  if(view.kind==='tool'){head.material=tip.material=toolMaterials[id];return;}
+  if(held.visible){textureBoxUV(held,view.tiles);held.scale.z=view.kind==='item'?.08:1;}
  }
+ setItem(0);
  function update(dt,moving=false,mining=false){age+=dt;swingRemaining=Math.max(0,swingRemaining-dt);
   const bob=moving?Math.sin(age*10)*.025:Math.sin(age*2.5)*.006;
   group.position.y=bob+(mining?Math.sin(age*25)*.038:0);

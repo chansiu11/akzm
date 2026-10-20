@@ -38,7 +38,7 @@ import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngre
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js';
-import {createFirstPerson} from './first-person.js';
+import {createFirstPerson} from './first-person.js?v=1.1';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
@@ -186,13 +186,13 @@ function iconOffset(id){const item=itemDefinition(id),tile=item?.iconTile??tileF
 }
 function showAtlas(canvas){texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);}
 function updateUI(){
- firstPerson.setItem(inventory[selected]?.id??0);
  replenishOverflow(inventory,inventoryOverflow);
- el('hotbar').innerHTML=inventory.slice(0,9).map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Unknown'}"><small>${i+1}</small><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span></button>`).join('');
- el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(item.count>1?item.count:''):''}</span></button>`).join('');
+ firstPerson.setItem(inventory[selected]?.count>0?inventory[selected].id:0);
+ el('hotbar').innerHTML=inventory.slice(0,9).map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Unknown'}"><small>${i+1}</small><i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span></button>`).join('');
+ el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(item.count>1?item.count:''):''}</span></button>`).join('');
  layoutContainer112(el('inventory'));
 }
-function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
+function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;
  if(world.set(t.x,t.y,t.z,0)){

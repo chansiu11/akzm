@@ -2,9 +2,28 @@
 // Captures screenshots and checks menu flow and browser-applied owner-GUI selectors.
 // No copyrighted Minecraft assets, login, saved worlds or private files are used here.
 import {chromium} from 'playwright';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
+// A push may start before Pages finishes. Never call old deployed files a test
+// of the new commit: wait for the entry point and changed visual modules.
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js'];
+const digest=data=>createHash('sha256').update(data).digest('hex');
+const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
+let pending=sources.slice();
+const deadline=Date.now()+360000;
+while(pending.length&&Date.now()<deadline){
+ pending=[];
+ for(const file of sources){
+  try{const response=await fetch(new URL(file+'?review='+Date.now(),site),{signal:AbortSignal.timeout(15000)});
+   if(!response.ok||digest(Buffer.from(await response.arrayBuffer()))!==expected[file])pending.push(file);
+  }catch{pending.push(file);}
+ }
+ if(pending.length){console.log('Waiting for matching deployment: '+pending.join(', '));await new Promise(resolve=>setTimeout(resolve,10000));}
+}
+if(pending.length)throw Error('Pages does not match checkout: '+pending.join(', '));
+await writeFile('site-review/deployment.json',JSON.stringify({commit:process.env.GITHUB_SHA??null,site,sha256:expected},null,2));
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
 const failures=[];
 async function review(viewport,label,touch=false){
@@ -41,12 +60,20 @@ async function review(viewport,label,touch=false){
   await page.locator('#inventory').waitFor({state:'visible',timeout:12000});
   const overlayHud=await page.locator('#hotbar').evaluate(el=>getComputedStyle(el).display);
   if(overlayHud!=='none')throw Error('Vanilla inventory regression: gameplay HUD is still visible.');
+  const bounds=await page.locator('#inventory').boundingBox();
+  if(!bounds||bounds.x<0||bounds.y<0||bounds.x+bounds.width>viewport.width||bounds.y+bounds.height>viewport.height)throw Error('Inventory panel exceeds viewport');
   await page.screenshot({path:'site-review/'+label+'-inventory.png'});
+  await page.locator('#closeInventory').click();
+  await page.locator('#inventory').waitFor({state:'hidden'});
+  await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
+  await page.locator('#inventory').waitFor({state:'visible'});
+  if(await page.locator('#hotbar').evaluate(el=>getComputedStyle(el).display)!=='none')throw Error('HUD visible after reopening inventory');
   console.log(JSON.stringify({label,menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok'}));
  }catch(e){failures.push(label+': '+e.message);await page.screenshot({path:'site-review/'+label+'-failure.png'}).catch(()=>{});}
  finally{await context.close();}
 }
 await review({width:1440,height:900},'desktop');
 await review({width:390,height:844},'mobile',true);
+await review({width:844,height:390},'mobile-landscape',true);
 await browser.close();
 if(failures.length){for(const f of failures)console.error(f);process.exitCode=1;}
