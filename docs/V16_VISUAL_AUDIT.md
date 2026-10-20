@@ -22,3 +22,5 @@
 * The procedural block textures were not copied from commercial texture sheets; exact visual/lighting equivalence is neither claimed nor intended.
 * User-progress data stored in localStorage is left intact. World generation and server protocol were not modified.
 * Multiplayer, command runtime and gameplay feature completion remain unrelated work.
+
+Additional visual pass: pickaxes use separate original CSS silhouettes in inventory/hotbar and geometric haft/head meshes in first person, instead of displaying ordinary blocks. The held apple and bread icons now use their own atlas indices.

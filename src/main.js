@@ -175,6 +175,7 @@ function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot(
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
+function iconClass(id){return id>=110&&id<=114?' toolIcon tool-'+id:'';}
 function iconOffset(id){const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
  return `background-position:${(tile%8*100/7).toFixed(3)}% ${(Math.floor(tile/8)*100/(ATLAS_ROWS-1)).toFixed(3)}%`;
 }
@@ -182,8 +183,8 @@ function showAtlas(canvas){texture.image=canvas;texture.needsUpdate=true;waterTe
 function updateUI(){
  firstPerson.setItem(inventory[selected]?.id??0);
  replenishOverflow(inventory,inventoryOverflow);
- el('hotbar').innerHTML=inventory.slice(0,9).map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Unknown'}"><small>${i+1}</small><i class="tileIcon" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span></button>`).join('');
- el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(itemDefinition(item.id)?.name??'Unknown')+' · '+item.count:'빈칸'}</span></button>`).join('');
+ el('hotbar').innerHTML=inventory.slice(0,9).map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Unknown'}"><small>${i+1}</small><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span></button>`).join('');
+ el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(itemDefinition(item.id)?.name??'Unknown')+' · '+item.count:'빈칸'}</span></button>`).join('');
 }
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;

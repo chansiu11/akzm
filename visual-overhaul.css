@@ -116,3 +116,9 @@ body.touch-ui #touchSneak{font-size:20px}
 @media(max-height:510px) and (orientation:landscape){#overlay .title-page{padding-top:8px}#overlay .brand-shadow{margin:1vh auto 12px}#overlay .brand-shadow h1{font-size:48px}#overlay .menu-stack{gap:4px;margin:5px auto 0}#overlay button.stone-button{height:37px;min-height:37px;padding:5px}#overlay #packStatus{margin:6px 0;font-size:10px}#overlay .menu-footer{padding:3px;font-size:9px}}
 
 body.menu-open #survivalHud,body.menu-open #miningIndicator{visibility:hidden}
+
+/* Handmade pickaxe silhouettes for item slots; avoids showing rock cubes for tools. */
+.tileIcon.toolIcon{background-image:none!important;position:relative;transform:rotate(-43deg);box-shadow:none!important;border:0!important;--tool-color:#a98458}
+.tileIcon.toolIcon:before{content:'';position:absolute;z-index:2;width:87%;height:24%;left:5%;top:13%;background:var(--tool-color);clip-path:polygon(0 55%,16% 10%,72% 0,100% 65%,83% 74%,70% 38%,27% 42%,12% 92%);filter:drop-shadow(1px 1px 0 #222)}
+.tileIcon.toolIcon:after{content:'';position:absolute;width:17%;height:76%;left:44%;top:25%;background:linear-gradient(90deg,#644427,#c69b6a 55%,#513619);box-shadow:1px 1px #26231e}
+.tileIcon.tool-110{--tool-color:#ae7f4b}.tileIcon.tool-111{--tool-color:#9ca5aa}.tileIcon.tool-112{--tool-color:#d3dde0}.tileIcon.tool-113{--tool-color:#f4c74f}.tileIcon.tool-114{--tool-color:#55d2c9}

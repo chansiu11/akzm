@@ -1,6 +1,7 @@
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {tileFor,uvFor} from './atlas.js?v=1.6';
+import {itemDefinition} from './item-registry.js';
 const skin=new THREE.MeshLambertMaterial({color:'#d9ab86'});
 const sleeve=new THREE.MeshLambertMaterial({color:'#477c92'});
 function cube(w,h,d,material){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material)}
@@ -17,8 +18,17 @@ export function createFirstPerson(renderer,atlasTexture){
  const cuff=cube(.36,.40,.38,sleeve);cuff.position.set(.52,-.98,-.80);cuff.rotation.z=-.29;group.add(cuff);
  const blockMaterial=new THREE.MeshLambertMaterial({map:atlasTexture,transparent:true,alphaTest:.05});
  const held=cube(.28,.28,.28,blockMaterial);held.position.set(.20,-.59,-.63);held.rotation.set(.24,.65,.15);group.add(held);
+ const toolGroup=new THREE.Group();toolGroup.position.set(.22,-.57,-.63);toolGroup.rotation.set(.08,0,-.45);group.add(toolGroup);
+ const stickMat=new THREE.MeshLambertMaterial({color:'#94673f'});
+ const toolMaterials={110:new THREE.MeshLambertMaterial({color:'#a77f53'}),111:new THREE.MeshLambertMaterial({color:'#8e989c'}),112:new THREE.MeshLambertMaterial({color:'#d2d9db'}),113:new THREE.MeshLambertMaterial({color:'#f0c652'}),114:new THREE.MeshLambertMaterial({color:'#56c2be'})};
+ const shaft=cube(.072,.46,.09,stickMat);shaft.position.y=-.05;toolGroup.add(shaft);
+ const head=cube(.38,.10,.12,toolMaterials[110]);head.position.y=.17;toolGroup.add(head);
+ const tip=cube(.09,.09,.12,toolMaterials[110]);tip.position.set(-.14,.11,0);toolGroup.add(tip);
  let itemId=0,age=0,swingRemaining=0;
- function setItem(id){if(itemId===id)return;itemId=id;held.visible=id>0; if(id>0)textureBoxUV(held,tileFor(id,[0,1,0]));}
+ function setItem(id){if(itemId===id)return;itemId=id;const tool=Object.hasOwn(toolMaterials,id);toolGroup.visible=tool;held.visible=id>0&&!tool;
+  if(tool){head.material=tip.material=toolMaterials[id];return;}
+  if(id>0)textureBoxUV(held,itemDefinition(id)?.iconTile??tileFor(id,[0,1,0]));
+ }
  function update(dt,moving=false,mining=false){age+=dt;swingRemaining=Math.max(0,swingRemaining-dt);
   const bob=moving?Math.sin(age*10)*.025:Math.sin(age*2.5)*.006;
   group.position.y=bob+(mining?Math.sin(age*25)*.038:0);
@@ -30,5 +40,5 @@ export function createFirstPerson(renderer,atlasTexture){
  function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.updateProjectionMatrix();
   const old=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(scene,camera);renderer.autoClear=old;
  }
- return {setItem,update,swing,render,dispose(){for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();skin.dispose();sleeve.dispose();}};
+ return {setItem,update,swing,render,dispose(){for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};
 }

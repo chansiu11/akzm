@@ -44,3 +44,9 @@ test('atlas receives individual procedural texture details instead of flat swatc
  assert.match(atlas,/textureDetail\(ctx,i,ox,oy\)/);
  for(const i of ['i===0','i===13','i===7','i===15','i===30'])assert.ok(atlas.includes(i));
 });
+test('standalone pickaxes have hand-built silhouettes and held 3D tool geometry',()=>{
+ assert.match(main,/toolIcon tool-/);
+ assert.match(firstPerson,/const toolGroup=new THREE.Group\(\)/);
+ assert.match(firstPerson,/head\.material=tip\.material=toolMaterials\[id\]/);
+ assert.match(css,/\.tileIcon\.toolIcon/);
+});
