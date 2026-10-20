@@ -1,7 +1,11 @@
 // Java Edition 1.8.9-inspired command syntax. Only the subset documented here is implemented.
 import {BLOCK, BLOCK_NAMES, MAX_Y, SEED} from './terrain.js';
+import {BLOCK_DEFS} from './block-registry.js';
+import {COMMANDS, suggestions, activeHelp, canonicalName} from './command-catalog.js';
+import {executeExtended} from './command-extras.js';
+export {COMMANDS,suggestions,activeHelp};
 
-export const COMMANDS = Object.freeze([
+const LEGACY_COMMANDS = Object.freeze([
   {name:'help', syntax:'/help [명령어]', description:'지원하는 명령어와 사용법 확인', example:'/help time', args:[{name:'명령어', choices:['time','tp','setblock','fill','particle'],optional:true}]},
   {name:'time', syntax:'/time <set|add|query> <값>', description:'월드 시간 설정, 증가, 확인 (24000틱 = 하루)', example:'/time set day', args:[{name:'작업',choices:['set','add','query']},{name:'시간 / 틱',choices:['day','night','0','6000','12000','18000']}]},
   {name:'tp', syntax:'/tp <x> <y> <z>', description:'자신을 지정 좌표로 순간이동 (상대좌표 ~ 지원)', example:'/tp ~ ~5 ~', args:[{name:'X',choices:['~','~1','0']},{name:'Y',choices:['~','~5','10']},{name:'Z',choices:['~','~-1','0']}]},
@@ -13,20 +17,20 @@ export const COMMANDS = Object.freeze([
 ]);
 
 const SHORT_BLOCKS=Object.freeze({air:BLOCK.AIR,grass:BLOCK.GRASS,grass_block:BLOCK.GRASS,dirt:BLOCK.DIRT,stone:BLOCK.STONE,sand:BLOCK.SAND,log:BLOCK.LOG,log_oak:BLOCK.LOG,leaves:BLOCK.LEAVES,planks:BLOCK.PLANKS,water:BLOCK.WATER,cobblestone:BLOCK.COBBLE,coal_ore:BLOCK.COAL,snow:BLOCK.SNOW,brick_block:BLOCK.BRICK,bricks:BLOCK.BRICK,bedrock:BLOCK.BEDROCK});
-export function blockFromName(value){const text=String(value??'').toLowerCase().replace(/^minecraft:/,'');return Object.hasOwn(SHORT_BLOCKS,text)?SHORT_BLOCKS[text]:null;}
+export function blockFromName(value){const text=String(value??'').toLowerCase().replace(/^minecraft:/,'');if(Object.hasOwn(SHORT_BLOCKS,text))return SHORT_BLOCKS[text];const b=BLOCK_DEFS.find(d=>d.key==='minecraft:'+text);return b?.id??null;}
 export function coordinate(token,origin){if(typeof token!=='string')throw Error('좌표가 빠졌습니다.');const raw=token.startsWith('~')?token.slice(1):token;const n=raw===''&&token.startsWith('~')?0:Number(raw);if(!Number.isFinite(n)||raw.trim()!==raw||raw===''){
  if(token==='~')return origin;
  throw Error('좌표에는 숫자 또는 ~를 입력하세요.');
  }return token.startsWith('~')?origin+n:n;}
 export function position(args,base){if(args.length!==3)throw Error('좌표 X Y Z 3개를 입력하세요.');return args.map((part,i)=>coordinate(part,base[i]));}
-export function suggestions(text){const input=String(text||'').replace(/^\//,'');const pieces=input.trimStart().split(/\s+/);const commandName=pieces[0]?.toLowerCase()||'';
+function legacySuggestions(text){const input=String(text||'').replace(/^\//,'');const pieces=input.trimStart().split(/\s+/);const commandName=pieces[0]?.toLowerCase()||'';
  if(pieces.length===1)return COMMANDS.filter(c=>c.name.startsWith(commandName)).map(c=>({label:'/'+c.name,insert:'/'+c.name+' ',description:c.description}));
  const command=COMMANDS.find(c=>c.name===commandName);if(!command)return [];
  const argIndex=pieces.length-2;const arg=command.args[argIndex];if(!arg)return [];
  const prefix=pieces.at(-1)?.toLowerCase()||'';const base=input.slice(0,input.length-prefix.length);
  return (arg.choices||[]).filter(c=>c.toLowerCase().startsWith(prefix)).map(c=>({label:c,insert:'/'+base+c+(argIndex===command.args.length-1?'':' '),description:arg.name}));
 }
-export function activeHelp(input){const text=String(input||'').replace(/^\//,'').trimStart();const parts=text.split(/\s+/);const cmd=COMMANDS.find(c=>c.name===parts[0]?.toLowerCase());if(!cmd)return null;
+function legacyActiveHelp(input){const text=String(input||'').replace(/^\//,'').trimStart();const parts=text.split(/\s+/);const cmd=COMMANDS.find(c=>c.name===parts[0]?.toLowerCase());if(!cmd)return null;
  const argIndex=Math.max(0,parts.length-2);return {...cmd,activeArgument:Math.min(cmd.args.length-1,argIndex)};
 }
 const between=(val,min,max,label)=>{if(!Number.isFinite(val)||val<min||val>max)throw Error(`${label}: ${min}~${max} 범위여야 합니다.`);return val;};
@@ -34,7 +38,7 @@ const int=(value,min,max,label)=>{const n=Number(value);if(!/^[-+]?\d+$/.test(St
 const getCoords=(data,ctx)=>position(data,ctx.position());
 const validHeight=y=>{if(!Number.isInteger(y)||y<1||y>MAX_Y)throw Error(`블록 Y 좌표는 1~${MAX_Y}여야 합니다.`);};
 function blockArg(value){const id=blockFromName(value);if(id===null)throw Error(`미지원 블록: ${value}. /setblock ~ ~-1 ~ stone 처럼 입력하세요.`);return id;}
-export function executeCommand(input,ctx){
+function executeLegacyCommand(input,ctx){
  const line=String(input||'').trim();if(!line.startsWith('/'))return {ok:false,message:'명령어는 /로 시작해야 합니다.'};
  const [raw,...args]=line.slice(1).trim().split(/\s+/);const name=raw?.toLowerCase();
  try{
@@ -53,7 +57,7 @@ export function executeCommand(input,ctx){
     return {ok:true,message:`현재 시간: ${Math.floor(ctx.getTime())}틱`};
    }
    if(mode==='set'){
-    const ticks=({day:1000,night:13000,noon:6000,midnight:18000})[rawValue]??int(rawValue,0,2147483647,'시간');
+    const ticks=({day:1000,night:13000})[rawValue]??int(rawValue,0,2147483647,'시간');
     ctx.setTime(ticks);return {ok:true,message:`월드 시간을 ${ticks}틱으로 설정했습니다.`};
    }
    if(mode==='add'){
@@ -86,4 +90,13 @@ export function executeCommand(input,ctx){
   default: throw Error(`알 수 없는 명령어입니다: /${name||''} · /help로 확인하세요.`);
  }
  }catch(e){return {ok:false,message:e.message||'명령어 오류'};}
+}
+
+// Registered command grammar is wider than the commands that the prototype can execute.
+// Always reject unsupported commands instead of reporting false successes.
+export function executeCommand(input,ctx={}){
+ const raw=String(input||'').trim();
+ const name=canonicalName(raw.replace(/^\//,'').split(/\s+/)[0]);
+ if(['time','particle'].includes(name)||name==='tp'&&raw.split(/\s+/).length===4||name==='setblock'&&raw.split(/\s+/).length===5||name==='fill'&&raw.split(/\s+/).length===8)return executeLegacyCommand(raw,ctx);
+ return executeExtended(raw,ctx);
 }

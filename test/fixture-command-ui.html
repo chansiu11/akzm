@@ -1,0 +1,8 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><style>body{font:14px system-ui;background:#172029;color:#fff}.hidden{display:none}.command-assist{display:flex;gap:10px}.command-choices,.command-detail{width:48%;height:260px;overflow:auto}.command-choice{display:block;width:100%;text-align:left}.command-entry{display:flex}#commandInput{width:80%;font:16px monospace}</style>
+<section id="commandPanel" class="hidden"><div class="command-assist"><div id="commandChoices" class="command-choices"></div><div id="commandDetail" class="command-detail"></div></div><div id="commandOutput"></div><div class="command-entry"><input id="commandInput" type="text"><button id="commandSubmit">실행</button></div><button id="commandHelp">도움말</button><button id="commandClose">닫기</button></section>
+<script type="module">
+import {setupCommandUI} from '../src/command-ui.js';
+const state={seed:231,position:[3,70,4],weather:'clear'};
+window.fixture=setupCommandUI({onOpen:()=>{},onClose:()=>{},onResult:()=>{},context:()=>({position:()=>state.position,getSeed:()=>state.seed,players:()=>['Player'],objectives:()=>['score'],teams:()=>['red'],setWeather:(n)=>state.weather=n,getWeather:()=>state.weather})});
+window.fixture.show();window.fixtureState=state;
+</script></html>

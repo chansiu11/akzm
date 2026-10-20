@@ -9,6 +9,17 @@ const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fa
 const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}};
 export const activeWorldId=()=>{try{return localStorage.getItem(ACTIVE_WORLD_KEY)||'default'}catch{return 'default'}};
 export const worldSaveKey=(id=activeWorldId())=>id==='default'?'voxel-frontier-save-v1':`voxel-frontier-save-v1-${id}`;
+export function activeWorldMode(){const w=listWorlds().find(w=>w.id===activeWorldId());return w?.mode==='survival'?'survival':'prototype';}
+export function activeWorldCheats(){const w=listWorlds().find(w=>w.id===activeWorldId());return w?.allowCheats===true||w?.mode!=='survival';}
+export function activeWorldSeed(){const world=listWorlds().find(w=>w.id===activeWorldId());return Number.isSafeInteger(world?.seed)?world.seed:18909;}
+export function parseWorldSeed(text){
+ const raw=String(text??'').trim();
+ if(!raw){return Math.floor(Math.random()*4294967296)-2147483648;}
+ if(/^-?\d+$/.test(raw)){const n=Number(raw);if(Number.isSafeInteger(n))return n|0;}
+ // Stable unsigned UTF-16 character hashing for custom seed strings.
+ let h=0;for(let i=0;i<raw.length;i++)h=(Math.imul(h,31)+raw.charCodeAt(i))|0;
+ return h;
+}
 export function listWorlds(){
  const worlds=read(WORLDS_KEY,null);
  if(!Array.isArray(worlds)||!worlds.length)return [{...DEFAULT_WORLD}];
@@ -21,7 +32,7 @@ export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
  sensitivity:Math.max(.08,Math.min(.6,Number(s?.sensitivity)||.24)),
  showCoordinates:s?.showCoordinates!==false
 };}
-export function setupMenu({play,save,applySettings}){
+export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  const state={page:'title',selection:activeWorldId(),settings:loadSettings()};
  const pages=['title','worlds','create','settings','help','pause'];
  let settingsBack='title';
@@ -32,14 +43,14 @@ export function setupMenu({play,save,applySettings}){
   for(const w of worlds){const b=document.createElement('button');b.type='button';b.className='world-row'+(state.selection===w.id?' selected':'');b.dataset.worldId=w.id;
    const label=document.createElement('strong');label.textContent=w.name;
    const sub=document.createElement('small');let updated='아직 저장되지 않음';try{const v=localStorage.getItem(worldSaveKey(w.id));if(v)updated='플레이 기록 있음';}catch{}
-   sub.textContent=`${updated} · 기본 지형 · 생존 프로토타입`;
+   sub.textContent=`${updated} · 시드 ${Number.isSafeInteger(w.seed)?w.seed:'레거시'} · ${w.mode==='survival'?'생존':'건설 실험'}`;
    b.append(label,sub);b.addEventListener('click',()=>{state.selection=w.id;refreshWorlds()});b.addEventListener('dblclick',continueWorld);box.append(b);
   }
   $('worldDelete').disabled=worlds.length===0;
  }
  function continueWorld(){try{if(state.selection!==activeWorldId()){localStorage.setItem(ACTIVE_WORLD_KEY,state.selection);location.reload();return;}}catch{}close();play();}
- function createWorld(){const name=$('worldName').value.trim().slice(0,32)||'새로운 세계';const id='w'+Date.now().toString(36);const worlds=listWorlds();
-  if(!write(WORLDS_KEY,[{id,name,created:Date.now()},...worlds])){$('worldError').textContent='기기에 세계를 저장할 수 없습니다.';return;}
+ function createWorld(){const name=$('worldName').value.trim().slice(0,32)||'새로운 세계';const id='w'+Date.now().toString(36);const seed=parseWorldSeed($('worldSeed').value);const mode=$('worldMode').value==='survival'?'survival':'prototype';const allowCheats=$('worldCheats').checked;const worlds=listWorlds();
+  if(!write(WORLDS_KEY,[{id,name,seed,mode,allowCheats,created:Date.now()},...worlds])){$('worldError').textContent='기기에 세계를 저장할 수 없습니다.';return;}
   try{localStorage.setItem(ACTIVE_WORLD_KEY,id)}catch{$('worldError').textContent='브라우저 저장소를 사용할 수 없습니다.';return;}
   location.reload();
  }
@@ -54,7 +65,7 @@ export function setupMenu({play,save,applySettings}){
  function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,state.settings);applySettings(state.settings);open(settingsBack);}
  $('menuSingle').addEventListener('click',()=>open('worlds'));
  $('worldPlay').addEventListener('click',continueWorld);
- $('worldCreate').addEventListener('click',()=>{$('worldName').value='새로운 세계';$('worldError').textContent='';open('create')});
+ $('worldCreate').addEventListener('click',()=>{$('worldName').value='새로운 세계';$('worldSeed').value='';$('worldMode').value='survival';$('worldCheats').checked=false;$('worldError').textContent='';open('create')});
  $('worldDelete').addEventListener('click',deleteWorld);
  $('worldBack').addEventListener('click',()=>open('title'));
  $('createBack').addEventListener('click',()=>open('worlds'));
@@ -68,7 +79,7 @@ export function setupMenu({play,save,applySettings}){
  $('menuHelp').addEventListener('click',()=>open('help'));
  $('helpBack').addEventListener('click',()=>open('title'));
  $('pauseResume').addEventListener('click',()=>{close();play()});
- $('pauseTitle').addEventListener('click',()=>{save();open('title')});
+ $('pauseTitle').addEventListener('click',()=>{save();onTitle();open('title')});
  $('menuExit').addEventListener('click',()=>{const el=$('menuExit');el.textContent='브라우저 탭을 닫으면 종료됩니다';setTimeout(()=>{el.textContent='게임 종료'},2500)});
  open('title');applySettings(state.settings);
  return {open,close,getSettings:()=>state.settings,showPause:()=>open('pause')};

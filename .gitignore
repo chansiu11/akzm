@@ -1,4 +1,6 @@
-# Locally extracted proprietary game images; never commit to a public repository.
-/local-resources/
-__pycache__/
-*.pyc
+local-resources/
+node_modules/
+server/node_modules/
+server/server-state.json
+server/*.tmp-*
+.DS_Store

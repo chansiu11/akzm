@@ -18,5 +18,5 @@ test('vanilla JAR texture and nested resource pack paths resolve',()=>{
  assert.equal(findTexturePath(raw,'grass_top'),raw[0]);
  assert.equal(findTexturePath(raw,'stone'),raw[1]);
  assert.equal(findTexturePath(raw,'nonexistent'),null);
- assert.equal(REQUIRED_TILES.length,16);
+ assert.equal(REQUIRED_TILES.length,34);
 });

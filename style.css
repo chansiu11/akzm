@@ -2,7 +2,7 @@
 
 /* All inventory and hotbar icons sample the same automatically applied texture atlas. */
 #packStatus{font-size:11px;color:#c3dfcf;margin-top:16px;min-height:18px}
-.tileIcon{display:inline-block;width:28px;height:28px;background-image:var(--block-atlas);background-size:800% 200%;image-rendering:pixelated;background-repeat:no-repeat;flex-shrink:0}
+.tileIcon{display:inline-block;width:28px;height:28px;background-image:var(--block-atlas);background-size:800% 500%;image-rendering:pixelated;background-repeat:no-repeat;flex-shrink:0}
 .item{display:flex;align-items:center;justify-content:center;gap:7px}.item .tileIcon{width:24px;height:24px}
 /* Mobile: swipe on the world to turn, stick to walk; never scroll the page. */
 #viewport{touch-action:none;user-select:none;-webkit-user-select:none}#touchControls{display:none;position:fixed;inset:0;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}body.touch-ui #touchControls{display:block}#touchControls button,#joystick{pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent}#joystick{position:absolute;left:24px;bottom:max(100px,env(safe-area-inset-bottom));width:122px;height:122px;border-radius:50%;border:3px solid #fff7;background:#0007;box-shadow:0 2px 10px #0007}#stickThumb{position:absolute;left:50%;top:50%;width:50px;height:50px;transform:translate(-50%,-50%);border-radius:50%;border:2px solid #fff9;background:#b5d2d47a;pointer-events:none}#touchActions{position:absolute;right:16px;bottom:max(104px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,72px);gap:9px}#touchActions button{border-radius:45px;padding:0;height:60px;background:#121e25bf;border:2px solid #f1f3dec9;color:#fff;font-size:13px}#touchActions #touchJump{grid-column:2;grid-row:2}#touchActions button:active{background:#79955baa}#touchTop{position:absolute;right:12px;top:max(14px,env(safe-area-inset-top));display:flex;gap:8px}#touchTop button{padding:9px 12px;border:1px solid #ffffff8a;background:#1f303cbf;font-size:12px}body.touch-ui #status{top:max(12px,env(safe-area-inset-top));left:8px;font-size:9px;max-width:46vw;pointer-events:none}body.touch-ui #hotbar{bottom:max(10px,env(safe-area-inset-bottom));z-index:1}body.touch-ui .slot{width:min(10vw,42px);height:41px}body.touch-ui .slot i{width:17px;height:17px}body.touch-ui .panel{max-height:90dvh;overflow:auto;padding:16px}body.touch-ui .controls{font-size:10px;line-height:1.5;margin:12px 0}#overlay{z-index:5}#inventory{z-index:6}#gameNotice{z-index:4}#touchControls{z-index:2}
@@ -62,3 +62,46 @@ body.menu-open #hotbar,body.menu-open #crosshair,body.menu-open #status,body.men
 .command-entry-actions{display:flex;gap:4px}.command-output{padding:8px 12px;background:rgba(8,10,14,.86)}.command-output:empty{display:none}.command-output.error{color:#ffb1a8}.command-output.success{color:#d8f9c2}
 .command-empty{padding:9px;color:#b8c6ca}
 @media (max-width:620px){.command-assist{grid-template-columns:1fr;grid-template-rows:minmax(68px,110px) minmax(90px,1fr);max-height:48vh}.command-choices{display:flex;gap:4px;overflow-x:auto}.command-choice{min-width:112px;flex-direction:column;align-items:flex-start;justify-content:center;padding:6px}.command-choice small{text-align:left}.command-detail{font-size:12px}.command-entry-actions button{font-size:12px}}
+
+/* Stage 2 block catalog; does not replace the planned survival inventory. */
+#inventory{width:min(680px,96vw);max-height:min(88dvh,760px);overflow-y:auto}
+.catalog-title{font-size:14px;margin:18px 0 4px;color:#e4e4d2}
+.catalog-hint{font-size:11px;line-height:1.5;color:#bac5c9;margin:0 0 8px}
+#blockCatalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:6px}
+.catalog-item{min-height:49px;padding:5px 7px;display:flex;align-items:center;gap:7px;background:#27343a;border:1px solid #62747b;color:#eee;text-align:left;font-size:11px}
+.catalog-item:hover,.catalog-item:focus-visible{outline:2px solid #f4dfab;background:#41525e}
+.catalog-item .tileIcon{width:24px;height:24px}
+body.touch-ui #inventory{max-height:84dvh}
+
+/* Prototype systems developed after stage 3, not reproduced vanilla HUD assets. */
+#survivalHud{position:fixed;bottom:91px;left:50%;transform:translateX(-50%);text-align:center;font-size:16px;font-weight:bold;white-space:nowrap;color:#fff2e4;text-shadow:2px 2px #15151b;pointer-events:none;z-index:2}
+#deathScreen{position:fixed;inset:0;background:#390b0bcc;z-index:98;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+#deathScreen h2{font-size:40px;text-shadow:3px 3px #17070d}
+#invItems{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+#invItems .item{padding:5px 2px;flex-direction:column;gap:2px;min-height:58px;font-size:9px;overflow:hidden}
+#invItems .item .tileIcon{height:22px;width:22px}
+#invItems .item span{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#craftRecipes{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px;padding:9px 0}
+.recipe-item{border:1px solid #afbb9d;font:12px/1.3 inherit;padding:8px;background:#375640;color:#fff;min-height:46px}
+.recipe-item:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:640px){#survivalHud{bottom:62px;font-size:12px}#invItems .item{min-height:44px}.recipe-item{font-size:11px}}
+
+#tilePanel{border:1px solid #cadbb1;background:#1b302acb;margin:12px 0;padding:10px}
+#tileContents{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:3px}
+#tileContents button{padding:5px 2px;min-height:46px;border:1px solid #93a592;background:#263b35;font-size:10px;color:#fff}
+#tileContents button:focus-visible{outline:2px solid #fee7ad}
+
+#progressionPanel{background:#1c3028;padding:10px;font-size:11px;line-height:1.6;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:5px}
+#progressionPanel span{border:1px solid #506b62;padding:4px 6px}
+
+/* Stage reconciliation: spatial crafting grid, with keyboard-accessible buttons. */
+.crafting-area{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0 16px}
+#craftGrid{display:grid;grid-template-columns:repeat(var(--grid-side,2),minmax(46px,58px));gap:3px;align-content:start}
+#craftGrid button{min-width:46px;min-height:46px;padding:4px;background:#333f45;border:2px solid #888e86;font-size:11px;overflow:hidden;word-break:keep-all}
+#craftGrid button:focus-visible,#craftOutput:focus-visible{outline:3px solid #efd783;outline-offset:2px}
+#craftOutput{min-height:66px;max-width:220px;padding:12px;background:#527050;border:2px solid #acbba7}
+#craftOutput:disabled{opacity:.45;cursor:not-allowed}
+#craftRecipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:4px;padding:8px 0}
+#craftRecipes span{border:1px solid #6b786f;font-size:11px;padding:5px 8px;color:#bbc4af}
+
+.command-key-hint{font:11px/1.4 Consolas,monospace;color:#d2dcbf;background:#202923d9;padding:4px 8px}
