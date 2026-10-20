@@ -42,7 +42,7 @@ import {createFirstPerson} from './first-person.js';
 import {installRecipeBook112} from './recipe-book112.js';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.1';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -242,7 +242,7 @@ function startUseSelected(){
 }
 function cancelUsing(){usingFood=false;foodHold=0;}
 
-function openInventory({table=false}={}){el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'))}
+function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'))}
 function closeInventory(){recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
 function requestPlay(){enteredWorld=true;worldPaused=false;menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}{const lock=canvas.requestPointerLock?.();lock?.catch(()=>menus.showPause())}}
 function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
@@ -320,7 +320,7 @@ canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
 window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&cheatsAllowed&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
-window.addEventListener('wheel',e=>{selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
+window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
 const heldDirections=new Set();
 function syncDpad(){
