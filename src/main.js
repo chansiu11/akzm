@@ -5,6 +5,8 @@ import {restoreLocalAtlas} from './resource-pack.js';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta,joystickDelta} from './touch.js';
 import {setupMenu,activeWorldId,worldSaveKey,loadSettings} from './menu.js';
+import {setupCommandUI} from './command-ui.js';
+import {createParticles} from './particles.js';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport'); const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -18,8 +20,9 @@ const solidMat=new THREE.MeshLambertMaterial({map:texture,side:THREE.FrontSide})
 const world=new World(readSave()?.world), saved=readSave();const inventory=saved?.inventory?.length===9?saved.inventory:[{id:1,count:32},{id:2,count:32},{id:3,count:32},{id:4,count:32},{id:5,count:16},{id:6,count:16},{id:7,count:32},{id:9,count:32},{id:12,count:32}];
 let selected=Number.isInteger(saved?.selected)?Math.max(0,Math.min(8,saved.selected)):0;
 const player={x:saved?.player?.x??3.5,y:saved?.player?.y??heightAt(3,3)+3,z:saved?.player?.z??3.5,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
-let settings=loadSettings();let running=false,inventoryOpen=false,day=saved?.day??.21,clickHold=false,damage=0,aimKey='',saveTimer=0,noticeTimer=0;
+let settings=loadSettings();let running=false,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,clickHold=false,damage=0,aimKey='',saveTimer=0,noticeTimer=0;
 const keys=new Set(),meshes=new Map(),pending=[],queued=new Set();
+const effects=createParticles(scene);
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 if(touchMode)document.body.classList.add('touch-ui');
 const mobileMove={forward:0,strafe:0};let mobileJump=false;let activeLook=null;const size=16;let renderRadius=settings.renderDistance;let lastChunk='';
@@ -51,26 +54,47 @@ function stepPhysics(dt){let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)
 const selectOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:'#fff4c1',depthTest:false}));selectOutline.visible=false;scene.add(selectOutline);
 const raycaster=new THREE.Raycaster();raycaster.far=5;const forward=new THREE.Vector3();let currentHit=null;
 function look(){raycaster.setFromCamera({x:0,y:0},camera);const targets=[...meshes.values()].flat();const hits=raycaster.intersectObjects(targets,false);let h=hits.find(hit=>hit.object.material!==waterMat);currentHit=h||null;if(h){const n=h.face.normal,p=h.point;const x=Math.floor(p.x-n.x*.002),y=Math.floor(p.y-n.y*.002),z=Math.floor(p.z-n.z*.002);selectOutline.position.set(x+.5,y+.5,z+.5);selectOutline.visible=true;el('target').textContent=`${BLOCK_NAMES[world.get(x,y,z)]} · ${x} ${y} ${z}`;return {x,y,z,normal:n,id:world.get(x,y,z)}}selectOutline.visible=false;el('target').textContent='';return null}
-function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify({world:world.serialize(),inventory,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day}));notify('월드 저장 완료')}catch{notify('저장할 수 없습니다: 브라우저 저장공간을 확인하세요')}}
+function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify({world:world.serialize(),inventory,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle}));notify('월드 저장 완료')}catch{notify('저장할 수 없습니다: 브라우저 저장공간을 확인하세요')}}
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
 function iconOffset(id){const tile=tileFor(id,[0,1,0]);return `background-position:${(tile%8*100/7).toFixed(3)}% ${Math.floor(tile/8)*100}%`;}
 function showAtlas(canvas){texture.image=canvas;texture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);}
 function updateUI(){el('hotbar').innerHTML=inventory.map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${BLOCK_NAMES[item.id]}"><small>${i+1}</small><i class="tileIcon" style="${iconOffset(item.id)}"></i><span>${item.count}</span></button>`).join('');el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}"><i class="tileIcon" style="${iconOffset(item.id)}"></i>${BLOCK_NAMES[item.id]} · ${item.count}</button>`).join('');}
-function breakBlock(t){if(!t||t.id===BLOCK.BEDROCK||t.id===BLOCK.WATER)return;if(world.set(t.x,t.y,t.z,0)){updateNearBlock(t.x,t.z);let item=inventory.find(a=>a.id===t.id);if(item)item.count=Math.min(999,item.count+1);updateUI();saveTimer=7}}
-function placeBlock(t){if(!t)return;const item=inventory[selected];if(!item||item.count<=0)return;const {x,y,z}=t, n=t.normal;const nx=x+n.x,ny=y+n.y,nz=z+n.z;if(world.get(nx,ny,nz)!==BLOCK.AIR&&world.get(nx,ny,nz)!==BLOCK.WATER)return;if(ny<=0||ny>MAX_Y)return;const prev=world.get(nx,ny,nz);world.set(nx,ny,nz,item.id);if(collides(player.x,player.y,player.z)){world.set(nx,ny,nz,prev);return}item.count--;updateNearBlock(nx,nz);updateUI();saveTimer=7}
+function breakBlock(t){if(!t||t.id===BLOCK.BEDROCK||t.id===BLOCK.WATER)return;if(world.set(t.x,t.y,t.z,0)){effects.emit('block',[t.x+.5,t.y+.5,t.z+.5],[.4,.4,.4],.3,18);updateNearBlock(t.x,t.z);let item=inventory.find(a=>a.id===t.id);if(item)item.count=Math.min(999,item.count+1);updateUI();saveTimer=7}}
+function placeBlock(t){if(!t)return;const item=inventory[selected];if(!item||item.count<=0)return;const {x,y,z}=t, n=t.normal;const nx=x+n.x,ny=y+n.y,nz=z+n.z;if(world.get(nx,ny,nz)!==BLOCK.AIR&&world.get(nx,ny,nz)!==BLOCK.WATER)return;if(ny<=0||ny>MAX_Y)return;const prev=world.get(nx,ny,nz);world.set(nx,ny,nz,item.id);if(collides(player.x,player.y,player.z)){world.set(nx,ny,nz,prev);return}item.count--;effects.emit('block',[nx+.5,ny+.5,nz+.5],[.25,.25,.25],.08,6);updateNearBlock(nx,nz);updateUI();saveTimer=7}
 function hardness(id){return ({1:.6,2:.55,3:1.6,4:.5,5:1.2,6:.25,7:.8,9:1.7,10:1.9,11:.15,12:1.7})[id]??1}
 function openInventory(){inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI()}
 function closeInventory(){inventoryOpen=false;el('inventory').classList.add('hidden');menus.showPause()}
 function requestPlay(){menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}{const lock=canvas.requestPointerLock?.();lock?.catch(()=>menus.showPause())}}
 function pauseGame(){running=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.();menus.showPause()}
-const onPointer=()=>{if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running&&!inventoryOpen&&!el('overlay').classList.contains('show'))menus.showPause();clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
+// Initial command subset; commands never bypass the same World.set limits as normal placing.
+const commandUI=setupCommandUI({
+ onOpen:()=>{running=false;clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.()},
+ onClose:()=>requestPlay(),
+ onResult:result=>notify(result.message),
+ context:()=>({
+  position:()=>[player.x,player.y,player.z],
+  teleport:(x,y,z)=>{player.x=x;player.y=y;player.z=z;player.vy=0;lastChunk='';return true},
+  getTime:()=>((day%1+1)%1)*24000,
+  setTime:t=>{day=((t%24000)+24000)%24000/24000;saveTimer=0},
+  getDaylightCycle:()=>daylightCycle,
+  setDaylightCycle:value=>{daylightCycle=value;saveTimer=0},
+  setBlock:(x,y,z,id)=>{if(!world.set(x,y,z,id))return false;updateNearBlock(x,z);saveTimer=0;return true},
+  fill:(from,to,id)=>{let count=0;const touched=new Set();for(let x=from[0];x<=to[0];x++)for(let y=from[1];y<=to[1];y++)for(let z=from[2];z<=to[2];z++){
+   if(world.get(x,y,z)===id)continue;if(world.set(x,y,z,id)){count++;touched.add(chunkId(Math.floor(x/size),Math.floor(z/size)));}
+  }
+  for(const key of touched){const [cx,cz]=key.split(',').map(Number);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))enqueue(cx+dx,cz+dz)}
+  saveTimer=0;return count},
+  particle:(type,coords,spread,speed,count)=>effects.emit(type,coords,spread,speed,count)
+ })
+});
+const onPointer=()=>{if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
 document.addEventListener('mousemove',e=>{if(!running||touchMode)return;Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100))});
 // The mobile viewport only turns the camera. Movement/action overlays manage their own pointers.
 canvas.addEventListener('pointerdown',e=>{if(!touchMode||e.pointerType==='mouse'||!running||activeLook)return;e.preventDefault();activeLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture?.(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(!running||!activeLook||activeLook.id!==e.pointerId)return;e.preventDefault();const dx=e.clientX-activeLook.x,dy=e.clientY-activeLook.y;activeLook.x=e.clientX;activeLook.y=e.clientY;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100*1.46))});
 for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>{if(activeLook?.id===e.pointerId)activeLook=null});
-window.addEventListener('keydown',e=>{if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
+window.addEventListener('keydown',e=>{if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT')return;if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(e.button===0){clickHold=true;damage=0;aimKey=''}if(e.button===2)placeBlock(look())});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Virtual joystick and independent touch actions. All pointer gestures are local-only.
@@ -84,6 +108,7 @@ function holdAction(id,onStart,onEnd){const b=el(id);let heldPointer=null;b.addE
 holdAction('touchBreak',()=>{clickHold=true;damage=0;aimKey=''},()=>{clickHold=false;damage=0});
 holdAction('touchJump',()=>{mobileJump=true},()=>{mobileJump=false});
 holdAction('touchPlace',()=>{placeBlock(look())},()=>{});
+el('touchCommand').addEventListener('click',()=>{if(running)commandUI.show()});
 el('touchBag').addEventListener('click',()=>{if(running)openInventory()});
 el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // Automatically use every supported existing tile from locally prepared resources.
@@ -103,10 +128,10 @@ el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');i
 el('invItems').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
- if(running){stepPhysics(dt);day=(day+dt/1200)%1;const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;const sky=new THREE.Color('#101c32').lerp(new THREE.Color('#87bde3'),Math.min(1,light));scene.background.copy(sky);scene.fog.color.copy(sky);const t=look();if(clickHold&&t&&t.id&&t.id!==BLOCK.BEDROCK&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;el('target').textContent+=` · 파괴 ${Math.min(100,Math.floor(damage/hardness(t.id)*100))}%`;if(damage>=hardness(t.id)){breakBlock(t);damage=0}}else damage=0;
- saveTimer-=dt;if(saveTimer<=0){saveTimer=20;try{localStorage.setItem(worldSaveKey(),JSON.stringify({world:world.serialize(),inventory,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.y,pitch:player.pitch},day}))}catch{}}
+ if(running){stepPhysics(dt);if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;const sky=new THREE.Color('#101c32').lerp(new THREE.Color('#87bde3'),Math.min(1,light));scene.background.copy(sky);scene.fog.color.copy(sky);const t=look();if(clickHold&&t&&t.id&&t.id!==BLOCK.BEDROCK&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;el('target').textContent+=` · 파괴 ${Math.min(100,Math.floor(damage/hardness(t.id)*100))}%`;if(damage>=hardness(t.id)){breakBlock(t);damage=0}}else damage=0;
+ saveTimer-=dt;if(saveTimer<=0){saveTimer=20;try{localStorage.setItem(worldSaveKey(),JSON.stringify({world:world.serialize(),inventory,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.y,pitch:player.pitch},day,daylightCycle}))}catch{}}
  }
  loadArea();if(pending.length){const [cx,cz]=pending.shift();queued.delete(chunkId(cx,cz));const pcx=Math.floor(player.x/size),pcz=Math.floor(player.z/size);if(Math.abs(cx-pcx)<=renderRadius&&Math.abs(cz-pcz)<=renderRadius)rebuild(cx,cz)}
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`VOXEL FRONTIER · 0.4\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera)}
-updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{try{localStorage.setItem(worldSaveKey(),JSON.stringify({world:world.serialize(),inventory,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.y,pitch:player.pitch},day}))}catch{}});
+updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{try{localStorage.setItem(worldSaveKey(),JSON.stringify({world:world.serialize(),inventory,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.y,pitch:player.pitch},day,daylightCycle}))}catch{}});

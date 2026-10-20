@@ -49,3 +49,11 @@
 - PC 1365×768 및 모바일 390×844 HTML/CSS 메뉴 Chromium 확인; 메뉴 전환 및 설정 동작 확인.
 - Node.js 자동 테스트, JS 문법 검사 통과. WebGL 통합 테스트는 외부 three.js CDN 접근 제한으로 미완료.
 - 미구현: 원작 수준의 모든 블록·아이템·사운드·월드 생성·제작·전투·AI·멀티플레이, 원작과 동일한 메뉴 아트.
+
+## 2026-10-20 — v0.5 command palette and basic particles
+- CODED: Java 1.8.9-style slash command palette, argument chips, examples, suggestions, Tab autocomplete, keyboard and touch submit/close.
+- CODED: working subset of /help /time /tp /setblock /fill /particle /gamerule doDaylightCycle /seed, relative coordinates, block ID lookup, input validation, safe fill limit.
+- CODED: light Three.js point particle pool; block breaking and placing trigger effects. This is not the vanilla particle rendering engine.
+- CODED: daylightCycle persisted alongside the previous world save format without resetting existing worlds.
+- UNIT TESTS: added command parser/dispatch tests, preserving old terrain, menu, touch and resource tests.
+- LIMITATIONS: full 1.8.9 command catalog, chat, command blocks, scoreboards, NBT, entity targeting, real mobs, vanilla sprites and audio still missing. Browser GPU end-to-end separately tracked.

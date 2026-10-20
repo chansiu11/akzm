@@ -44,3 +44,21 @@ body.menu-open #hotbar,body.menu-open #crosshair,body.menu-open #status,body.men
 #overlay .help-text{padding:18px;background:#152329dc;border:1px solid #aab4b477;color:#e4eae6;text-align:left;font-size:13px;line-height:2.1}
 #overlay .menu-bottom{margin-top:25px}
 @media (max-width:640px){#overlay .menu-page{padding-top:7dvh}#overlay .brand-shadow{margin:4vh auto 3vh}#overlay .brand-shadow h1{font-size:clamp(43px,12vw,70px)}#overlay .menu-stack{gap:7px}#overlay button.stone-button{font-size:14px;min-height:42px}#overlay .menu-footer{font-size:9px}#overlay .settings-grid{grid-template-columns:1fr}#overlay #menu-worlds .world-list{max-height:35dvh}}
+
+/* Command input: detail-first keyboard/touch palette, independent of the world HUD */
+.command-panel{position:fixed;z-index:80;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(900px,calc(100vw - 28px));display:flex;flex-direction:column;gap:5px;color:#fff;font:14px/1.4 Consolas,monospace;pointer-events:auto}
+.command-panel.hidden{display:none!important}
+.command-assist{display:grid;grid-template-columns:minmax(160px,35%) minmax(0,1fr);gap:8px;max-height:min(43vh,350px)}
+.command-choices,.command-detail{background:rgba(6,10,14,.88);border:1px solid #66737c;overflow:auto;backdrop-filter:blur(5px);padding:8px}
+.command-choice{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;background:transparent;color:#fff;border:1px solid transparent;padding:8px;cursor:pointer}
+.command-choice b{font-size:14px}.command-choice small{color:#b7c1c6;text-align:right;font-size:11px}
+.command-choice.selected,.command-choice:hover{border-color:#d1e39c;background:rgba(137,157,80,.22)}
+.command-detail strong{color:#d5f5a8;overflow-wrap:anywhere}.command-detail p{margin:7px 0;color:#e8ebea}
+.command-detail code{display:block;margin-top:8px;color:#b1d9ff;white-space:pre-wrap;overflow-wrap:anywhere}
+.command-arguments{display:flex;gap:4px;flex-wrap:wrap}.command-arg{color:#c8d1d5;border:1px solid #4d5d65;border-radius:3px;padding:3px 5px;font-size:12px}.command-arg.active{border-color:#d6eab1;background:#3a4a26;color:white}
+.command-entry{display:flex;align-items:center;background:#161d21;border:2px solid #9ca9b1;min-height:44px}
+.command-entry input{flex:1;min-width:0;outline:none;border:0!important;background:transparent!important;box-shadow:none!important;color:#fff!important;padding:10px;font:16px Consolas,monospace}
+.command-entry button,.command-entry-actions button{padding:8px 10px;color:#fff;background:#3c4a51;border:1px solid #768389;cursor:pointer;font:13px Consolas,monospace}
+.command-entry-actions{display:flex;gap:4px}.command-output{padding:8px 12px;background:rgba(8,10,14,.86)}.command-output:empty{display:none}.command-output.error{color:#ffb1a8}.command-output.success{color:#d8f9c2}
+.command-empty{padding:9px;color:#b8c6ca}
+@media (max-width:620px){.command-assist{grid-template-columns:1fr;grid-template-rows:minmax(68px,110px) minmax(90px,1fr);max-height:48vh}.command-choices{display:flex;gap:4px;overflow-x:auto}.command-choice{min-width:112px;flex-direction:column;align-items:flex-start;justify-content:center;padding:6px}.command-choice small{text-align:left}.command-detail{font-size:12px}.command-entry-actions button{font-size:12px}}
