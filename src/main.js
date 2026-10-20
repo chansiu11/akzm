@@ -39,7 +39,7 @@ import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js';
 import {createFirstPerson} from './first-person.js';
-import {installRecipeBook112} from './recipe-book112.js';
+import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
 import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.1';

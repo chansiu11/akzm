@@ -27,3 +27,9 @@ Base: da20dcf4cf129719f401f83c6e4114b6b01b603f.
 6. Commands/network: current command subset still targets 1.8.9; no vanilla protocol compatibility or Anvil/NBT save compatibility.
 
 The requested final stage has NOT been reached. Later stages cannot be declared vanilla-correct on the basis of these UI/unit tests.
+
+## Public Pages browser follow-up
+- Public game rendered with WebGL. Entered a world, opened the new inventory, searched the Korean recipe name, and displayed its pattern/ingredient legend using real browser controls. This used independent fallback images, not the owner JAR.
+- Found and fixed a clipped recipe panel at GUI scale 3: opening it shifts the combined panel to fit; narrow screens use an overlay.
+- Cache versions updated. Inventory closes the pause overlay; title-screen E and scrolling a recipe panel no longer operate gameplay controls.
+- GitHub CI and Pages for db159c0 both succeeded. Real Java/JAR comparison and chest/furnace browser interaction remain open.

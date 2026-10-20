@@ -10,7 +10,9 @@ export function installRecipeBook112(root,recipes,getSize){
  const list=document.createElement('div'),preview=document.createElement('div'),note=document.createElement('small');note.textContent='구현된 제작법 · 재료는 직접 배치';panel.append(search,list,preview,note);root.append(toggle,panel);
  function render(){list.replaceChildren();preview.replaceChildren();for(const r of recipeBookEntries(recipes,getSize(),search.value)){const b=document.createElement('button');b.type='button';b.textContent=r.name;b.addEventListener('click',()=>{preview.replaceChildren();const title=document.createElement('div');title.textContent=`${r.name} ×${r.output.count}`;preview.append(title);const pattern=document.createElement('pre');pattern.textContent=r.pattern.map(row=>[...row].map(c=>c===' '?'·':c).join(' ')).join('\n');preview.append(pattern);const legend=document.createElement('div');legend.textContent=Object.entries(r.keys).map(([symbol,id])=>`${symbol}: ${names.get(id)??id}`).join(' / ');preview.append(legend);});list.append(b);}}
  const names=new Map();
- toggle.addEventListener('click',()=>{panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden){render();search.focus();}});
+ function place(){const scale=Number(getComputedStyle(root).getPropertyValue('--gui-scale'))||1;root.classList.toggle('recipe-narrow',innerWidth<323*scale);root.classList.toggle('recipe-open',!panel.hidden);}
+ window.addEventListener('resize',place);
+ toggle.addEventListener('click',()=>{panel.hidden=!panel.hidden;place();toggle.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden){render();search.focus();}});
  search.addEventListener('input',render);
- return {refresh:render,setNames(entries){for(const [id,name] of entries)names.set(id,name);},close(){panel.hidden=true;toggle.setAttribute('aria-expanded','false');}};
+ return {refresh:render,setNames(entries){for(const [id,name] of entries)names.set(id,name);},close(){panel.hidden=true;place();toggle.setAttribute('aria-expanded','false');}};
 }
