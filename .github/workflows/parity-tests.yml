@@ -1,0 +1,18 @@
+name: Java 1.12.2 parity regression tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  node-tests:
+    name: Node.js tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run game regression and GUI geometry tests
+        run: npm test
