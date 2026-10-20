@@ -32,7 +32,7 @@ test('GUI is arranged like a classic world menu and inventory rather than card d
 });
 test('resizing refreshes responsive native GUI layout, F3 toggles in game',()=>{
  const js=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(js,/import \{applyGuiScale\} from '\.\/gui189-layout\.js'/);
- assert.match(js,/resize.*applyGuiScale\(document\.documentElement,innerWidth,innerHeight/);
+ assert.match(js,/import \{applyGui112Scale\} from '\.\/gui112-layout\.js'/);
+ assert.match(js,/resize.*applyGui112Scale\(document\.documentElement,innerWidth,innerHeight/);
  assert.match(js,/e\.code==='F3'.*debug-overlay/);
 });
