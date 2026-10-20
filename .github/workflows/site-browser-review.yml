@@ -1,0 +1,32 @@
+name: Deployed akzm browser screenshots
+on:
+  workflow_run:
+    workflows: ['pages build and deployment']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visit-site:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless Chromium automation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Open real deployed website, verify controls and capture desktop/mobile screenshots
+        run: node tools/visit-deployed-site.mjs
+      - name: Upload inspected screenshots and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akzm-site-screenshots
+          path: site-review/
+          if-no-files-found: warn
+          retention-days: 7

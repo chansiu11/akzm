@@ -1,93 +1,95 @@
+/* HUD parity fix: the importer adds gui112-* classes to document.documentElement
+   (<html>), so original artwork selectors must target html rather than body. */
 /* Java Edition 1.12.2 HUD: coordinates from the owner's original 256x256 PNGs.
    No original assets ship with this CSS. Vanilla images activate after owner JAR import. */
 #target{display:none!important}
 #loadJar112{display:block;margin:7px auto 0;width:min(414px,92vw);max-width:100%;font-size:12px}
 #jar112Input{display:none!important}
-body.gui112-assets #crosshair{
+html.gui112-assets body #crosshair{
  width:calc(16px * var(--gui-scale))!important;height:calc(16px * var(--gui-scale))!important;
  background:var(--gui112-icons) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important;
  filter:none!important;mix-blend-mode:difference
 }
-body.gui112-assets #crosshair:before,body.gui112-assets #crosshair:after{display:none!important}
-body.gui112-assets #hotbar{
+html.gui112-assets body #crosshair:before,html.gui112-assets body #crosshair:after{display:none!important}
+html.gui112-assets body #hotbar{
  width:calc(182px * var(--gui-scale))!important;height:calc(22px * var(--gui-scale))!important;
  background:var(--gui112-widgets) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important;
  border:0!important;padding:0!important;box-shadow:none!important;gap:0!important;
  grid-template-columns:repeat(9,calc(20px * var(--gui-scale)))!important
 }
-body.gui112-assets #hotbar .slot{
+html.gui112-assets body #hotbar .slot{
  width:calc(20px * var(--gui-scale))!important;height:calc(20px * var(--gui-scale))!important;
  border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;
  padding:0!important;overflow:visible;position:relative
 }
-body.gui112-assets #hotbar .slot.active:before{
+html.gui112-assets body #hotbar .slot.active:before{
  content:'';position:absolute;left:calc(-2px * var(--gui-scale));top:calc(-1px * var(--gui-scale));
  width:calc(24px * var(--gui-scale));height:calc(22px * var(--gui-scale));pointer-events:none;z-index:4;
  background:var(--gui112-widgets) 0 calc(-22px * var(--gui-scale)) /
   calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat
 }
-body.gui112-assets #hotbar .slot .tileIcon{
+html.gui112-assets body #hotbar .slot .tileIcon{
  width:calc(16px * var(--gui-scale))!important;height:calc(16px * var(--gui-scale))!important;
  border:0!important;transform:none!important;box-shadow:none!important;image-rendering:pixelated
 }
-body.gui112-assets #hotbar .slot span{
+html.gui112-assets body #hotbar .slot span{
  font-size:calc(8px * var(--gui-scale))!important;right:calc(1px * var(--gui-scale))!important;
  bottom:calc(1px * var(--gui-scale))!important;text-shadow:1px 1px #333,-1px 1px #333,1px -1px #333,-1px -1px #333
 }
-body.gui112-assets #survivalHud{
+html.gui112-assets body #survivalHud{
  width:calc(182px * var(--gui-scale))!important;height:calc(28px * var(--gui-scale))!important;
  bottom:calc(var(--gui-bottom) + 22px * var(--gui-scale))!important;max-width:none!important;overflow:visible
 }
-body.gui112-assets #survivalHud .vitals-top{
+html.gui112-assets body #survivalHud .vitals-top{
  position:absolute;left:0;bottom:calc(8px * var(--gui-scale));
  width:100%;height:calc(9px * var(--gui-scale))
 }
-body.gui112-assets #survivalHud .vital-hearts,body.gui112-assets #survivalHud .vital-food{
+html.gui112-assets body #survivalHud .vital-hearts,html.gui112-assets body #survivalHud .vital-food{
  display:flex;gap:0!important;height:calc(9px * var(--gui-scale))!important
 }
-body.gui112-assets #survivalHud .pixel-vital{
+html.gui112-assets body #survivalHud .pixel-vital{
  width:calc(9px * var(--gui-scale))!important;height:calc(9px * var(--gui-scale))!important;
  background-image:var(--gui112-icons)!important;background-size:calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))!important;
  background-repeat:no-repeat!important;border:0!important;border-radius:0!important;clip-path:none!important;
  margin:0!important;transform:none!important;filter:none!important;opacity:1!important;position:relative
 }
-body.gui112-assets #survivalHud .pixel-vital:not(:last-child){margin-right:calc(-1px * var(--gui-scale))!important}
-body.gui112-assets #survivalHud .pixel-vital:after{display:none!important}
-body.gui112-assets #survivalHud .pixel-vital:before{
+html.gui112-assets body #survivalHud .pixel-vital:not(:last-child){margin-right:calc(-1px * var(--gui-scale))!important}
+html.gui112-assets body #survivalHud .pixel-vital:after{display:none!important}
+html.gui112-assets body #survivalHud .pixel-vital:before{
  content:'';display:block;position:absolute;inset:0;width:100%!important;height:100%!important;
  border:0!important;clip-path:none!important;opacity:1!important;
  background-image:var(--gui112-icons)!important;background-size:calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))!important;
  background-repeat:no-repeat!important
 }
-body.gui112-assets #survivalHud .pixel-vital.heart{background-position:calc(-16px * var(--gui-scale)) 0!important}
-body.gui112-assets #survivalHud .pixel-vital.heart:before{background-position:calc(-52px * var(--gui-scale)) 0!important}
-body.gui112-assets #survivalHud .pixel-vital.heart[data-fill="0.5"]:before{background-position:calc(-61px * var(--gui-scale)) 0!important}
-body.gui112-assets #survivalHud .pixel-vital.heart[data-fill="0"]:before{display:none!important}
-body.gui112-assets #survivalHud .pixel-vital.food{background-position:calc(-16px * var(--gui-scale)) calc(-27px * var(--gui-scale))!important}
-body.gui112-assets #survivalHud .pixel-vital.food:before{background-position:calc(-52px * var(--gui-scale)) calc(-27px * var(--gui-scale))!important}
-body.gui112-assets #survivalHud .pixel-vital.food[data-fill="0.5"]:before{background-position:calc(-61px * var(--gui-scale)) calc(-27px * var(--gui-scale))!important}
-body.gui112-assets #survivalHud .pixel-vital.food[data-fill="0"]:before{display:none!important}
-body.gui112-assets #survivalHud .vital-air{
+html.gui112-assets body #survivalHud .pixel-vital.heart{background-position:calc(-16px * var(--gui-scale)) 0!important}
+html.gui112-assets body #survivalHud .pixel-vital.heart:before{background-position:calc(-52px * var(--gui-scale)) 0!important}
+html.gui112-assets body #survivalHud .pixel-vital.heart[data-fill="0.5"]:before{background-position:calc(-61px * var(--gui-scale)) 0!important}
+html.gui112-assets body #survivalHud .pixel-vital.heart[data-fill="0"]:before{display:none!important}
+html.gui112-assets body #survivalHud .pixel-vital.food{background-position:calc(-16px * var(--gui-scale)) calc(-27px * var(--gui-scale))!important}
+html.gui112-assets body #survivalHud .pixel-vital.food:before{background-position:calc(-52px * var(--gui-scale)) calc(-27px * var(--gui-scale))!important}
+html.gui112-assets body #survivalHud .pixel-vital.food[data-fill="0.5"]:before{background-position:calc(-61px * var(--gui-scale)) calc(-27px * var(--gui-scale))!important}
+html.gui112-assets body #survivalHud .pixel-vital.food[data-fill="0"]:before{display:none!important}
+html.gui112-assets body #survivalHud .vital-air{
  position:absolute;right:0;bottom:calc(18px * var(--gui-scale));
  display:flex;height:calc(9px * var(--gui-scale))!important;gap:0!important
 }
-body.gui112-assets #survivalHud .pixel-vital.bubble{background-position:calc(-25px * var(--gui-scale)) calc(-18px * var(--gui-scale))!important}
-body.gui112-assets #survivalHud .pixel-vital.bubble:before{background-position:calc(-16px * var(--gui-scale)) calc(-18px * var(--gui-scale))!important}
-body.gui112-assets #survivalHud .pixel-vital.bubble[data-fill="0"]:before{display:none!important}
-body.gui112-assets #survivalHud .pixel-xp-track{
+html.gui112-assets body #survivalHud .pixel-vital.bubble{background-position:calc(-25px * var(--gui-scale)) calc(-18px * var(--gui-scale))!important}
+html.gui112-assets body #survivalHud .pixel-vital.bubble:before{background-position:calc(-16px * var(--gui-scale)) calc(-18px * var(--gui-scale))!important}
+html.gui112-assets body #survivalHud .pixel-vital.bubble[data-fill="0"]:before{display:none!important}
+html.gui112-assets body #survivalHud .pixel-xp-track{
  position:absolute;left:0;bottom:calc(2px * var(--gui-scale));overflow:hidden;
  width:calc(182px * var(--gui-scale))!important;height:calc(5px * var(--gui-scale))!important;
  margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;
  background:var(--gui112-icons) 0 calc(-64px * var(--gui-scale)) /
   calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important
 }
-body.gui112-assets #survivalHud .pixel-xp-fill{
+html.gui112-assets body #survivalHud .pixel-xp-fill{
  height:100%!important;margin:0!important;border:0!important;
  background:var(--gui112-icons) 0 calc(-69px * var(--gui-scale)) /
   calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important
 }
-body.touch-ui.gui112-assets #hotbar{bottom:var(--gui-bottom)!important}
-body.touch-ui.gui112-assets #survivalHud{bottom:calc(var(--gui-bottom) + 22px * var(--gui-scale))!important}
+html.gui112-assets body.touch-ui #hotbar{bottom:var(--gui-bottom)!important}
+html.gui112-assets body.touch-ui #survivalHud{bottom:calc(var(--gui-bottom) + 22px * var(--gui-scale))!important}
 /* Container coordinates are independent of imported artwork. */
 body:not(.touch-ui){--gui-bottom:0px}
 #inventory[data-container]{width:calc(176px * var(--gui-scale))!important;height:calc(var(--container-height,166) * 1px * var(--gui-scale));max-width:none;max-height:none;padding:0!important;overflow:visible;background:#c6c6c6!important;border:0!important;border-radius:0;box-shadow:0 0 0 100vmax #0008!important;color:#404040;image-rendering:pixelated}
@@ -105,15 +107,15 @@ body:not(.touch-ui){--gui-bottom:0px}
 #inventory[data-container] #craftOutput:disabled{opacity:1}
 #inventory[data-container="chest"] :is(#craftGrid,#craftOutput),#inventory[data-container="furnace"] :is(#craftGrid,#craftOutput){display:none!important}
 #inventory[data-container="chest"] #craftGrid button,#inventory[data-container="furnace"] #craftGrid button{display:none!important}
-body.gui112-assets #inventory[data-container="inventory"]{background:var(--gui112-inventory) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
-body.gui112-assets #inventory[data-container="crafting"]{background:var(--gui112-crafting) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
-body.gui112-furnace #inventory[data-container="furnace"]{background:var(--gui112-furnace) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
-body.gui112-chest #inventory[data-container="chest"]{background:var(--gui112-chest) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
-body.gui112-chest #inventory[data-container="chest"]:before{content:'';position:absolute;left:0;top:calc(71px * var(--gui-scale));width:100%;height:calc(97px * var(--gui-scale));background:var(--gui112-chest) 0 calc(-125px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat}
+html.gui112-assets body #inventory[data-container="inventory"]{background:var(--gui112-inventory) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+html.gui112-assets body #inventory[data-container="crafting"]{background:var(--gui112-crafting) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+html.gui112-furnace body #inventory[data-container="furnace"]{background:var(--gui112-furnace) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+html.gui112-chest body #inventory[data-container="chest"]{background:var(--gui112-chest) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+html.gui112-chest body #inventory[data-container="chest"]:before{content:'';position:absolute;left:0;top:calc(71px * var(--gui-scale));width:100%;height:calc(97px * var(--gui-scale));background:var(--gui112-chest) 0 calc(-125px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat}
 #inventory[data-container] .furnace-status{display:none}
 #inventory[data-container] .furnace-progress{position:absolute;left:calc(79px * var(--gui-scale));top:calc(34px * var(--gui-scale));width:calc(var(--progress) * 1px * var(--gui-scale));height:calc(16px * var(--gui-scale));background:#eee}
-body.gui112-furnace #inventory .furnace-progress{background:var(--gui112-furnace) 0 calc(-14px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale));background-position-x:calc(-176px * var(--gui-scale))}
-body.gui112-furnace #inventory .furnace-flame{position:absolute;left:calc(56px * var(--gui-scale));top:calc((49 - var(--burn)) * 1px * var(--gui-scale));width:calc(14px * var(--gui-scale));height:calc(var(--burn) * 1px * var(--gui-scale));background:var(--gui112-furnace) calc(-176px * var(--gui-scale)) calc((var(--burn) - 13) * 1px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))}
+html.gui112-furnace body #inventory .furnace-progress{background:var(--gui112-furnace) 0 calc(-14px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale));background-position-x:calc(-176px * var(--gui-scale))}
+html.gui112-furnace body #inventory .furnace-flame{position:absolute;left:calc(56px * var(--gui-scale));top:calc((49 - var(--burn)) * 1px * var(--gui-scale));width:calc(14px * var(--gui-scale));height:calc(var(--burn) * 1px * var(--gui-scale));background:var(--gui112-furnace) calc(-176px * var(--gui-scale)) calc((var(--burn) - 13) * 1px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))}
 #inventory[data-container="inventory"] #tileContents,#inventory[data-container="crafting"] #tileContents{display:none!important}
 #inventory[data-container] .container-slot{z-index:1}
 #recipeBookToggle{position:absolute;left:calc(104px * var(--gui-scale));top:calc(61px * var(--gui-scale));width:calc(20px * var(--gui-scale));height:calc(18px * var(--gui-scale));padding:0;font-size:calc(10px * var(--gui-scale));background:#788879;border:1px solid #404040;z-index:2}

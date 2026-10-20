@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {GUI112,gui112Scale} from '../src/gui112-layout.js';
 import {GUI112_FILES,GUI112_SHA1,validGui112Assets,applyGui112} from '../src/gui112-assets.js';
@@ -19,4 +20,29 @@ test('owner-owned JAR importer rejects incomplete graphical assets',()=>{
  assert.ok(Object.values(GUI112_FILES).every(p=>p.startsWith('assets/minecraft/textures/gui/')));
  assert.equal(validGui112Assets({widgets:'data:image/png;base64,AA=='}),false);
  assert.equal(applyGui112(null,{}),false);
+});
+
+test('owner sprite selectors target <html>, matching applyGui112(document.documentElement, assets)',()=>{
+ const css=readFileSync(new URL('../gui112.css',import.meta.url),'utf8');
+ const js=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(js,/applyGui112\(document\.documentElement,assets\)/);
+ assert.match(js,/restoreGui112\(document\.documentElement\)/);
+ assert.match(css,/html\.gui112-assets body #hotbar/);
+ assert.match(css,/html\.gui112-assets body #crosshair/);
+ assert.match(css,/html\.gui112-assets body #inventory\[data-container="inventory"\]/);
+ assert.match(css,/html\.gui112-chest body #inventory/);
+ assert.match(css,/html\.gui112-furnace body #inventory/);
+ assert.doesNotMatch(css,/body\.gui112-(?:assets|chest|furnace)/);
+ assert.match(html,/gui112\.css\?v=1\.3/);
+});
+test('owner-supplied four PNGs activate the root class and CSS properties',()=>{
+ const names=new Set(),props={};
+ const root={classList:{add:(x)=>names.add(x),toggle:(x,on)=>on?names.add(x):names.delete(x)},style:{setProperty:(k,v)=>props[k]=v}};
+ const assets={widgets:'data:image/png;base64,AA==',icons:'data:image/png;base64,AA==',inventory:'data:image/png;base64,AA==',crafting:'data:image/png;base64,AA=='};
+ assert.equal(applyGui112(root,assets),true);
+ assert.ok(names.has('gui112-assets'));
+ assert.ok(!names.has('gui112-chest'));
+ assert.ok(!names.has('gui112-furnace'));
+ assert.match(props['--gui112-widgets'],/data:image\/png/);
 });
