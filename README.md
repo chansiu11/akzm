@@ -1,3 +1,13 @@
+# Voxel Frontier v1.3 — GitHub Pages 배포본
+
+현재 `main`의 통합 개발본은 GitHub Pages 배포 기록에서 성공으로 확인되었습니다 (커밋 `459550914394195fcf87c4f1b8cd9dbfd63224ef`). 1.8.9 명령어 59종과 별칭 3종의 문법/Tab 자동완성 목록을 포함하지만, 모든 명령어가 완전히 실행되지는 않습니다. 실제 3D 인게임 호환성은 검증되지 않았습니다. 아래의 '코드 전용', 'GitHub 미적용' 문구는 **이전 단계의 작성 당시 기록**입니다.
+
+웹사이트: https://chansiu11.github.io/akzm/
+
+---
+
+## 이전 단계 개발 기록
+
 # Voxel Frontier — 단계 3 코드 전용 v0.7
 
 **주의: GitHub/Render 미적용.** 이 버전은 공식 Minecraft Java Edition 1.8.9 바닐라와 기능을 비교하기 위한 독립 구현입니다. 원본 프로그램·이미지·소리를 재배포하지 않습니다.
