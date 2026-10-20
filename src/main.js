@@ -7,7 +7,8 @@ import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {beginChunk,progressChunk} from './chunk-builder.js';
 import {restoreLocalAtlas} from './resource-pack.js';
 import {loadAutomaticTextures} from './auto-resources.js';
-import {lookDelta,joystickDelta} from './touch.js';
+import {lookDelta} from './touch.js';
+import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
 import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings} from './menu.js';
 import {setupCommandUI} from './command-ui.js';
 import {createParticles} from './particles.js';
@@ -59,21 +60,14 @@ const solidMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,side
 const leafMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,side:THREE.DoubleSide,alphaTest:.45});
 const glassMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,transparent:true,opacity:.44,depthWrite:false,side:THREE.DoubleSide});
 const waterMat=new THREE.MeshLambertMaterial({map:waterTexture,vertexColors:true,transparent:true,opacity:.67,depthWrite:false,side:THREE.DoubleSide});
-function findSafeSpawn(w){
-  for(let r=0;r<=64;r+=8)for(let dx=-r;dx<=r;dx+=8)for(let dz=-r;dz<=r;dz+=8){
-   if(r!==0&&Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;
-   const x=3+dx,z=3+dz,height=w.surfaceHeight(x,z);
-   if(height>=64&&height<=150&&w.biome(x,z)!=='ocean')return {x:x+.5,y:w.columnTop(x,z)+2,z:z+.5};
-  }
-  return {x:3.5,y:Math.max(w.columnTop(3,3)+3,65),z:3.5};
-}
 const saved=readSave(),gameMode=activeWorldMode(),cheatsAllowed=activeWorldCheats(),world=new World(saved?.world,{seed:activeWorldSeed()});
 const inventoryRestore=restoreInventory(Array.isArray(saved?.inventory)?saved.inventory:gameMode==='survival'?[]:cleanInventory(null),saved?.inventoryOverflow);
 const inventory=inventoryRestore.slots,inventoryOverflow=inventoryRestore.overflow;
 let selected=Number.isInteger(saved?.selected)?Math.max(0,Math.min(8,saved.selected)):0;
 const commandState=new CommandWorldState(saved?.commandState);
 const spawn=findSafeSpawn(world);
-const player={x:saved?.player?.x??spawn.x,y:saved?.player?.y??spawn.y,z:saved?.player?.z??spawn.z,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
+const restoredPosition=restoreSafePlayerPosition(world,saved?.player,spawn);
+const player={x:restoredPosition.x,y:restoredPosition.y,z:restoredPosition.z,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
 let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,clickHold=false,damage=0,aimKey='',saveTimer=0,noticeTimer=0;
 const keys=new Set(),meshes=new Map(),pending=[],queued=new Set();let activeBuild=null;
 const effects=createParticles(scene);
@@ -88,7 +82,7 @@ const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInte
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 if(touchMode)document.body.classList.add('touch-ui');
-const mobileMove={forward:0,strafe:0};let mobileJump=false;let activeLook=null;const size=16;let renderRadius=settings.renderDistance;let lastChunk='';
+const mobileMove={forward:0,strafe:0};let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=settings.renderDistance;let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
@@ -117,13 +111,7 @@ function loadArea(){const cx=Math.floor(player.x/size),cz=Math.floor(player.z/si
  for(const [id,list] of [...meshes]){const [a,b]=id.split(',').map(Number);if(Math.abs(a-cx)>renderRadius+1||Math.abs(b-cz)>renderRadius+1){for(const m of list){scene.remove(m);m.geometry.dispose()}meshes.delete(id)}}}
 const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{updateNearBlock(x,z);saveTimer=0;});
 function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))enqueue(cx+dx,cz+dz)}
-function collides(x,y,z){const r=.29,eps=.001;
- for(let bx=Math.floor(x-r);bx<=Math.floor(x+r);bx++)for(let by=Math.floor(y+eps);by<=Math.floor(y+1.8-eps);by++)for(let bz=Math.floor(z-r);bz<=Math.floor(z+r);bz++){
-  const block=world.getBlock(bx,by,bz),boxes=blockBoxes(block);
-  if(intersectsAABB(boxes,bx,by,bz,x-r,y+eps,z-r,x+r,y+1.8-eps,z+r))return true;
- }
- return false;
-}
+function collides(x,y,z){return playerCollides(world,x,y,z)}
 function moveAxis(axis,delta){
  if(!delta)return;
  const steps=Math.ceil(Math.abs(delta)/.09),d=delta/steps;
@@ -142,7 +130,7 @@ function moveAxis(axis,delta){
   player[axis]=nv;
  }
 }
-function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !keys.has('ShiftLeft');let speed=keys.has('ShiftLeft')?2:sprinting?5.7:4.4;if(usingFood)speed*=.2;if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;moveAxis('x',(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*dt*speed);moveAxis('z',(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*dt*speed)}
+function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !sneaking;let speed=sneaking?2:sprinting?5.7:4.4;if(usingFood)speed*=.2;if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;moveAxis('x',(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*dt*speed);moveAxis('z',(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*dt*speed)}
  const water=world.get(Math.floor(player.x),Math.floor(player.y+.7),Math.floor(player.z))===BLOCK.WATER;
  const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER;
  if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:8.2;player.onGround=false;survival.exert(sprinting?.8:.2)}
@@ -156,7 +144,29 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  camera.position.set(player.x,player.y+1.62,player.z);camera.rotation.set(player.pitch,player.yaw,0);}
 const selectOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:'#fff4c1',depthTest:false}));selectOutline.visible=false;scene.add(selectOutline);
 const raycaster=new THREE.Raycaster();raycaster.far=5;const forward=new THREE.Vector3();let currentHit=null;
-function look(){raycaster.setFromCamera({x:0,y:0},camera);const targets=[...meshes.values()].flat();const hits=raycaster.intersectObjects(targets,false);let h=hits.find(hit=>hit.object.material!==waterMat);currentHit=h||null;if(h){const n=h.face.normal,p=h.point;const x=Math.floor(p.x-n.x*.002),y=Math.floor(p.y-n.y*.002),z=Math.floor(p.z-n.z*.002);selectOutline.position.set(x+.5,y+.5,z+.5);selectOutline.visible=true;el('target').textContent=`${BLOCK_NAMES[world.get(x,y,z)]} · ${x} ${y} ${z}`;return {x,y,z,normal:n,id:world.get(x,y,z),hitY:p.y}}selectOutline.visible=false;el('target').textContent='';return null}
+function look(){
+ const facing=camera.getWorldDirection(forward);
+ const blocked=obstructingBlockTarget(world,player,facing);
+ if(blocked){
+  currentHit=null;
+  selectOutline.position.set(blocked.x+.5,blocked.y+.5,blocked.z+.5);
+  selectOutline.visible=true;
+  el('target').textContent=`${BLOCK_NAMES[blocked.id]} · 끼인 블록 · ${blocked.x} ${blocked.y} ${blocked.z}`;
+  return blocked;
+ }
+ raycaster.setFromCamera({x:0,y:0},camera);
+ const targets=[...meshes.values()].flat();
+ const hits=raycaster.intersectObjects(targets,false);
+ const h=hits.find(hit=>hit.object.material!==waterMat);currentHit=h||null;
+ if(h){
+  const n=h.face.normal,p=h.point;
+  const x=Math.floor(p.x-n.x*.002),y=Math.floor(p.y-n.y*.002),z=Math.floor(p.z-n.z*.002);
+  selectOutline.position.set(x+.5,y+.5,z+.5);selectOutline.visible=true;
+  el('target').textContent=`${BLOCK_NAMES[world.get(x,y,z)]} · ${x} ${y} ${z}`;
+  return {x,y,z,normal:n,id:world.get(x,y,z),hitY:p.y};
+ }
+ selectOutline.visible=false;el('target').textContent='';return null;
+}
 function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle,survival:survival.serialize(),weather:weatherCycle.serialize(),tiles:tiles.save(),progression:progression.serialize(),commandState:commandState.serialize(),entities:entityWorld.serialize(),drops:drops.serialize()};}
 function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()));notify('월드 저장 완료')}catch{notify('저장할 수 없습니다: 브라우저 저장공간을 확인하세요')}}
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
@@ -220,10 +230,10 @@ function startUseSelected(){
 }
 function cancelUsing(){usingFood=false;foodHold=0;}
 
-function openInventory({table=false}={}){cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI()}
+function openInventory({table=false}={}){cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI()}
 function closeInventory(){returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
 function requestPlay(){enteredWorld=true;worldPaused=false;menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}{const lock=canvas.requestPointerLock?.();lock?.catch(()=>menus.showPause())}}
-function pauseGame(){worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.();menus.showPause()}
+function pauseGame(){worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
 // Initial command subset; commands never bypass the same World.set limits as normal placing.
 const commandUI=setupCommandUI({
  onOpen:()=>{running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.()},
@@ -268,24 +278,59 @@ const commandUI=setupCommandUI({
 });
 const onPointer=()=>{if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running)cancelUsing();if(!survival.dead&&!running&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
 document.addEventListener('mousemove',e=>{if(!running||touchMode)return;Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100))});
-// The mobile viewport only turns the camera. Movement/action overlays manage their own pointers.
-canvas.addEventListener('pointerdown',e=>{if(!touchMode||e.pointerType==='mouse'||!running||activeLook)return;e.preventDefault();activeLook={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture?.(e.pointerId)});
-canvas.addEventListener('pointermove',e=>{if(!running||!activeLook||activeLook.id!==e.pointerId)return;e.preventDefault();const dx=e.clientX-activeLook.x,dy=e.clientY-activeLook.y;activeLook.x=e.clientX;activeLook.y=e.clientY;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100*1.46))});
-for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>{if(activeLook?.id===e.pointerId)activeLook=null});
+// Minecraft-style touch: drag to look, tap to use/place, hold a block to mine.
+// Pointer-captured viewport gestures do not interfere with the independent D-pad.
+function endTouchLook(e,cancelled=false){
+ if(!activeLook||activeLook.id!==e.pointerId)return;
+ const gesture=activeLook;activeLook=null;
+ const wasMining=gesture.mining;
+ if(wasMining){clickHold=false;damage=0;aimKey='';return;}
+ if(!cancelled&&running&&!gesture.moved&&performance.now()-gesture.start<550){
+  const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));
+  if(victim){effects.emit('crit',[victim.x,victim.y+1.2,victim.z],[.3,.3,.3],.1,6);audio.beep('hit');track('entityHits');survival.exert(.3);}
+  else useOrPlace();
+ }
+}
+canvas.addEventListener('pointerdown',e=>{
+ if(!touchMode||e.pointerType==='mouse'||!running||activeLook)return;
+ e.preventDefault();activeLook={id:e.pointerId,x:e.clientX,y:e.clientY,start:performance.now(),distance:0,moved:false,mining:false};
+ canvas.setPointerCapture?.(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+ if(!running||!activeLook||activeLook.id!==e.pointerId)return;
+ e.preventDefault();const g=activeLook,dx=e.clientX-g.x,dy=e.clientY-g.y;
+ g.x=e.clientX;g.y=e.clientY;g.distance+=Math.hypot(dx,dy);
+ if(g.distance>10){g.moved=true;if(g.mining){clickHold=false;damage=0;g.mining=false;}}
+ if(g.moved)Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100*1.46));
+});
+canvas.addEventListener('pointerup',e=>endTouchLook(e));
+canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
+canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
 window.addEventListener('keydown',e=>{if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT')return;if(running&&cheatsAllowed&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(e.button===0){const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
-// Virtual joystick and independent touch actions. All pointer gestures are local-only.
-const stick=el('joystick'),thumb=el('stickThumb');let stickPointer=null;
-const resetStick=()=>{stickPointer=null;mobileMove.forward=mobileMove.strafe=0;thumb.style.transform='translate(-50%,-50%)'};
-function trackStick(e){const r=stick.getBoundingClientRect();const d=joystickDelta(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2),46);mobileMove.forward=d.forward;mobileMove.strafe=d.strafe;thumb.style.transform=`translate(calc(-50% + ${d.thumbX}px),calc(-50% + ${d.thumbY}px))`}
-stick.addEventListener('pointerdown',e=>{if(!running||stickPointer!==null)return;e.preventDefault();stickPointer=e.pointerId;stick.setPointerCapture?.(e.pointerId);trackStick(e)});
-stick.addEventListener('pointermove',e=>{if(stickPointer!==e.pointerId)return;e.preventDefault();trackStick(e)});
-for(const type of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(type,e=>{if(stickPointer===e.pointerId)resetStick()});
-function holdAction(id,onStart,onEnd){const b=el(id);let heldPointer=null;b.addEventListener('pointerdown',e=>{if(!running||heldPointer!==null)return;e.preventDefault();heldPointer=e.pointerId;b.setPointerCapture?.(e.pointerId);onStart()});for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,e=>{if(e.pointerId===heldPointer){heldPointer=null;onEnd?.()}})}
-holdAction('touchBreak',()=>{const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){effects.emit('crit',[victim.x,victim.y+1.2,victim.z],[.3,.3,.3],.1,6);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''},()=>{clickHold=false;damage=0});
+// Direction pad and classic touch action buttons. All iconography is original CSS/text.
+const heldDirections=new Set();
+function syncDpad(){
+ mobileMove.forward=(heldDirections.has('up')?1:0)-(heldDirections.has('down')?1:0);
+ mobileMove.strafe=(heldDirections.has('right')?1:0)-(heldDirections.has('left')?1:0);
+}
+function holdAction(id,onStart,onEnd){
+ const b=el(id);let heldPointer=null;
+ b.addEventListener('pointerdown',e=>{if(!running||heldPointer!==null)return;e.preventDefault();heldPointer=e.pointerId;b.setPointerCapture?.(e.pointerId);onStart();});
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,e=>{
+  if(e.pointerId===heldPointer){heldPointer=null;onEnd?.();}
+ });
+}
+for(const [direction,id] of [['up','touchUp'],['down','touchDown'],['left','touchLeft'],['right','touchRight']]){
+ holdAction(id,()=>{heldDirections.add(direction);syncDpad()},()=>{heldDirections.delete(direction);syncDpad()});
+}
 holdAction('touchJump',()=>{mobileJump=true},()=>{mobileJump=false});
-holdAction('touchPlace',useOrPlace,cancelUsing);
+el('touchSneak').addEventListener('click',()=>{
+ if(!running)return;mobileSneak=!mobileSneak;
+ el('touchSneak').classList.toggle('pressed',mobileSneak);
+ el('touchSneak').setAttribute('aria-pressed',String(mobileSneak));
+});
 el('touchCommand').classList.toggle('hidden',!cheatsAllowed);
 el('touchCommand').addEventListener('click',()=>{if(running&&cheatsAllowed)commandUI.show()});
 el('touchBag').addEventListener('click',()=>{if(running)openInventory()});
@@ -341,7 +386,7 @@ el('craftOutput').addEventListener('click',()=>{const product=craftGridOnce(craf
  if(product){audio.beep('craft');track('crafted');if(product.id===BLOCK.CRAFTING_TABLE)track('craftedTable');if(product.id>=110&&product.id<=114)track('craftedPickaxe');updateUI();renderCrafting();notify(`아이템 ×${product.count} 제작 완료`);saveTimer=0;}
 });
 el('weatherToggle').addEventListener('click',()=>{weatherCycle.set(weatherCycle.kind==='clear'?'rain':weatherCycle.kind==='rain'?'thunder':'clear');el('weatherToggle').textContent='날씨 미리보기: '+weatherCycle.kind;notify('날씨: '+weatherCycle.kind)});
-el('respawnButton').addEventListener('click',()=>{survival.respawn();player.x=(commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z])[0];player.y=(commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z])[1];player.z=(commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z])[2];player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');requestPlay();saveTimer=0});
+el('respawnButton').addEventListener('click',()=>{survival.respawn();const requestedSpawn=commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z];const safeRespawn=restoreSafePlayerPosition(world,{x:requestedSpawn[0],y:requestedSpawn[1],z:requestedSpawn[2]},spawn);player.x=safeRespawn.x;player.y=safeRespawn.y;player.z=safeRespawn.z;player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');requestPlay();saveTimer=0});
 function showDeath(){if(!survival.dead||!el('deathScreen').classList.contains('hidden'))return;
  cancelUsing();running=false;document.exitPointerLock?.();
  if(gameMode==='survival'&&!commandState.rules.keepInventory){for(const item of dropInventoryOnDeath(inventory,inventoryOverflow)){
@@ -363,7 +408,8 @@ el('closeInventory').addEventListener('click',closeInventory);
 el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
+function loop(now){requestAnimationFrame(loop);
+ if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
   for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);
   if(running){const lastX=player.x,lastZ=player.z;stepPhysics(dt);track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
@@ -383,6 +429,6 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-(loop.
   // CPU mesh generation is spread over multiple animation frames.
   if(progressChunk(activeBuild,4)){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
  }
- if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}el('survivalHud').textContent=`❤ ${survival.health.toFixed(0)}/20   🍗 ${survival.hunger.toFixed(0)}/20   ${survival.air<300?'◉ '+Math.ceil(survival.air/20):''}`;const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`VOXEL FRONTIER · v1.3\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
+ if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}el('survivalHud').textContent=`❤ ${survival.health.toFixed(0)}/20   🍗 ${survival.hunger.toFixed(0)}/20   ${survival.air<300?'◉ '+Math.ceil(survival.air/20):''}`;const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`VOXEL FRONTIER · v1.5\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera)}
 updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}});
