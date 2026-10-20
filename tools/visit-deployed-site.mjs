@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -62,6 +62,8 @@ async function review(viewport,label,touch=false){
   if(overlayHud!=='none')throw Error('Vanilla inventory regression: gameplay HUD is still visible.');
   const bounds=await page.locator('#inventory').boundingBox();
   if(!bounds||bounds.x<0||bounds.y<0||bounds.x+bounds.width>viewport.width||bounds.y+bounds.height>viewport.height)throw Error('Inventory panel exceeds viewport');
+  const closeBounds=await page.locator('#closeInventory').boundingBox();
+  if(!closeBounds||closeBounds.y<0||closeBounds.x<0||closeBounds.x+closeBounds.width>viewport.width)throw Error('Inventory close control is clipped');
   await page.screenshot({path:'site-review/'+label+'-inventory.png'});
   await page.locator('#closeInventory').click();
   await page.locator('#inventory').waitFor({state:'hidden'});

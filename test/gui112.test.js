@@ -58,3 +58,11 @@ test('inventory overlay hides the gameplay HUD and restores it when closed',()=>
  assert.match(js,/function requestPlay\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
  assert.match(html,/gui112\.css\?v=1\.4/);
 });
+
+test('touch inventory and external close control fit short landscape screens',()=>{
+ for(const [w,h] of [[844,390],[740,320],[667,375],[390,844]]){
+  const scale=gui112Scale(w,h,{touch:true});
+  assert.ok(166*scale+40*scale<=h);
+  assert.ok(182*scale<=w);
+ }
+});

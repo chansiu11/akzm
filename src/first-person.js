@@ -14,11 +14,11 @@ export function createFirstPerson(renderer,atlasTexture){
  const group=new THREE.Group();scene.add(group);
  const lit=new THREE.AmbientLight('#ffffff',1.35);scene.add(lit);
  const sun=new THREE.DirectionalLight('#fff8e8',1.2);sun.position.set(-2,4,3);scene.add(sun);
- const arm=cube(.34,.56,.36,skin);arm.position.set(.45,-.68,-.85);arm.rotation.z=-.29;group.add(arm);
- const cuff=cube(.36,.40,.38,sleeve);cuff.position.set(.52,-.98,-.80);cuff.rotation.z=-.29;group.add(cuff);
+ const arm=cube(.34,.56,.36,skin);arm.position.set(.45,-.50,-.85);arm.rotation.z=-.29;group.add(arm);
+ const cuff=cube(.36,.40,.38,sleeve);cuff.position.set(.52,-.80,-.80);cuff.rotation.z=-.29;group.add(cuff);
  const blockMaterial=new THREE.MeshLambertMaterial({map:atlasTexture,transparent:true,alphaTest:.05});
- const held=cube(.28,.28,.28,blockMaterial);held.position.set(.20,-.59,-.63);held.rotation.set(.24,.65,.15);group.add(held);
- const toolGroup=new THREE.Group();toolGroup.position.set(.22,-.57,-.63);toolGroup.rotation.set(.08,0,-.45);group.add(toolGroup);
+ const held=cube(.28,.28,.28,blockMaterial);held.position.set(.45,-.32,-.85);held.rotation.set(.24,.65,.15);group.add(held);
+ const toolGroup=new THREE.Group();toolGroup.position.set(.45,-.30,-.85);toolGroup.rotation.set(.08,0,-.45);group.add(toolGroup);
  const stickMat=new THREE.MeshLambertMaterial({color:'#94673f'});
  const toolMaterials={110:new THREE.MeshLambertMaterial({color:'#a77f53'}),111:new THREE.MeshLambertMaterial({color:'#8e989c'}),112:new THREE.MeshLambertMaterial({color:'#d2d9db'}),113:new THREE.MeshLambertMaterial({color:'#f0c652'}),114:new THREE.MeshLambertMaterial({color:'#56c2be'})};
  const shaft=cube(.072,.46,.09,stickMat);shaft.position.y=-.05;toolGroup.add(shaft);

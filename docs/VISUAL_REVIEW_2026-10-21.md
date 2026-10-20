@@ -20,3 +20,10 @@ Base: 94ed8f6d15868ad6ee79a37b733a78131d1d30d5 (includes the work after 542b600)
 - Arm skin, pose, bob/swing/equip animation, item model JSON transforms, generated-item extrusion, inventory player preview, armor/offhand, tooltip/font rendering remain incomplete.
 - Non-cube block items still use a cube in hand. Item textures still include placeholder atlas tiles. Imported JAR GUI/block textures remain local to the owner's browser; no JAR or extracted assets were added.
 - Inventory interactions, recipe book, terrain generation, light propagation, redstone, mobs, dimensions and multiplayer retain the outstanding gates in CONTINUATION_112_2026-10-21.md.
+
+## Deployed review and second visual correction
+- ec56f0d: Node tests and Pages succeeded. Chromium run 39514170521 opened the public site at 1440x900, 390x844 and 844x390 and passed menu/world/inventory checks. Downloaded and inspected the actual screenshots.
+- Visual inspection found two issues beyond those checks: held block mostly below the bottom edge, and the landscape close button partially clipped above the viewport.
+- Raised and moved the held block/tool to the lower-right view area, raised the empty arm, and limited touch GUI scale by available height including the external close control. These are independently chosen transforms, not measured vanilla transforms.
+- Added an explicit close-button bounds assertion and a short-screen scale regression. Local suite: 181 passed.
+- Desktop Chromium screenshots looked vertically upward after pointer lock; they do not validate world terrain appearance. Mobile screenshots show terrain. Camera input and same-seed vanilla screenshot comparison remain open.
