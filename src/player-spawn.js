@@ -45,7 +45,20 @@ export function findSafeSpawn(world,{x=3,z=3,radius=18}={}) {
       }
     }
   }
-  // Emergency high position: ensures body is free even if the local area is blocked.
+  // Ocean or blocked start: search progressively wider with a sparse grid before
+  // giving up. This avoids a dangerous unsupported spawn over deep water.
+  for(let r=Math.max(radius+8,24);r<=256;r+=8){
+    for(let dx=-r;dx<=r;dx+=8)for(let dz=-r;dz<=r;dz+=8){
+      if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;
+      const bx=cx+dx,bz=cz+dz;
+      if(world.biome(bx,bz)==='ocean')continue;
+      for(const y of candidateHeight(world,bx,bz)){
+        const px=bx+.5,pz=bz+.5;
+        if(safeStanding(world,px,y,pz))return {x:px,y,z:pz};
+      }
+    }
+  }
+  // Last resort: never embed inside blocks, even if no safe floor was found.
   const top=world.columnTop(cx,cz);
   return {x:cx+.5,y:Math.max(2,Math.min(MAX_Y+2,top+3)),z:cz+.5};
 }

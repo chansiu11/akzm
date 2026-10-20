@@ -40,3 +40,10 @@ test('bedrock and water are never emergency mining targets',()=>{
  w.set(Math.floor(s.x),s.y,Math.floor(s.z),BLOCK.WATER);
  assert.equal(obstructingBlockTarget(w,s),null);
 });
+
+test('100 unrelated world seeds find dry supported spawn points',()=>{
+ for(let i=0;i<100;i++){
+  const w=new World(null,{seed:i*100003+17}),s=findSafeSpawn(w);
+  assert.equal(safeStanding(w,s.x,s.y,s.z),true,`seed ${w.seed} spawned over unsupported surface: ${JSON.stringify(s)}`);
+ }
+});
