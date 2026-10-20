@@ -1,6 +1,38 @@
 // Low-resolution original voxel landscape panorama for the menu only. No textures or brand art copied.
+// Perspective cube terrain replaces purely flat silhouette layers in the near field.
 const rand=(x,y,z=0)=>{let n=Math.imul(x+19,374761393)^Math.imul(y+97,668265263)^Math.imul(z+7,2246822519);n=Math.imul(n^(n>>>13),1274126177);return (n>>>0)/4294967295};
 const W=400,H=225;
+
+function drawVoxelTerrain(ctx,offset){
+ // Paint back-to-front cube terraces. Stable hashed samples create different
+ // visible grass, soil and shallow river tones without embedding assets.
+ for(let depth=31;depth>=5;depth--){
+  const unit=Math.max(2,Math.round(90/depth));
+  const visible=Math.ceil(W/(2*unit))+1;
+  for(let col=-visible;col<=visible;col++){
+   const worldX=col+Math.floor(offset*.015),worldZ=depth;
+   const variation=rand(worldX,worldZ),slope=Math.sin(worldX*.16+depth*.11)*2.1+Math.sin(worldX*.35-depth*.23)*1.1;
+   const ground=Math.round(slope+variation*.8);
+   const x=Math.floor(W/2+col*unit);
+   const y=Math.floor(119+(31-depth)*3-ground*unit*.47);
+   if(x+unit<0||x>W||y>H+unit||y<-unit)continue;
+   const streamX=Math.sin(depth*.18+1.3)*4;
+   const wet=Math.abs(worldX-streamX)<2.1;
+   const top=wet?(variation>.45?'#548fb0':'#4f8fa9'):(variation>.68?'#628d48':variation>.34?'#618345':'#75944e');
+   const dirt=variation>.66?'#564a34':'#5c4a34';
+   ctx.fillStyle=wet?'#49798d':dirt;ctx.fillRect(x,y,unit,Math.max(unit*.55,2));
+   ctx.fillStyle=top;ctx.fillRect(x,y-unit*.24,unit,Math.max(1,unit*.32));
+   ctx.fillStyle=wet?'#84b5c8':'#394930';ctx.fillRect(x+unit-1,y,1,Math.max(unit*.55,2));
+   if(depth<20&&!wet&&variation>.989){
+     const trunk=Math.max(1,Math.floor(unit*.27)),h=unit*2.5;
+     ctx.fillStyle='#554735';ctx.fillRect(x+unit*.4,y-h,trunk,h);
+     ctx.fillStyle=variation>.996?'#4d7754':'#406444';ctx.fillRect(x-unit*.2,y-h-unit*1.25,unit*1.45,unit*1.2);
+     ctx.fillStyle='#527951';ctx.fillRect(x+unit*.02,y-h-unit*1.45,unit,unit*.3);
+   }
+  }
+ }
+}
+
 export function drawPanoramaFrame(ctx,t=0){
  if(!ctx)return;
  const image=ctx.createLinearGradient(0,0,0,H);image.addColorStop(0,'#77b6e6');image.addColorStop(.72,'#c9e6ef');image.addColorStop(1,'#c8e3bc');ctx.fillStyle=image;ctx.fillRect(0,0,W,H);
@@ -18,6 +50,7 @@ export function drawPanoramaFrame(ctx,t=0){
  // Blocky near-field earth and moss, with occasional rocks and tufts.
  for(let y=190;y<H;y+=5)for(let x=0;x<W;x+=5){const n=rand(x/5,y/5),a=n>.7?'#465a38':n>.35?'#3d5636':'#34502c';ctx.fillStyle=a;ctx.fillRect(x,y,5,5);if(n>.93){ctx.fillStyle='#9bad83';ctx.fillRect(x+1,y,1,2)}}
  for(let i=0;i<32;i++){const x=Math.floor(rand(i,3)*W/4)*4,y=186+Math.floor(rand(i,4)*38/4)*4;ctx.fillStyle=rand(i,5)>.5?'#b0aaa0':'#788273';ctx.fillRect(x,y,4,3)}
+ drawVoxelTerrain(ctx,offset);
  // Clouds wander gently through the sky.
  for(let i=0;i<10;i++){const x=Math.floor((i*109-offset*.62+W*40)% (W+140))-60,y=12+(i*37)%74;
   ctx.fillStyle='#f0f5f2';ctx.fillRect(x,y,43,7);ctx.fillRect(x+9,y-6,28,7);ctx.fillRect(x+19,y-10,14,6);

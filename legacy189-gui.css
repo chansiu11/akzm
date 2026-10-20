@@ -1,0 +1,92 @@
+/* GUI coordinate alignment based on logical sizes used by Java 1.8.9;
+   all pixel art is independently drawn with CSS. */
+:root{--gui-scale:2;--gui-bottom:10px}
+#hotbar{
+ box-sizing:border-box!important;
+ width:calc(182px * var(--gui-scale));height:calc(22px * var(--gui-scale));
+ min-width:0;max-width:calc(100vw - 10px);
+ display:grid!important;grid-template-columns:repeat(9,calc(20px * var(--gui-scale)))!important;
+ align-content:center;justify-content:center;
+ border:0!important;gap:0!important;padding:0!important;
+ background:linear-gradient(#525654bd,#3e4340d9 45%,#222827eb)!important;
+ box-shadow:inset 0 calc(2px * var(--gui-scale)) #bcbeb9b8,inset 0 calc(-2px * var(--gui-scale)) #070a0aa3,
+            inset calc(2px * var(--gui-scale)) 0 #a1a39c99,
+            inset calc(-2px * var(--gui-scale)) 0 #14181ac9!important;
+ bottom:var(--gui-bottom)!important;
+}
+#hotbar .slot{
+ box-sizing:border-box;width:calc(20px * var(--gui-scale))!important;
+ height:calc(20px * var(--gui-scale))!important;
+ border:calc(1px * var(--gui-scale)) solid #272d2bc0!important;
+ border-top-color:#1119179c!important;border-right-color:#aeb6b19e!important;
+ padding:0!important;box-shadow:none!important;
+ background:#90988a57!important;
+}
+#hotbar .slot.active{
+ background:#b0b9b250!important;
+ border:calc(2px * var(--gui-scale)) solid #f0f0e8!important;
+ outline:calc(1px * var(--gui-scale)) solid #454943;
+ outline-offset:0;z-index:3;
+}
+#hotbar .slot .tileIcon{width:calc(13px * var(--gui-scale))!important;height:calc(13px * var(--gui-scale))!important;image-rendering:pixelated}
+#hotbar .slot span{font-family:monospace;font-size:calc(7px * var(--gui-scale))!important;bottom:calc(1px * var(--gui-scale));right:calc(2px * var(--gui-scale));line-height:1}
+#survivalHud{
+ width:calc(182px * var(--gui-scale))!important;
+ max-width:calc(100vw - 10px);
+ bottom:calc(var(--gui-bottom) + 22px * var(--gui-scale) + 2px * var(--gui-scale))!important;
+ left:50%!important;transform:translateX(-50%)!important;
+}
+.vitals-top{width:100%;display:flex;justify-content:space-between;gap:0;align-items:center}
+.vital-hearts,.vital-food,.vital-air{gap:0!important;height:calc(10px * var(--gui-scale))!important}
+.pixel-vital.heart,.pixel-vital.food{
+ width:calc(8px * var(--gui-scale))!important;
+ height:calc(9px * var(--gui-scale))!important;
+ filter:drop-shadow(1px 1px #101511)!important;
+}
+.pixel-vital.bubble{width:calc(8px * var(--gui-scale))!important;height:calc(8px * var(--gui-scale))!important}
+.pixel-xp-track{
+ box-sizing:border-box;width:100%;height:calc(5px * var(--gui-scale))!important;
+ margin-top:calc(1px * var(--gui-scale))!important;
+ border:calc(1px * var(--gui-scale)) solid #222920!important;
+}
+/* The 1.8-era crosshair is a compact 15 logical pixel sprite; implement without copying it. */
+#crosshair{width:calc(15px * var(--gui-scale))!important;height:calc(15px * var(--gui-scale))!important;transform:translate(-50%,-50%)!important}
+#crosshair:before{width:calc(1px * var(--gui-scale))!important;height:calc(15px * var(--gui-scale))!important;left:calc(7px * var(--gui-scale))!important;top:0!important}
+#crosshair:after{height:calc(1px * var(--gui-scale))!important;width:calc(15px * var(--gui-scale))!important;left:0!important;top:calc(7px * var(--gui-scale))!important}
+/* Ordinary gameplay does not expose a permanent debug text wall. F3 toggles this. */
+body:not(.debug-overlay) #status{display:none!important}
+body.debug-overlay #status{display:block!important}
+/* Grid inventory rather than three wide cards, retaining all interactive slots. */
+#inventory{width:min(calc(220px * var(--gui-scale)),96vw);max-height:min(92dvh,860px);padding:calc(9px * var(--gui-scale))}
+#invItems{
+ display:grid!important;grid-template-columns:repeat(9,minmax(0,1fr))!important;
+ gap:calc(1px * var(--gui-scale))!important;
+ margin:calc(5px * var(--gui-scale)) 0;
+}
+#invItems .item{min-width:0;min-height:0!important;aspect-ratio:1;padding:1px!important;position:relative;overflow:hidden}
+#invItems .item .tileIcon{width:min(70%,36px);height:min(70%,36px);margin:auto}
+#invItems .item span{position:absolute;right:1px;bottom:0;font-size:calc(5px * var(--gui-scale))!important;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:clip}
+#inventory h3{margin:calc(7px * var(--gui-scale)) 0 calc(3px * var(--gui-scale));font-size:clamp(12px,calc(7px * var(--gui-scale)),18px)}
+#inventory .catalog-hint{margin:4px 0}
+#inventory .supplemental{font-size:12px;padding:5px;border:1px solid #777;margin:10px 0}
+#inventory .supplemental summary{cursor:pointer;font-weight:bold}
+/* Main menu proportions: three primary actions then settings/exit. */
+#overlay .title-page .menu-stack{width:min(400px,calc(100vw - 24px));gap:calc(3px * var(--gui-scale))!important;margin:0 auto}
+#overlay .title-page button.stone-button{height:calc(20px * var(--gui-scale))!important;min-height:0!important;padding:0 8px!important;font-size:calc(8px * var(--gui-scale))!important}
+#overlay .title-page .menu-duo{gap:calc(2px * var(--gui-scale))!important;margin-top:calc(6px * var(--gui-scale))}
+#overlay .title-page .brand-shadow{margin:max(3vh,12px) auto clamp(28px,9vh,95px)}
+#overlay .secondary-help{font-size:11px;background:#10171b75;border:1px solid #89928b75;padding:5px 12px;margin:18px auto 0;color:#f9f9f5;cursor:pointer}
+#menuPanorama{filter:blur(2px) brightness(.73) saturate(.87)!important}
+@media(max-width:670px){
+ #overlay .title-page .menu-stack{gap:4px!important}
+ #overlay .title-page button.stone-button{min-height:38px!important;height:38px!important;font-size:15px!important}
+ #overlay .title-page .brand-shadow{margin:4vh auto 5vh}
+ #inventory{width:min(96vw,530px);padding:8px}
+ #invItems .item span{font-size:8px!important}
+}
+body.touch-ui #hotbar{bottom:var(--gui-bottom)!important}
+body.touch-ui #survivalHud{bottom:calc(var(--gui-bottom) + 24px * var(--gui-scale))!important}
+@media(max-height:500px){#overlay .title-page .brand-shadow{margin:3px auto 17px}#overlay .secondary-help{margin:7px auto 0}}
+/* 1.8 survival inventory: 27 storage slots, then a separate bottom hotbar row. */
+#invItems .item:nth-child(n+10){order:1}
+#invItems .item:nth-child(-n+9){order:2;margin-top:calc(3px * var(--gui-scale))}
