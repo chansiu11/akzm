@@ -39,6 +39,8 @@ import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js';
 import {createFirstPerson} from './first-person.js';
+import {installRecipeBook112} from './recipe-book112.js';
+import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
 import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js';
 
@@ -187,8 +189,10 @@ function updateUI(){
  firstPerson.setItem(inventory[selected]?.id??0);
  replenishOverflow(inventory,inventoryOverflow);
  el('hotbar').innerHTML=inventory.slice(0,9).map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Unknown'}"><small>${i+1}</small><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span></button>`).join('');
- el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(itemDefinition(item.id)?.name??'Unknown')+' · '+item.count:'빈칸'}</span></button>`).join('');
+ el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(item.count>1?item.count:''):''}</span></button>`).join('');
+ layoutContainer112(el('inventory'));
 }
+function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;
  if(world.set(t.x,t.y,t.z,0)){
@@ -238,8 +242,8 @@ function startUseSelected(){
 }
 function cancelUsing(){usingFood=false;foodHold=0;}
 
-function openInventory({table=false}={}){mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI()}
-function closeInventory(){returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
+function openInventory({table=false}={}){el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'))}
+function closeInventory(){recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
 function requestPlay(){enteredWorld=true;worldPaused=false;menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}{const lock=canvas.requestPointerLock?.();lock?.catch(()=>menus.showPause())}}
 function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
 // Initial command subset; commands never bypass the same World.set limits as normal placing.
@@ -314,7 +318,7 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
-window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT')return;if(running&&cheatsAllowed&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
+window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&cheatsAllowed&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
@@ -375,13 +379,16 @@ const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enter
 const palette=el('blockCatalog');
 if(gameMode==='survival'){palette.classList.add('hidden');document.querySelector('.catalog-title')?.classList.add('hidden');document.querySelector('.catalog-title')?.nextElementSibling?.classList.add('hidden');}
 const recipePane=el('craftRecipes');
-function renderTile(){const panel=el('tilePanel'),items=el('tileContents');items.replaceChildren();if(!activeTile){panel.classList.add('hidden');return;}panel.classList.remove('hidden');const {x,y,z,kind}=activeTile;const t=tiles.ensure(x,y,z,kind);el('tileTitle').textContent=kind==='chest'?'상자 (입금: 클릭 / 회수: Shift+클릭)':'화로 (선택 슬롯의 광석·연료 넣기)';
- if(kind==='chest'){t.slots.forEach((slot,i)=>{const b=document.createElement('button');b.textContent=slot.id?(itemDefinition(slot.id)?.name||slot.id)+' '+slot.count:'빈칸';b.addEventListener('click',e=>{const ok=e.shiftKey?withdrawOne(t.slots,i,inventory):depositOne(t.slots,i,inventory,selected);if(ok){updateUI();renderTile();saveTimer=0}});items.append(b)});}
- if(kind==='furnace'){for(const key of ['input','fuel','output']){const b=document.createElement('button');const slot=t[key];b.textContent=`${key}: ${slot.id?(itemDefinition(slot.id)?.name||slot.id)+' '+slot.count:'비어 있음'}`;b.addEventListener('click',()=>{let ok=false;if(key==='output'){ok=withdrawOne({output:t.output},'output',inventory)}else{const item=inventory[selected];if(item?.count>0&&(key==='input'?[18,19,4].includes(item.id):item.id===100)){ok=depositOne(t,key,inventory,selected)}}if(ok){renderTile();updateUI();saveTimer=0}});items.append(b)}const p=document.createElement('span');p.textContent='제련: '+Math.floor(t.progress*10)+'% / 연료 '+Math.ceil(t.burn)+'초';items.append(p);}
+const recipeBook112=installRecipeBook112(el('inventory'),GRID_RECIPES,()=>craftingSize);
+recipeBook112.setNames([...new Set(GRID_RECIPES.flatMap(r=>Object.values(r.keys)))].map(id=>[id,itemDefinition(id)?.name??String(id)]));
+function renderTile(){renderTileContents();layoutContainer112(el('inventory'));}
+function renderTileContents(){const panel=el('tilePanel'),items=el('tileContents');items.replaceChildren();if(!activeTile){panel.classList.add('hidden');return;}panel.classList.remove('hidden');const {x,y,z,kind}=activeTile;const t=tiles.ensure(x,y,z,kind);el('tileTitle').textContent=kind==='chest'?'상자 (입금: 클릭 / 회수: Shift+클릭)':'화로 (선택 슬롯의 광석·연료 넣기)';
+ if(kind==='chest'){t.slots.forEach((slot,i)=>{const b=document.createElement('button');b.textContent=slot.id?(itemDefinition(slot.id)?.name||slot.id)+' '+slot.count:'빈칸';b.addEventListener('click',e=>{const ok=e.shiftKey?withdrawOne(t.slots,i,inventory):depositOne(t.slots,i,inventory,selected);if(ok){updateUI();renderTile();saveTimer=0}});slotArtwork(b,slot);items.append(b)});}
+ if(kind==='furnace'){for(const key of ['input','fuel','output']){const b=document.createElement('button');const slot=t[key];b.textContent=`${key}: ${slot.id?(itemDefinition(slot.id)?.name||slot.id)+' '+slot.count:'비어 있음'}`;b.addEventListener('click',()=>{let ok=false;if(key==='output'){ok=withdrawOne({output:t.output},'output',inventory)}else{const item=inventory[selected];if(item?.count>0&&(key==='input'?[18,19,4].includes(item.id):item.id===100)){ok=depositOne(t,key,inventory,selected)}}if(ok){renderTile();updateUI();saveTimer=0}});b.dataset.furnaceSlot=key;slotArtwork(b,slot);items.append(b)}const p=document.createElement('span');p.textContent='제련: '+Math.floor(t.progress*10)+'% / 연료 '+Math.ceil(t.burn)+'초';p.className='furnace-status';items.append(p);const arrow=document.createElement('i');arrow.className='furnace-progress';arrow.style.setProperty('--progress',Math.floor(Math.min(1,t.progress/10)*24));items.append(arrow);const flame=document.createElement('i');flame.className='furnace-flame';flame.style.setProperty('--burn',Math.ceil(Math.min(1,t.burn/80)*13));items.append(flame);}
 }
 function interactBlock(t,kind){if(kind==='lever'){const state=world.getState(t.x,t.y,t.z);const enabled=!state.powered;world.set(t.x,t.y,t.z,BLOCK.LEVER,{powered:enabled});updateNearBlock(t.x,t.z);recomputeNearbyLamps(world,t.x,t.y,t.z);notify('레버: '+(enabled?'켜짐':'꺼짐'));saveTimer=0;return;}
  if(kind==='crafting'){openInventory({table:true});notify('3×3 제작대 · 재료를 직접 배치하세요');return;}
- if(kind==='chest'||kind==='furnace'){activeTile={x:t.x,y:t.y,z:t.z,kind};openInventory();renderTile();return;}
+ if(kind==='chest'||kind==='furnace'){activeTile={x:t.x,y:t.y,z:t.z,kind};openInventory();renderTile();layoutContainer112(el('inventory'));return;}
 }
 function returnUncrafted(){
  clearCraftGrid(craftingCells,inventory);
@@ -389,6 +396,7 @@ function returnUncrafted(){
  updateUI();
 }
 function updateRecipes(){
+ recipeBook112.refresh();
  recipePane.replaceChildren(...GRID_RECIPES.map(recipe=>{const el=document.createElement('span');el.textContent=`${recipe.name}: ${recipe.requiresTable?'3×3 제작대':'2×2 가능'} · ×${recipe.output.count}`;return el;}));
  renderCrafting();
 }
@@ -398,14 +406,14 @@ function renderCrafting(){
  el('craftTitle').textContent=`제작 · ${craftingSize}×${craftingSize}`;
  craftingCells.forEach((item,index)=>{
   const button=document.createElement('button');button.type='button';button.title=`${index+1}번 제작 칸, 재료 선택 후 클릭 또는 Shift+클릭으로 반환`;
-  button.textContent=item.id?`${itemDefinition(item.id)?.name??item.id} ×${item.count}`:'+';
+  slotArtwork(button,item);
   button.addEventListener('click',event=>{
    const success=event.shiftKey?takeCraftIngredient(craftingCells,index,inventory):placeCraftIngredient(craftingCells,index,inventory,selected);
    if(success){updateUI();renderCrafting();saveTimer=0;}
   });cells.append(button);
  });
  const match=recipeAt(craftingCells,craftingSize);
- output.disabled=!match;output.textContent=match?`${match.recipe.name} ×${match.recipe.output.count} 제작`:'일치하는 제작법 없음';
+ output.disabled=!match;slotArtwork(output,match?.recipe.output??{id:0,count:0});layoutContainer112(el('inventory'));
 }
 el('craftOutput').addEventListener('click',()=>{const product=craftGridOnce(craftingCells,craftingSize,inventory);
  if(product){audio.beep('craft');track('crafted');if(product.id===BLOCK.CRAFTING_TABLE)track('craftedTable');if(product.id>=110&&product.id<=114)track('craftedPickaxe');updateUI();renderCrafting();notify(`아이템 ×${product.count} 제작 완료`);saveTimer=0;}

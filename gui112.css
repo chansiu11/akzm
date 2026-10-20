@@ -88,3 +88,42 @@ body.gui112-assets #survivalHud .pixel-xp-fill{
 }
 body.touch-ui.gui112-assets #hotbar{bottom:var(--gui-bottom)!important}
 body.touch-ui.gui112-assets #survivalHud{bottom:calc(var(--gui-bottom) + 22px * var(--gui-scale))!important}
+/* Container coordinates are independent of imported artwork. */
+body:not(.touch-ui){--gui-bottom:0px}
+#inventory[data-container]{width:calc(176px * var(--gui-scale))!important;height:calc(var(--container-height,166) * 1px * var(--gui-scale));max-width:none;max-height:none;padding:0!important;overflow:visible;background:#c6c6c6!important;border:0!important;border-radius:0;box-shadow:0 0 0 100vmax #0008!important;color:#404040;image-rendering:pixelated}
+#inventory[data-container] .inventory-head{position:static}
+#inventory[data-container] .inventory-head strong{position:absolute;left:calc(8px * var(--gui-scale));top:calc(6px * var(--gui-scale));font-size:calc(8px * var(--gui-scale));font-weight:normal;line-height:1}
+#inventory[data-container="inventory"] .inventory-head strong{left:calc(97px * var(--gui-scale));top:calc(6px * var(--gui-scale))}
+#inventory[data-container="crafting"] .inventory-head strong{left:calc(28px * var(--gui-scale))}
+#inventory[data-container] #closeInventory{position:absolute;right:0;top:calc(-20px * var(--gui-scale));padding:2px 5px;font-size:12px}
+#inventory[data-container] :is(.catalog-hint,.supplemental,details,h3,p){display:none!important}
+#inventory[data-container] :is(#invItems,#craftGrid,.crafting-area,#tilePanel,#tileContents){display:contents!important}
+#inventory[data-container] :is(#invItems,#craftGrid,#tileContents) button,#inventory[data-container] #craftOutput{position:absolute!important;left:calc(var(--slot-x) * 1px * var(--gui-scale));top:calc(var(--slot-y) * 1px * var(--gui-scale));width:calc(16px * var(--gui-scale))!important;height:calc(16px * var(--gui-scale))!important;min-height:0!important;min-width:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;outline:0;overflow:visible;aspect-ratio:auto;display:grid;place-items:center;background:#8b8b8b!important;box-shadow:calc(-1px * var(--gui-scale)) calc(-1px * var(--gui-scale)) #373737,calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #fff!important}
+#inventory[data-container] .container-slot:hover{background:#c5c5c5!important}
+#inventory[data-container] .container-slot .tileIcon{width:calc(16px * var(--gui-scale))!important;height:calc(16px * var(--gui-scale))!important;margin:0;border:0;transform:none;box-shadow:none;image-rendering:pixelated}
+#inventory[data-container] .container-slot span{position:absolute;bottom:0;right:0;color:#fff;line-height:1;font-size:calc(8px * var(--gui-scale))!important;text-shadow:1px 1px #333;pointer-events:none}
+#inventory[data-container] #craftOutput:disabled{opacity:1}
+#inventory[data-container="chest"] :is(#craftGrid,#craftOutput),#inventory[data-container="furnace"] :is(#craftGrid,#craftOutput){display:none!important}
+#inventory[data-container="chest"] #craftGrid button,#inventory[data-container="furnace"] #craftGrid button{display:none!important}
+body.gui112-assets #inventory[data-container="inventory"]{background:var(--gui112-inventory) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+body.gui112-assets #inventory[data-container="crafting"]{background:var(--gui112-crafting) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+body.gui112-furnace #inventory[data-container="furnace"]{background:var(--gui112-furnace) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+body.gui112-chest #inventory[data-container="chest"]{background:var(--gui112-chest) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important}
+body.gui112-chest #inventory[data-container="chest"]:before{content:'';position:absolute;left:0;top:calc(71px * var(--gui-scale));width:100%;height:calc(97px * var(--gui-scale));background:var(--gui112-chest) 0 calc(-125px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat}
+#inventory[data-container] .furnace-status{display:none}
+#inventory[data-container] .furnace-progress{position:absolute;left:calc(79px * var(--gui-scale));top:calc(34px * var(--gui-scale));width:calc(var(--progress) * 1px * var(--gui-scale));height:calc(16px * var(--gui-scale));background:#eee}
+body.gui112-furnace #inventory .furnace-progress{background:var(--gui112-furnace) 0 calc(-14px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale));background-position-x:calc(-176px * var(--gui-scale))}
+body.gui112-furnace #inventory .furnace-flame{position:absolute;left:calc(56px * var(--gui-scale));top:calc((49 - var(--burn)) * 1px * var(--gui-scale));width:calc(14px * var(--gui-scale));height:calc(var(--burn) * 1px * var(--gui-scale));background:var(--gui112-furnace) calc(-176px * var(--gui-scale)) calc((var(--burn) - 13) * 1px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))}
+#inventory[data-container="inventory"] #tileContents,#inventory[data-container="crafting"] #tileContents{display:none!important}
+#inventory[data-container] .container-slot{z-index:1}
+#recipeBookToggle{position:absolute;left:calc(104px * var(--gui-scale));top:calc(61px * var(--gui-scale));width:calc(20px * var(--gui-scale));height:calc(18px * var(--gui-scale));padding:0;font-size:calc(10px * var(--gui-scale));background:#788879;border:1px solid #404040;z-index:2}
+#inventory[data-container="crafting"] #recipeBookToggle{left:calc(5px * var(--gui-scale));top:calc(35px * var(--gui-scale))}
+#inventory[data-container="chest"] #recipeBookToggle,#inventory[data-container="furnace"] #recipeBookToggle{display:none}
+#recipeBook112{position:absolute;right:calc(100% + 3px * var(--gui-scale));top:0;width:calc(147px * var(--gui-scale));height:100%;padding:calc(7px * var(--gui-scale));background:#c6c6c6;border:2px solid #444;overflow:auto;z-index:3;font-size:calc(7px * var(--gui-scale));color:#303030}
+#recipeBook112[hidden]{display:none}
+#recipeBook112 input{width:100%;font:inherit;background:#333;color:white;padding:4px}
+#recipeBook112 button{font:inherit;padding:4px;margin:2px;background:#8b8b8b;border:1px solid #444;color:white}
+#recipeBook112 pre{font:inherit;line-height:1.5}
+#recipeBook112 small{display:block;margin-top:8px;font:inherit}
+@media(max-width:1000px){#recipeBook112{right:0;width:100%}}
+#inventory[data-container] #recipeBook112 pre{display:block!important}

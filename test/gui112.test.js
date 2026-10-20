@@ -15,7 +15,7 @@ test('9 slots fit vanilla 182 pixel wide hotbar and mobile scaling remains safe'
  assert.ok(gui112Scale(375,667,{touch:true})>=1);
 });
 test('owner-owned JAR importer rejects incomplete graphical assets',()=>{
- assert.equal(Object.keys(GUI112_FILES).length,4);
+ assert.equal(Object.keys(GUI112_FILES).length,7);
  assert.ok(Object.values(GUI112_FILES).every(p=>p.startsWith('assets/minecraft/textures/gui/')));
  assert.equal(validGui112Assets({widgets:'data:image/png;base64,AA=='}),false);
  assert.equal(applyGui112(null,{}),false);

@@ -6,10 +6,13 @@ export const GUI112_FILES=Object.freeze({
  widgets:'assets/minecraft/textures/gui/widgets.png',
  icons:'assets/minecraft/textures/gui/icons.png',
  inventory:'assets/minecraft/textures/gui/container/inventory.png',
- crafting:'assets/minecraft/textures/gui/container/crafting_table.png'
+ crafting:'assets/minecraft/textures/gui/container/crafting_table.png',
+ chest:'assets/minecraft/textures/gui/container/generic_54.png',
+ furnace:'assets/minecraft/textures/gui/container/furnace.png',
+ recipeBook:'assets/minecraft/textures/gui/recipe_book.png'
 });
-export function validGui112Assets(a){return Object.keys(GUI112_FILES).every(k=>typeof a?.[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));}
-export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');return true;}
+export function validGui112Assets(a){return ['widgets','icons','inventory','crafting'].every(k=>typeof a?.[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));}
+export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))if(typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
 export function restoreGui112(root){try{const a=JSON.parse(localStorage.getItem(GUI112_KEY)||'null');return applyGui112(root,a)?a:null;}catch{return null;}}
 export function storeGui112(a){if(!validGui112Assets(a))return false;try{localStorage.setItem(GUI112_KEY,JSON.stringify(a));return true;}catch{return false;}}
 export async function readOwner112Jar(file){
