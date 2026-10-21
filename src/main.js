@@ -48,7 +48,7 @@ import {createFirstPerson} from './first-person.js?v=1.7';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.7';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.8';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const playerPreview112=createPlayerPreview112(el('inventory'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -186,13 +186,13 @@ function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot(
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
-let ownerItemIcons={},blockItemIcons={},ownerBlockGuiModels={};
+let ownerItemIcons={},blockItemIcons={},ownerBlockGuiModels={},ownerBlockIconModels={};
 const itemIconURI=id=>ownerItemIcons[id]??blockItemIcons[id];
 function iconClass(id){if(pngData(itemIconURI(id)))return ' owner-item-icon';return id>=110&&id<=114?' toolIcon tool-'+id:'';}
 function iconOffset(id){if(pngData(itemIconURI(id)))return `background-image:url('${itemIconURI(id)}')!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
  return `background-position:${(tile%8*100/7).toFixed(3)}% ${(Math.floor(tile/8)*100/(ATLAS_ROWS-1)).toFixed(3)}%`;
 }
-function showAtlas(canvas){try{blockItemIcons=renderBlockItemIcons(canvas,ownerBlockGuiModels);}catch(error){console.warn('Block item icons:',error);}texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);updateUI();}
+function showAtlas(canvas){try{blockItemIcons=renderBlockItemIcons(canvas,ownerBlockGuiModels,ownerBlockIconModels);}catch(error){console.warn('Block item icons:',error);}texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);updateUI();}
 function updateUI(){
  replenishOverflow(inventory,inventoryOverflow);
  firstPerson.setItem(inventory[selected]?.count>0?inventory[selected].id:0);
@@ -360,7 +360,7 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);
