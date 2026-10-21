@@ -64,10 +64,10 @@ export function drawPanoramaFrame(ctx,t=0){
 }
 export function startMenuPanorama(canvas){
  if(!canvas)return ()=>{};canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d',{alpha:false});
- let handle=0,active=true,last=-Infinity,ownerFaces=null;
- canvas.addEventListener('owner-panorama',event=>{ownerFaces=event.detail;});
+ let handle=0,active=true,last=-Infinity,ownerFaces=null,ownerStart=null;
+ canvas.addEventListener('owner-panorama',event=>{ownerFaces=event.detail;ownerStart=null;});
  function frame(time){if(!active)return;
-  if(document.body.classList.contains('menu-open')&&time-last>75){if(ownerFaces){const ratio=innerWidth/innerHeight,w=Math.round(256*Math.min(1,ratio)),h=Math.round(256*Math.min(1,1/ratio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}drawOwnerPanorama(ctx,ownerFaces,time/1000,w,h);}else{if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}drawPanoramaFrame(ctx,time*.00016);}last=time;}
+  if(document.body.classList.contains('menu-open')&&time-last>75){if(ownerFaces){const ratio=innerWidth/innerHeight,w=Math.round(256*Math.min(1,ratio)),h=Math.round(256*Math.min(1,1/ratio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ownerStart??=time;drawOwnerPanorama(ctx,ownerFaces,(time-ownerStart)/1000,w,h);}else{if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}drawPanoramaFrame(ctx,time*.00016);}last=time;}
   handle=requestAnimationFrame(frame);
  }
  handle=requestAnimationFrame(frame);return ()=>{active=false;cancelAnimationFrame(handle)};
