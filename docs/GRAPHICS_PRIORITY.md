@@ -56,3 +56,7 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 - The first-person renderer previously hid the right arm whenever a block/tool/item was selected. The owner-local textured arm now remains visible when holding an object; exact vanilla positioning is not yet verified.
 - Slab, stairs and post model kinds no longer inherit the generic full-cube first-person geometry. The existing world quads and atlas face UVs are reused in a dedicated held geometry; cached noncube meshes are disposed on teardown.
 - No JAR PNGs, source model files, or skins are committed. Java vanilla screenshot comparison under matched FOV/view conditions remains necessary.
+
+## 2026-10-21: held-model deployed browser regression
+- Added WebGL browser check on desktop and both mobile orientations: the held stair must emit more visible triangles than the held cube. Captures a separate synthetic first-person stair/hand screenshot.
+- Existing empty-hand textured-skin test remains in place. A passing fixture checks geometry integration but does not establish vanilla-identical transforms or lighting.

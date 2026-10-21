@@ -133,6 +133,16 @@ async function review(viewport,label,touch=false){
    window.fixtureModel={model,renderer,c};
   });
   await page.locator('#modelFixture').screenshot({path:'site-review/'+label+'-synthetic-item.png'});
+  // The first-person model must retain non-cube geometry and a hand.
+  await page.evaluate(()=>{
+   const {model,renderer}=window.fixtureModel;
+   model.setItem(1);renderer.clear();model.render(320,240);
+   const cubeTriangles=renderer.info.render.triangles;
+   model.setItem(16);renderer.clear();model.render(320,240);
+   const stairsTriangles=renderer.info.render.triangles;
+   if(stairsTriangles<=cubeTriangles)throw Error('Held stair still renders as a cube: '+JSON.stringify({stairsTriangles,cubeTriangles}));
+  });
+  await page.locator('#modelFixture').screenshot({path:'site-review/'+label+'-synthetic-held-stairs.png'});
   await page.evaluate(async()=>{
    const {model,renderer,c}=window.fixtureModel;c.width=c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='#d6a177';ctx.fillRect(40,16,16,16);ctx.fillStyle='#26859a';ctx.fillRect(40,16,16,8);
    await model.setOwnerSkin(c.toDataURL());model.setItem(0);renderer.clear();model.render(320,240);
