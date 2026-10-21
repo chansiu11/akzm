@@ -149,6 +149,7 @@ async function review(viewport,label,touch=false){
    c.getContext('2d').fillRect(0,0,256,256);
    const assets=Object.fromEntries([...Object.keys(GUI112_FILES),...Object.keys(MENU112_FILES)].map(k=>[k,c.toDataURL()]));
    assets.bitmapFont={ascii:c.toDataURL(),sizes:btoa(String.fromCharCode(15).repeat(65536)),pages:{172:c.toDataURL(),174:c.toDataURL(),179:c.toDataURL(),183:c.toDataURL(),185:c.toDataURL(),186:c.toDataURL(),189:c.toDataURL(),192:c.toDataURL(),196:c.toDataURL(),199:c.toDataURL(),200:c.toDataURL(),201:c.toDataURL(),203:c.toDataURL(),205:c.toDataURL(),208:c.toDataURL(),212:c.toDataURL()}};
+   c.width=c.height=64;assets.playerSkin=c.toDataURL();
    c.width=128;c.height=96;
    if(!await writePrivateResources({version:PRIVATE_RESOURCE_VERSION,assets,atlas:c.toDataURL()}))throw Error('Private cache write failed');
   });
@@ -156,7 +157,17 @@ async function review(viewport,label,touch=false){
   await page.waitForFunction(()=>document.getElementById('packStatus')?.textContent.includes('자동 불러오기 완료'));
   await page.waitForFunction(()=>document.documentElement.classList.contains('menu112-assets')&&document.documentElement.classList.contains('gui112-assets'));
   await page.locator('#menu-title .menu-stack > button:nth-child(3) canvas.bitmap-text').waitFor({state:'attached'});
-  console.log(JSON.stringify({label,automaticResourceRestore:'ok',menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok'}));
+  await page.locator('#menuSingle').click();
+  await page.locator('#worldPlay').click();
+  await page.waitForTimeout(1000);
+  await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
+  await page.locator('#inventory').waitFor({state:'visible',timeout:12000});
+  await page.locator('#ownerPlayerPreview112.owner-preview-ready').waitFor({state:'visible',timeout:12000});
+  const preview=await page.locator('#ownerPlayerPreview112').boundingBox();
+  const panel=await page.locator('#inventory').boundingBox();
+  if(!preview||!panel||preview.x<panel.x||preview.y<panel.y||preview.x+preview.width>panel.x+panel.width||preview.y+preview.height>panel.y+panel.height)throw Error('Owner skin preview outside inventory panel');
+  await page.screenshot({path:'site-review/'+label+'-synthetic-owner-inventory.png'});
+  console.log(JSON.stringify({label,automaticResourceRestore:'ok',menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok',ownerSkinPreview:'ok'}));
  }catch(e){failures.push(label+': '+e.message);await page.screenshot({path:'site-review/'+label+'-failure.png'}).catch(()=>{});}
  finally{await context.close();}
 }

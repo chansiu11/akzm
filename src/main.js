@@ -1,4 +1,5 @@
 import {renderBlockItemIcons} from './block-item-icons.js';
+import {createPlayerPreview112} from './player-preview112.js';
 import {installTitleLayout112} from './title-layout112.js';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
 import {applyBitmapFont112} from './bitmap-font112.js';
@@ -50,7 +51,7 @@ import {applyGui112Scale} from './gui112-layout.js';
 import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.6';
 
 const el=id=>document.getElementById(id);
-const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
+const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const playerPreview112=createPlayerPreview112(el('inventory'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 const scene=new THREE.Scene();scene.background=new THREE.Color('#83b3e1');scene.fog=new THREE.Fog('#83b3e1',32,68);
@@ -249,7 +250,7 @@ function startUseSelected(){
 }
 function cancelUsing(){usingFood=false;foodHold=0;}
 
-function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'))}
+function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));playerPreview112.draw()}
 function closeInventory(){document.body.classList.remove('inventory-open');recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
 function requestPlay(){document.body.classList.remove('inventory-open');enteredWorld=true;worldPaused=false;menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}{const lock=canvas.requestPointerLock?.();lock?.catch(()=>menus.showPause())}}
 function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
@@ -359,7 +360,7 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);
@@ -472,7 +473,7 @@ palette.addEventListener('click',e=>{if(gameMode==='survival')return;const butto
 el('closeInventory').addEventListener('click',closeInventory);
 el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});playerPreview112.draw();});
 function loop(now){requestAnimationFrame(loop);
  if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){

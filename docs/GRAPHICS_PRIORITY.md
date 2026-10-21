@@ -31,3 +31,8 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 ## 2026-10-21: imported extra-face alpha
 - A second alpha compositing defect affected additional per-face atlas tiles (furnace sides/top, sandstone, spruce log end) and the derived chest top: original translucent pixels could retain fallback-art pixels beneath them. Clear each destination tile before drawing owner PNGs.
 - Public Chromium synthetic PNG fixture now checks that a fully transparent extra face remains transparent in the atlas, in addition to existing glass coverage. No owner game resources are uploaded into CI.
+
+## 2026-10-21: owner-skin inventory player viewport
+- Added an optional 3D player preview in the original inventory character recess. It is made from six body-part boxes and uses the locally extracted user skin, not any published model/texture asset.
+- The preview appears only after private owner assets are loaded. No-JAR fallback remains distinct. First-person model and user JAR caching are unchanged.
+- Source is an approximate 3D model; precise Minecraft player preview transforms, overlays, armor, body poses, and pixels have not been validated against the vanilla client.
