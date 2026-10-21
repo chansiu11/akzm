@@ -40,3 +40,8 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 ## 2026-10-21: preview visual inspection follow-up
 - The first preview smoke check only confirmed canvas size and placement; captured screenshots had an all-transparent synthetic skin, so a passing browser check did not prove model pixels were rendered.
 - The fixture now generates an opaque, independently authored two-tone synthetic skin and verifies rendered canvas alpha coverage, not just DOM visibility. This does not constitute vanilla-client screenshot parity or owner-JAR fidelity verification.
+
+## 2026-10-21: use composited browser screenshots for WebGL proof
+- The strengthened pixel test found an incorrect assumption in the test: on desktop, the actual screenshot visibly contained the synthetic avatar, while reading back `canvas.toDataURL()` reported zero pixels. Browser compositor screenshots and WebGL drawing-buffer readback are not equivalent.
+- Replaced the readback check with a color-pixel assertion on the element screenshot using known blue/orange synthetic fixture colors; now also waits for `src/player-preview112.js` to be deployed before visiting the site.
+- Reverted unnecessary WebGL `preserveDrawingBuffer`; the private resource import/privacy mechanism is unchanged.

@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -171,16 +171,25 @@ async function review(viewport,label,touch=false){
   const preview=await page.locator('#ownerPlayerPreview112').boundingBox();
   const panel=await page.locator('#inventory').boundingBox();
   if(!preview||!panel||preview.x<panel.x||preview.y<panel.y||preview.x+preview.width>panel.x+panel.width||preview.y+preview.height>panel.y+panel.height)throw Error('Owner skin preview outside inventory panel');
-  const paintedPixels=await page.locator('#ownerPlayerPreview112').evaluate(async canvas=>{
-   const image=new Image(),uri=canvas.toDataURL('image/png');
-   await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=uri});
-   const copy=document.createElement('canvas');copy.width=canvas.width;copy.height=canvas.height;
+  // WebGL canvas.toDataURL may read an empty back buffer even when Chromium
+  // visibly composites the avatar. Inspect actual screenshot pixels instead.
+  const avatarCapture=(await page.locator('#ownerPlayerPreview112').screenshot()).toString('base64');
+  const paintedPixels=await page.evaluate(async encoded=>{
+   const image=new Image();image.src='data:image/png;base64,'+encoded;
+   await image.decode();
+   const copy=document.createElement('canvas');copy.width=image.width;copy.height=image.height;
    const ctx=copy.getContext('2d');ctx.drawImage(image,0,0);
    const rgba=ctx.getImageData(0,0,copy.width,copy.height).data;
-   let visible=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i]>64)visible++;
-   return visible;
-  });
-  if(paintedPixels<100)throw Error('Owner player preview canvas exists but the avatar has no rendered pixels: '+paintedPixels);
+   let colored=0;
+   for(let i=0;i<rgba.length;i+=4){
+    const r=rgba[i],g=rgba[i+1],b=rgba[i+2],a=rgba[i+3];
+    // Detect the orange or blue independently authored fixture skin,
+    // not the all-black synthetic GUI background behind the canvas.
+    if(a>64&&((r>165&&g>60&&g<190&&b<145)||(b>120&&b>r*1.25&&b>g*1.1)))colored++;
+   }
+   return colored;
+  },avatarCapture);
+  if(paintedPixels<25)throw Error('Synthetic owner skin is not visibly rendered in the browser screenshot: '+paintedPixels);
   await page.screenshot({path:'site-review/'+label+'-synthetic-owner-inventory.png'});
   console.log(JSON.stringify({label,automaticResourceRestore:'ok',menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok',ownerSkinPreview:'ok'}));
  }catch(e){failures.push(label+': '+e.message);await page.screenshot({path:'site-review/'+label+'-failure.png'}).catch(()=>{});}

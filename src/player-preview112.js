@@ -42,7 +42,7 @@ export function createPlayerPreview112(panel){
   const {width,height}=loaded.image;
   if(width!==64||![32,64].includes(height)){loaded.dispose();throw Error('Invalid owner player skin');}
   if(!renderer){
-   renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false,preserveDrawingBuffer:true});
+   renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
    renderer.setPixelRatio(1);renderer.setSize(51,72,false);
    renderer.outputColorSpace=THREE.SRGBColorSpace;
   }
