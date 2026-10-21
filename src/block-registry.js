@@ -84,7 +84,10 @@ export function intersectsAABB(boxes,bx,by,bz,ax0,ay0,az0,ax1,ay1,az1){
 export function tileForBlock(id,normal){
  if(id===BLOCK.GRASS)return normal[1]===1?0:normal[1]===-1?1:13;
  if(id===BLOCK.LOG)return normal[1]!==0?14:4;
- if(id===BLOCK.SPRUCE_LOG)return normal[1]!==0?14:25;
+ if(id===BLOCK.SPRUCE_LOG)return normal[1]!==0?40:25;
+ if(id===BLOCK.FURNACE)return normal[1]!==0?37:normal[2]===1?31:36;
+ if(id===BLOCK.SANDSTONE)return normal[1]===1?38:normal[1]===-1?39:23;
+ if(id===BLOCK.CHEST)return normal[1]!==0?42:normal[2]===1?43:41;
  if(id===BLOCK.CRAFTING_TABLE)return normal[1]===1?16:normal[1]===-1?6:normal[2]===1?18:17;
  return definition(id)?.tile??2;
 }

@@ -90,12 +90,12 @@ test('geometry emits only exposed faces with correct partial slab shape', () => 
 
 test('atlas tile references stay in range including crafting-table faces',()=>{
   assert.equal(ATLAS_COLUMNS,8);
-  assert.equal(ATLAS_ROWS,5);
+  assert.equal(ATLAS_ROWS,6);
   assert.equal(REQUIRED_TILES.length,34);
   for(const d of BLOCK_DEFS){
     for(const normal of [[0,1,0],[0,-1,0],[0,0,1]]){
       const tile=tileForBlock(d.id,normal);
-      assert.ok(Number.isInteger(tile)&&tile>=0&&tile<REQUIRED_TILES.length,`${d.name}: tile ${tile}`);
+      assert.ok(Number.isInteger(tile)&&tile>=0&&tile<ATLAS_ROWS*ATLAS_COLUMNS,`${d.name}: tile ${tile}`);
       assert.ok(uvFor(tile).every(([u,v])=>u>=0&&u<=1&&v>=0&&v<=1));
     }
   }

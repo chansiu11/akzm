@@ -1,3 +1,5 @@
+import {MENU112_FILES,pngData} from './menu112-assets.js';
+import {ITEM_DEFS} from './item-registry.js';
 // Personal-use importer: all original images are read from a locally chosen JAR.
 // Never include proprietary game files or encoded copies in this public repository.
 export const GUI112_SHA1='0f275bc1547d01fa5f56ba34bdc87d981ee12daf';
@@ -32,6 +34,14 @@ export async function readOwner112Jar(file){
   const view=new DataView(b.buffer,b.byteOffset,b.byteLength);
   if(view.getUint32(16)!==256||view.getUint32(20)!==256)throw Error('UI 텍스처 크기 불일치: '+path);
   a[key]='data:image/png;base64,'+await f.async('base64');
+ }
+ for(const [key,path] of Object.entries(MENU112_FILES)){
+  const entry=zip.file(path);if(entry)a[key]='data:image/png;base64,'+await entry.async('base64');
+ }
+ a.itemIcons={};
+ for(const item of ITEM_DEFS.filter(i=>i.blockId===null)){
+  const entry=zip.file('assets/minecraft/textures/items/'+(item.id===107?'dye_powder_blue':item.key.split(':')[1])+'.png');
+  if(entry)a.itemIcons[item.id]='data:image/png;base64,'+await entry.async('base64');
  }
  return {assets:a,JSZip};
 }

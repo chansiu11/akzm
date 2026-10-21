@@ -1,0 +1,33 @@
+/* Layout and sprite cropping only. No original artwork is included. */
+#overlay .title-page{padding:0!important;width:100%;position:relative}
+#overlay .brand-shadow{position:absolute;top:calc(30px * var(--gui-scale));left:50%;transform:translateX(-50%)!important;margin:0!important;width:calc(274px * var(--gui-scale));max-width:92vw}
+#overlay .brand-shadow h1{font-size:clamp(32px,7vw,90px);line-height:1;white-space:nowrap;text-align:center}
+#originalTitle112{display:none;width:100%;height:auto;image-rendering:pixelated}
+.java-edition{font-family:monospace;font-weight:bold;font-size:calc(10px * var(--gui-scale));text-align:center;margin-top:calc(-2px * var(--gui-scale))}
+#menu-title>.menu-stack{position:absolute;left:50%;top:calc(25dvh + 48px * var(--gui-scale));transform:translateX(-50%);width:min(calc(200px * var(--gui-scale)),90vw);margin:0!important;gap:calc(4px * var(--gui-scale))!important}
+#overlay button.stone-button{height:calc(20px * var(--gui-scale));min-height:calc(20px * var(--gui-scale));padding:0 4px;font-size:calc(8px * var(--gui-scale));font-weight:normal}
+#menu-title .menu-duo{margin-top:calc(8px * var(--gui-scale));gap:calc(4px * var(--gui-scale))}
+#menu-title #menuHelp{position:absolute;bottom:calc(37px * var(--gui-scale));left:50%;transform:translateX(-50%);font-size:12px}
+#menu-title #loadJar112{position:absolute;bottom:calc(13px * var(--gui-scale));left:50%;transform:translateX(-50%);width:min(calc(200px * var(--gui-scale)),90vw);margin:0}
+#menu-title #packStatus{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);margin:0;width:90vw;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#overlay .menu-footer{font-size:9px;padding:3px 4px;background:none}
+body:has(#menu-title:not(.hidden)) .menu-footer{bottom:0;pointer-events:none}
+html.menu112-assets #originalTitle112{display:block}
+html.menu112-assets .brand-shadow h1{display:none}
+html.menu112-assets .java-edition{font-size:0;width:calc(128px * var(--gui-scale));height:calc(16px * var(--gui-scale));margin:0 auto;background:var(--menu112-edition) center/100% 100% no-repeat;image-rendering:pixelated}
+html.menu112-assets #menuPanorama{filter:blur(3px);image-rendering:auto}
+html.menu112-assets #overlay{background:linear-gradient(#ffffff38,#ffffff00 55%,#00000060)}
+html.menu112-assets body:has(#menu-title.hidden):not(:has(#menu-pause:not(.hidden))) #overlay{background:linear-gradient(#0009,#0009),var(--menu112-dirt);background-size:auto,calc(32px * var(--gui-scale)) calc(32px * var(--gui-scale))}
+html.gui112-assets #overlay button.stone-button{--button-row:66;border:0;box-shadow:none;background:none!important;isolation:isolate;position:relative;text-shadow:calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #373737;image-rendering:pixelated;color:#e0e0e0}
+html.gui112-assets #overlay button.stone-button::before,html.gui112-assets #overlay button.stone-button::after{content:'';position:absolute;top:0;bottom:0;width:50%;z-index:-1;background-image:var(--gui112-widgets);background-size:calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale));background-position-y:calc(-1px * var(--button-row) * var(--gui-scale))}
+html.gui112-assets #overlay button.stone-button::before{left:0;background-position-x:0}
+html.gui112-assets #overlay button.stone-button::after{right:0;background-position-x:calc(100% + 56px * var(--gui-scale))}
+html.gui112-assets #overlay button.stone-button:hover:not(:disabled){--button-row:86;color:#ffffa0}
+html.gui112-assets #overlay button.stone-button:disabled{--button-row:46;color:#a0a0a0;opacity:1;filter:none}
+.owner-item-icon{transform:none!important;clip-path:none!important;image-rendering:pixelated}
+.owner-item-icon:before,.owner-item-icon:after{display:none!important}
+/* Imported container images already contain their slot recesses. */
+html.gui112-assets #inventory[data-container] .container-slot{background:transparent!important;box-shadow:none!important}
+html.gui112-assets #inventory[data-container] .container-slot:hover{background:#ffffff80!important}
+@media(max-width:600px){#overlay .brand-shadow{top:7dvh}#menu-title>.menu-stack{top:35dvh}#menu-title #menuHelp{bottom:100px}#menu-title #loadJar112{bottom:54px}#menu-title #packStatus{bottom:28px}#overlay .menu-footer{font-size:8px}}
+@media(max-height:450px){#overlay .brand-shadow{top:12px;width:210px}#menu-title>.menu-stack{top:100px}#menu-title #menuHelp{left:12px;bottom:34px;transform:none}#menu-title #loadJar112{left:auto;right:12px;bottom:34px;transform:none;width:200px}#menu-title #packStatus{bottom:16px}}

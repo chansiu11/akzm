@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -35,6 +35,25 @@ async function review(viewport,label,touch=false){
   if(!response?.ok())throw Error('Website HTTP status '+response?.status());
   await page.locator('#menuSingle').waitFor({state:'visible',timeout:30000});
   await page.screenshot({path:'site-review/'+label+'-title.png',fullPage:true});
+  if(!await page.title().then(t=>t.includes('Minecraft 1.12.2')))throw Error('Game title mismatch');
+  for(const selector of ['#menuSingle','#menuSettings','#loadJar112']){
+   const box=await page.locator(selector).boundingBox();
+   if(!box||box.x<0||box.y<0||box.x+box.width>viewport.width||box.y+box.height>viewport.height)throw Error('Menu control clipped: '+selector);
+  }
+  // Synthetic PNGs validate the local resource rendering path without uploading
+  // the owner's JAR or copyrighted image bytes to Actions.
+  const ownerMenu=await page.evaluate(async()=>{
+   const {MENU112_FILES,applyMenu112}=await import('./src/menu112-assets.js');
+   const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');ctx.fillStyle='#6789ab';ctx.fillRect(0,0,256,256);
+   const assets=Object.fromEntries(Object.keys(MENU112_FILES).map(k=>[k,c.toDataURL()]));
+   await applyMenu112(assets);
+   const logo=document.getElementById('originalTitle112').getBoundingClientRect();
+   const ok=document.documentElement.classList.contains('menu112-assets')&&logo.width>0&&logo.right<=innerWidth;
+   document.documentElement.classList.remove('menu112-assets');
+   document.getElementById('menuPanorama').dispatchEvent(new CustomEvent('owner-panorama',{detail:null}));
+   return ok;
+  });
+  if(!ownerMenu)throw Error('Owner menu resources did not render');
   // The menu navigation is installed by main.js, so this tests code executed, not only static HTML.
   await page.locator('#menuSingle').click({timeout:30000});
   await page.locator('#menu-worlds').waitFor({state:'visible',timeout:30000});

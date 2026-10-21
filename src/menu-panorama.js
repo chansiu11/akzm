@@ -1,3 +1,4 @@
+import {drawOwnerPanorama} from './menu112-assets.js';
 // Low-resolution original voxel landscape panorama for the menu only. No textures or brand art copied.
 // Perspective cube terrain replaces purely flat silhouette layers in the near field.
 const rand=(x,y,z=0)=>{let n=Math.imul(x+19,374761393)^Math.imul(y+97,668265263)^Math.imul(z+7,2246822519);n=Math.imul(n^(n>>>13),1274126177);return (n>>>0)/4294967295};
@@ -63,9 +64,10 @@ export function drawPanoramaFrame(ctx,t=0){
 }
 export function startMenuPanorama(canvas){
  if(!canvas)return ()=>{};canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d',{alpha:false});
- let handle=0,active=true,last=-Infinity;
+ let handle=0,active=true,last=-Infinity,ownerFaces=null;
+ canvas.addEventListener('owner-panorama',event=>{ownerFaces=event.detail;});
  function frame(time){if(!active)return;
-  if(document.body.classList.contains('menu-open')&&time-last>75){drawPanoramaFrame(ctx,time*.00016);last=time;}
+  if(document.body.classList.contains('menu-open')&&time-last>75){if(ownerFaces)drawOwnerPanorama(ctx,ownerFaces,time/1000,W,H);else drawPanoramaFrame(ctx,time*.00016);last=time;}
   handle=requestAnimationFrame(frame);
  }
  handle=requestAnimationFrame(frame);return ()=>{active=false;cancelAnimationFrame(handle)};

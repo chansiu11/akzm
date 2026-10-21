@@ -2,7 +2,7 @@
 
 /* All inventory and hotbar icons sample the same automatically applied texture atlas. */
 #packStatus{font-size:11px;color:#c3dfcf;margin-top:16px;min-height:18px}
-.tileIcon{display:inline-block;width:28px;height:28px;background-image:var(--block-atlas);background-size:800% 500%;image-rendering:pixelated;background-repeat:no-repeat;flex-shrink:0}
+.tileIcon{display:inline-block;width:28px;height:28px;background-image:var(--block-atlas);background-size:800% 600%;image-rendering:pixelated;background-repeat:no-repeat;flex-shrink:0}
 .item{display:flex;align-items:center;justify-content:center;gap:7px}.item .tileIcon{width:24px;height:24px}
 /* Mobile: swipe on the world to turn, stick to walk; never scroll the page. */
 #viewport{touch-action:none;user-select:none;-webkit-user-select:none}

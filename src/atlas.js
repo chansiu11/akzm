@@ -1,6 +1,6 @@
 import {tileForBlock} from './block-registry.js';
 export const ATLAS_COLUMNS=8;
-export const ATLAS_ROWS=5;
+export const ATLAS_ROWS=6;
 // Generated pixel art, not extracted from a commercial game's asset files.
 const palette = [
  ['#6e9f48','#4e8437'], // grass top
@@ -38,7 +38,8 @@ const palette = [
  ['#b38c5b','#4a3d36'], // lever
  ['#9d8754','#e7bc4d'], // redstone lamp
  ['#cb392e','#ad211b'], // original procedural apple icon
- ['#a46b35','#e6b66b'] // original procedural bread icon
+ ['#a46b35','#e6b66b'], // original procedural bread icon
+ ...Array.from({length:8},()=>['#8d806c','#6a6255']) // extra face fallbacks
 ];
 function seed(i,x,y){let z=Math.imul(i+91,16777619)^Math.imul(x+11,374761393)^Math.imul(y+13,668265263);z=Math.imul(z^(z>>>13),1274126177);return (z>>>0)/4294967295}
 function textureDetail(ctx,i,ox,oy){

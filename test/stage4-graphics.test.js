@@ -42,7 +42,7 @@ test('water atlas cell maps to complete dedicated UV square',()=>{
  const uv=waterQuadUV(uvFor(7));
  assert.ok(uv.every(([u,v])=>u>=0&&u<=1&&v>=0&&v<=1));
  assert.ok(Math.abs(uv[0][0])<.01 && Math.abs(uv[1][0]-1)<.01);
- const rect=waterTileRegion({width:128,height:80});
+ const rect=waterTileRegion({width:128,height:96});
  assert.deepEqual(rect,{x:112,y:0,width:16,height:16});
 });
 test('celestial positions follow a complete 24,000-tick cycle without moving out of view',async()=>{

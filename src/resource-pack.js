@@ -1,7 +1,8 @@
 // Resource pack assets are always read in the user's own browser.
 // NO Minecraft artwork or sound is shipped with this repository.
-import {createAtlas} from './atlas.js';
+import {createAtlas,ATLAS_ROWS} from './atlas.js';
 
+export const EXTRA_FACE_TILES=Object.freeze({36:'furnace_side',37:'furnace_top',38:'sandstone_top',39:'sandstone_bottom',40:'log_spruce_top'});
 const BLOCK_PATH='assets/minecraft/textures/blocks/';
 const TILE_NAMES=[
  'grass_top','dirt','stone','sand','log_oak','leaves_oak','planks_oak','water_still',
@@ -34,7 +35,7 @@ function tintedImage(img,size,tint){
  drawSquare(ctx,img,0,0,size);
  const d=ctx.getImageData(0,0,size,size);for(let i=0;i<d.data.length;i+=4){d.data[i]=Math.round(d.data[i]*tint[0]/255);d.data[i+1]=Math.round(d.data[i+1]*tint[1]/255);d.data[i+2]=Math.round(d.data[i+2]*tint[2]/255)}ctx.putImageData(d,0,0);return c;
 }
-const TINT={grass_top:[142,199,97],leaves_oak:[115,163,85],water_still:[83,144,235]};
+const TINT={grass_top:[142,199,97],leaves_oak:[115,163,85],leaves_spruce:[97,153,97]};
 async function decodePNG(entry){
  const bytes=await entry.async('uint8array');const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
  try{return await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('PNG를 읽지 못했습니다'));image.src=url})}
@@ -48,14 +49,15 @@ export async function loadLocalResourcePack(file){
  let zip;try{zip=await window.JSZip.loadAsync(file)}catch{throw new Error('유효한 JAR/ZIP 압축파일이 아닙니다.');}
  const paths=Object.keys(zip.files);
  const overlayPath=findTexturePath(paths,'grass_side_overlay');
- const names=[...TILE_NAMES,...(overlayPath?['grass_side_overlay']:[])];
+ const names=[...TILE_NAMES,...Object.values(EXTRA_FACE_TILES),...(overlayPath?['grass_side_overlay']:[])];
  const assets=new Map();
  for(const name of names){const path=findTexturePath(paths,name);if(!path)continue;try{assets.set(name,await decodePNG(zip.file(path)))}catch{/* keep the generated texture for missing/invalid entries */}}
- if(assets.size===0)throw new Error('블록 PNG를 찾지 못했습니다. 업로드한 1.8.9.jar 또는 블록 텍스처가 들어 있는 리소스팩 ZIP을 선택하세요.');
+ if(assets.size===0)throw new Error('블록 PNG를 찾지 못했습니다. 업로드한 1.12.2.jar 또는 블록 텍스처가 들어 있는 리소스팩 ZIP을 선택하세요.');
  const tileSize=Math.max(16,Math.min(64,...[...assets.values()].map(x=>Math.min(x.width,x.height))));
- const canvas=document.createElement('canvas');canvas.width=tileSize*8;canvas.height=tileSize*5;
+ const canvas=document.createElement('canvas');canvas.width=tileSize*8;canvas.height=tileSize*ATLAS_ROWS;
  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=false;
  const fallback=createAtlas();
+ ctx.drawImage(fallback,0,0,canvas.width,canvas.height);
  for(let i=0;i<TILE_NAMES.length;i++){
   const x=i%8*tileSize,y=Math.floor(i/8)*tileSize,name=TILE_NAMES[i];
   const asset=assets.get(name);
@@ -66,11 +68,19 @@ export async function loadLocalResourcePack(file){
   // Older grass block models combine a grass_side texture with a tinted transparent overlay.
   if(name==='grass_side'&&assets.has('grass_side_overlay'))ctx.drawImage(tintedImage(assets.get('grass_side_overlay'),tileSize,[142,199,97]),x,y);
  }
- for(let j=0;j<2;j++){
-  const i=TILE_NAMES.length+j,x=(i%8)*tileSize,y=Math.floor(i/8)*tileSize;
-  ctx.drawImage(fallback,(i%8)*16,Math.floor(i/8)*16,16,16,x,y,tileSize,tileSize);
+ for(const [index,name] of Object.entries(EXTRA_FACE_TILES)){
+  const img=assets.get(name);if(img)drawSquare(ctx,img,index%8*tileSize,Math.floor(index/8)*tileSize,tileSize);
  }
- return {canvas,loaded:assets.size,total:TILE_NAMES.length,fileName:file.name};
+ for(const [j,name] of ['apple','bread'].entries()){
+  const entry=zip.file('assets/minecraft/textures/items/'+name+'.png');if(!entry)continue;
+  const i=34+j,x=i%8*tileSize,y=Math.floor(i/8)*tileSize;ctx.clearRect(x,y,tileSize,tileSize);drawSquare(ctx,await decodePNG(entry),x,y,tileSize);
+ }
+ const chest=zip.file('assets/minecraft/textures/entity/chest/normal.png');
+ if(chest){const image=await decodePNG(chest);
+  for(const [index,u] of [[41,0],[43,14]]){const x=index%8*tileSize,y=Math.floor(index/8)*tileSize;ctx.clearRect(x,y,tileSize,tileSize);ctx.drawImage(image,u,14,14,5,x,y,tileSize,tileSize/3);ctx.drawImage(image,u,33,14,10,x,y+tileSize/3,tileSize,tileSize*2/3);}
+  const index=42;ctx.drawImage(image,14,0,14,14,index%8*tileSize,Math.floor(index/8)*tileSize,tileSize,tileSize);
+ }
+ return {canvas,loaded:TILE_NAMES.filter(n=>assets.has(n)).length+Object.values(EXTRA_FACE_TILES).filter(n=>assets.has(n)).length,total:TILE_NAMES.length+Object.keys(EXTRA_FACE_TILES).length,fileName:file.name};
 }
 
 export function saveLocalAtlas(canvas){try{localStorage.setItem(LOCAL_ATLAS_KEY,canvas.toDataURL('image/png'));return true}catch{return false}}
@@ -79,21 +89,12 @@ export async function restoreLocalAtlas(){
  if(!uri?.startsWith('data:image/png;base64,'))return null;
  try{
   const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=uri});
-  // v0.5 user caches contain a two-row atlas; stage 2 needs a third row.
-  // Keep the user's original first two rows, adding independent default art only for new slots.
   const tileSize=img.width/8;
-  if(!Number.isInteger(tileSize)||tileSize<16||img.height!==2*tileSize&&img.height!==3*tileSize&&img.height!==4*tileSize&&img.height!==5*tileSize)return null;
-  const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=5*tileSize;
+  if(!Number.isInteger(tileSize)||tileSize<16||![2,3,4,5,6].includes(img.height/tileSize))return null;
+  const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=ATLAS_ROWS*tileSize;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(createAtlas(),0,0,canvas.width,canvas.height);
   ctx.drawImage(img,0,0);
-  if(img.height<5*tileSize){
-   const fallback=createAtlas();
-   for(let i=Math.floor(img.height/tileSize)*8;i<TILE_NAMES.length+2;i++){
-    ctx.drawImage(fallback,(i%8)*16,Math.floor(i/8)*16,16,16,(i%8)*tileSize,Math.floor(i/8)*tileSize,tileSize,tileSize);
-   }
-  }
-  const art=createAtlas();
-  for(let i=TILE_NAMES.length;i<TILE_NAMES.length+2;i++)ctx.drawImage(art,(i%8)*16,Math.floor(i/8)*16,16,16,(i%8)*tileSize,Math.floor(i/8)*tileSize,tileSize,tileSize);
   return canvas;
  }catch{return null}
 }

@@ -1,11 +1,12 @@
+import {applyMenu112,pngData} from './menu112-assets.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
-import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.6';
+import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
 import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-registry.js';
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {beginChunk,progressChunk} from './chunk-builder.js';
-import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js';
+import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.1';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
@@ -37,12 +38,12 @@ import {createGravityTicks} from './block-gravity.js';
 import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngredient,craftGridOnce,clearCraftGrid} from './crafting-grid.js';
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
-import {startMenuPanorama} from './menu-panorama.js';
+import {startMenuPanorama} from './menu-panorama.js?v=1.1';
 import {createFirstPerson} from './first-person.js?v=1.3';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.1';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.2';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -180,8 +181,9 @@ function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot(
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
-function iconClass(id){return id>=110&&id<=114?' toolIcon tool-'+id:'';}
-function iconOffset(id){const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
+let ownerItemIcons={};
+function iconClass(id){if(pngData(ownerItemIcons[id]))return ' owner-item-icon';return id>=110&&id<=114?' toolIcon tool-'+id:'';}
+function iconOffset(id){if(pngData(ownerItemIcons[id]))return `background-image:url("${ownerItemIcons[id]}")!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
  return `background-position:${(tile%8*100/7).toFixed(3)}% ${(Math.floor(tile/8)*100/(ATLAS_ROWS-1)).toFixed(3)}%`;
 }
 function showAtlas(canvas){texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);}
@@ -351,6 +353,8 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
+function applyOwnerAppearance(assets){ownerItemIcons=assets?.itemIcons??{};applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+if(storedGui112)applyOwnerAppearance(storedGui112);
 el('loadJar112').addEventListener('click',()=>el('jar112Input').click());
 el('jar112Input').addEventListener('change',async event=>{
  const jar=event.target.files?.[0];if(!jar)return;
@@ -358,12 +362,13 @@ el('jar112Input').addEventListener('change',async event=>{
  try{
   const {assets,JSZip}=await readOwner112Jar(jar);
   if(!applyGui112(document.documentElement,assets))throw Error('원본 HUD 이미지 적용 실패');
+  applyOwnerAppearance(assets);
   const stored=storeGui112(assets);
   window.JSZip=JSZip;
   const atlas=await loadLocalResourcePack(jar);
   showAtlas(atlas.canvas);
   const atlasStored=saveLocalAtlas(atlas.canvas);
-  status.textContent=`원본 1.12.2 HUD 4종 · 블록 이미지 ${atlas.loaded}/${atlas.total} 적용`+(stored&&atlasStored?' · 이 기기에 저장됨':' · 저장공간 부족 가능');
+  status.textContent=`원본 메뉴·UI·아이템 · 블록 이미지 ${atlas.loaded}/${atlas.total} 적용`+(stored&&atlasStored?' · 이 기기에 저장됨':' · 저장공간 부족 가능');
  }catch(error){status.textContent='JAR 불러오기 실패: '+(error?.message??String(error));}
  finally{button.disabled=false;event.target.value='';}
 });
@@ -462,6 +467,6 @@ function loop(now){requestAnimationFrame(loop);
   // CPU mesh generation is spread over multiple animation frames.
   if(progressChunk(activeBuild,4)){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
  }
- if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`VOXEL FRONTIER · v1.6\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
+ if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
 updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}});

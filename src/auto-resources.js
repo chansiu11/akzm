@@ -1,5 +1,5 @@
 // These URLs point to user-extracted local files. No game artwork is shipped in this repository.
-import {createAtlas} from './atlas.js';
+import {createAtlas,ATLAS_ROWS} from './atlas.js';
 import {REQUIRED_TILES} from './resource-pack.js';
 
 export const RESOURCE_ROOT = 'assets/minecraft/textures/';
@@ -62,9 +62,10 @@ export async function loadAutomaticTextures(){
   if(images.size===0)return null;
   const sizes=[...images.values()].map(img=>Math.min(img.width,img.height));
   const tileSize=Math.max(16,Math.min(64,...sizes));
-  const canvas=document.createElement('canvas');canvas.width=8*tileSize;canvas.height=5*tileSize;
+  const canvas=document.createElement('canvas');canvas.width=8*tileSize;canvas.height=ATLAS_ROWS*tileSize;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=false;
   const fallback=createAtlas();
+  ctx.drawImage(fallback,0,0,canvas.width,canvas.height);
   for(let i=0;i<REQUIRED_TILES.length;i++){
     const name=REQUIRED_TILES[i],x=(i%8)*tileSize,y=Math.floor(i/8)*tileSize;
     const img=images.get(name);
