@@ -72,7 +72,11 @@ export async function loadLocalResourcePack(file){
   if(name==='grass_side'&&assets.has('grass_side_overlay'))ctx.drawImage(tintedImage(assets.get('grass_side_overlay'),tileSize,TINT.grass_top),x,y);
  }
  for(const [index,name] of Object.entries(EXTRA_FACE_TILES)){
-  const img=assets.get(name);if(img)drawSquare(ctx,img,index%8*tileSize,Math.floor(index/8)*tileSize,tileSize);
+  const img=assets.get(name);if(!img)continue;
+  const x=index%8*tileSize,y=Math.floor(index/8)*tileSize;
+  // Imported transparent texels must replace procedural fallback, not blend over it.
+  ctx.clearRect(x,y,tileSize,tileSize);
+  drawSquare(ctx,img,x,y,tileSize);
  }
  for(const [j,name] of ['apple','bread'].entries()){
   const entry=zip.file('assets/minecraft/textures/items/'+name+'.png');if(!entry)continue;
@@ -81,7 +85,7 @@ export async function loadLocalResourcePack(file){
  const chest=zip.file('assets/minecraft/textures/entity/chest/normal.png');
  if(chest){const image=await decodePNG(chest);
   for(const [index,u] of [[41,0],[43,14]]){const x=index%8*tileSize,y=Math.floor(index/8)*tileSize;ctx.clearRect(x,y,tileSize,tileSize);ctx.drawImage(image,u,14,14,5,x,y,tileSize,tileSize/3);ctx.drawImage(image,u,33,14,10,x,y+tileSize/3,tileSize,tileSize*2/3);}
-  const index=42;ctx.drawImage(image,14,0,14,14,index%8*tileSize,Math.floor(index/8)*tileSize,tileSize,tileSize);
+  const index=42,x=index%8*tileSize,y=Math.floor(index/8)*tileSize;ctx.clearRect(x,y,tileSize,tileSize);ctx.drawImage(image,14,0,14,14,x,y,tileSize,tileSize);
  }
  return {canvas,loaded:TILE_NAMES.filter(n=>assets.has(n)).length+Object.values(EXTRA_FACE_TILES).filter(n=>assets.has(n)).length,total:TILE_NAMES.length+Object.keys(EXTRA_FACE_TILES).length,fileName:file.name};
 }

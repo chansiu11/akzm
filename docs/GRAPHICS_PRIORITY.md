@@ -27,3 +27,7 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 - A private cache schema bump automatically re-extracts retained JARs rather than preserving missing item icons from old caches. Regression tests cover aliases, model-defined texture paths, malicious/unusable paths, and cache version.
 - One-pixel owner HUD slot inset and selected-frame positioning now align hotbar icons with the 182px background sprite instead of the inherited fallback layout. Full vanilla pixel parity is not claimed.
 - Public browser fixtures use synthetic art, not the user's owner JAR; they cannot validate original-resource pixel fidelity.
+
+## 2026-10-21: imported extra-face alpha
+- A second alpha compositing defect affected additional per-face atlas tiles (furnace sides/top, sandstone, spruce log end) and the derived chest top: original translucent pixels could retain fallback-art pixels beneath them. Clear each destination tile before drawing owner PNGs.
+- Public Chromium synthetic PNG fixture now checks that a fully transparent extra face remains transparent in the atlas, in addition to existing glass coverage. No owner game resources are uploaded into CI.

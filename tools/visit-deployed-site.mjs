@@ -55,9 +55,11 @@ async function review(viewport,label,touch=false){
    const previous=window.JSZip;
    try{
     const entry={async:async()=>bytes};
-    window.JSZip={loadAsync:async()=>({files:{'assets/minecraft/textures/blocks/glass.png':entry},file:path=>path.endsWith('/glass.png')?entry:null})};
+    window.JSZip={loadAsync:async()=>({files:{'assets/minecraft/textures/blocks/glass.png':entry,'assets/minecraft/textures/blocks/furnace_side.png':entry},file:path=>path.endsWith('/glass.png')||path.endsWith('/furnace_side.png')?entry:null})};
     const result=await loadLocalResourcePack(new Blob(['fixture']));
-    if(result.canvas.getContext('2d').getImageData(7*16,16,1,1).data[3]!==0)throw Error('Original transparent glass retains fallback pixels');
+    const atlas=result.canvas.getContext('2d');
+    if(atlas.getImageData(7*16,16,1,1).data[3]!==0)throw Error('Original transparent glass retains fallback pixels');
+    if(atlas.getImageData(4*16,4*16,1,1).data[3]!==0)throw Error('Transparent extra-face tile retains fallback pixels');
    }finally{window.JSZip=previous;}
   });
   // Synthetic PNGs validate the local resource rendering path without uploading
