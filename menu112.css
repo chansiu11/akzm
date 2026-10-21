@@ -55,3 +55,25 @@ body:has(#menu-title:not(.hidden)) .menu-footer{font-size:calc(8px * var(--menu-
 
 #overlay #menu-title button.stone-button{height:calc(20px * var(--menu-scale,1))!important;min-height:0!important;font-size:calc(8px * var(--menu-scale,1))!important}
 #overlay #menu-title .menu-duo{gap:calc(4px * var(--menu-scale,1))!important}
+
+/* 1.12.2: bottom row starts 84 logical pixels below the first menu button. */
+#overlay #menu-title .menu-duo{margin-top:calc(12px * var(--menu-scale,1))!important}
+#overlay #menu-title #menuLanguage{
+ position:absolute;left:calc(var(--title-language-x,0px) * var(--menu-scale,1));
+ top:calc(var(--title-language-y,0px) * var(--menu-scale,1));
+ width:calc(20px * var(--menu-scale,1));height:calc(20px * var(--menu-scale,1));
+ min-width:0;min-height:0;padding:0;border:0;border-radius:0;line-height:1;
+ background:#777;color:white;cursor:pointer;z-index:1
+}
+#overlay #menu-title #menuLanguage span{font-size:calc(11px * var(--menu-scale,1))}
+html.gui112-assets #overlay #menu-title #menuLanguage{
+ background:var(--gui112-widgets) 0 calc(-106px * var(--menu-scale,1)) /
+ calc(256px * var(--menu-scale,1)) calc(256px * var(--menu-scale,1)) no-repeat!important
+}
+html.gui112-assets #overlay #menu-title #menuLanguage:hover,
+html.gui112-assets #overlay #menu-title #menuLanguage:focus-visible{
+ background-position-y:calc(-126px * var(--menu-scale,1))!important
+}
+html.gui112-assets #overlay #menu-title #menuLanguage span{display:none}
+#overlay #menu-settings .menu-language-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#e8e8e8}
+#overlay #menu-settings #menuLanguageSelect{max-width:60%;height:28px;background:#292929;color:white;border:1px solid #ababab;font:inherit}
