@@ -85,3 +85,10 @@ test('new item model resolution triggers private cached JAR re-extraction',async
  const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
  assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v6');
 });
+
+test('original JAR block atlas water retains source PNG transparency',()=>{
+ const js=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(js,/waterMat\.opacity=owner\?1:\.67/);
+ assert.match(js,/showAtlas\(atlas\.canvas,\{owner:true\}\)/);
+ assert.match(js,/showAtlas\(canvas,\{owner:true\}\)/);
+});
