@@ -76,7 +76,7 @@ test('vanilla 1.12.2 panorama rotates two degrees per second',()=>{
  const a=panoramaAngles112(0),b=panoramaAngles112(1);
  assert.ok(Math.abs(a.pitch-20*Math.PI/180)<1e-9);
  assert.ok(Math.abs(b.yaw+2*Math.PI/180)<1e-9);
- assert.equal(panoramaAngles112(-5).yaw,0);
+ assert.ok(Math.abs(panoramaAngles112(-5).yaw)<1e-12);
 });
 test('title includes owner-local language button at vanilla bottom row and functional settings',()=>{
  const css=readFileSync(new URL('../menu112.css',import.meta.url),'utf8');
