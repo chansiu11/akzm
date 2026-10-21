@@ -3,6 +3,8 @@
 export const WORLDS_KEY='voxel-frontier-worlds-v1';
 export const ACTIVE_WORLD_KEY='voxel-frontier-active-world-v1';
 export const SETTINGS_KEY='voxel-frontier-settings-v1';
+const TITLE_LANGUAGE_KEY='akzm-local-title-language112';
+function readTitleLanguage(){try{return localStorage.getItem(TITLE_LANGUAGE_KEY)==='en_us'?'en_us':'ko_kr'}catch{return 'ko_kr'}}
 const DEFAULT_WORLD={id:'default',name:'첫 번째 세계',created:0};
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
@@ -33,9 +35,11 @@ export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
  showCoordinates:s?.showCoordinates!==false
 };}
 export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
- const state={page:'title',selection:activeWorldId(),settings:loadSettings()};
+ const state={page:'title',selection:activeWorldId(),settings:loadSettings(),language:readTitleLanguage()};
  const pages=['title','worlds','create','settings','help','pause'];
  let settingsBack='title';
+ const titleStrings={ko_kr:['싱글플레이','멀티플레이','Minecraft Realms','설정...','게임 종료'],en_us:['Singleplayer','Multiplayer','Minecraft Realms','Options...','Quit Game']};
+ function localizeTitle(){const labels=titleStrings[state.language]??titleStrings.ko_kr;['menuSingle','menuMultiplayer','menuRealms','menuSettings','menuExit'].forEach((id,i)=>$(id).textContent=labels[i]);$('menuLanguageSelect').value=state.language;}
  function open(page){state.page=page;$('overlay').classList.add('show');document.body.classList.add('menu-open');for(const p of pages)$('menu-'+p).classList.toggle('hidden',p!==page);if(page==='worlds')refreshWorlds();}
  function close(){ $('overlay').classList.remove('show');document.body.classList.remove('menu-open');}
  function refreshWorlds(){const worlds=listWorlds();if(!worlds.some(w=>w.id===state.selection))state.selection=worlds[0].id;
@@ -60,9 +64,11 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
   if(activeWorldId()===item.id){try{localStorage.setItem(ACTIVE_WORLD_KEY,worlds[0].id)}catch{} location.reload();return;}
   state.selection=worlds[0].id;refreshWorlds();
  }
- function showSettings(from){settingsBack=from;const s=state.settings;$('settingFov').value=s.fov;$('settingDistance').value=s.renderDistance;$('settingSensitivity').value=s.sensitivity;$('settingCoords').checked=s.showCoordinates;updateSettingLabels();open('settings');}
+ function showSettings(from){settingsBack=from;const s=state.settings;$('settingFov').value=s.fov;$('settingDistance').value=s.renderDistance;$('settingSensitivity').value=s.sensitivity;$('settingCoords').checked=s.showCoordinates;$('menuLanguageSelect').value=state.language;updateSettingLabels();open('settings');}
  function updateSettingLabels(){$('fovValue').textContent=$('settingFov').value+'°';$('distanceValue').textContent=$('settingDistance').value+'청크';$('sensitivityValue').textContent=(Number($('settingSensitivity').value)*100).toFixed(0)+'%';}
- function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,state.settings);applySettings(state.settings);open(settingsBack);}
+ function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,state.settings);
+  state.language=$('menuLanguageSelect').value==='en_us'?'en_us':'ko_kr';try{localStorage.setItem(TITLE_LANGUAGE_KEY,state.language)}catch{}
+  localizeTitle();applySettings(state.settings);open(settingsBack);}
  $('menuSingle').addEventListener('click',()=>open('worlds'));
  $('worldPlay').addEventListener('click',continueWorld);
  $('worldCreate').addEventListener('click',()=>{$('worldName').value='새로운 세계';$('worldSeed').value='';$('worldMode').value='survival';$('worldCheats').checked=false;$('worldError').textContent='';open('create')});
@@ -72,6 +78,7 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  $('createConfirm').addEventListener('click',createWorld);
  $('worldName').addEventListener('keydown',e=>{if(e.key==='Enter')createWorld()});
  $('menuSettings').addEventListener('click',()=>showSettings('title'));
+ $('menuLanguage').addEventListener('click',()=>{showSettings('title');$('menuLanguageSelect').focus();});
  $('pauseSettings').addEventListener('click',()=>showSettings('pause'));
  for(const id of ['settingFov','settingDistance','settingSensitivity'])$(id).addEventListener('input',updateSettingLabels);
  $('settingsSave').addEventListener('click',saveSettings);
@@ -82,7 +89,7 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  $('helpBack').addEventListener('click',()=>open('title'));
  $('pauseResume').addEventListener('click',()=>{close();play()});
  $('pauseTitle').addEventListener('click',()=>{save();onTitle();open('title')});
- $('menuExit').addEventListener('click',()=>{const el=$('menuExit');el.textContent='브라우저 탭을 닫으면 종료됩니다';setTimeout(()=>{el.textContent='게임 종료'},2500)});
- open('title');applySettings(state.settings);
+ $('menuExit').addEventListener('click',()=>{const el=$('menuExit');el.textContent=state.language==='en_us'?'Close the browser tab to quit':'브라우저 탭을 닫으면 종료됩니다';setTimeout(localizeTitle,2500)});
+ localizeTitle();open('title');applySettings(state.settings);
  return {open,close,getSettings:()=>state.settings,showPause:()=>open('pause')};
 }
