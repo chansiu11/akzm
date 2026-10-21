@@ -73,6 +73,12 @@ async function review(viewport,label,touch=false){
    const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');ctx.fillStyle='#6789ab';ctx.fillRect(0,0,256,256);
    const assets=Object.fromEntries(Object.keys(MENU112_FILES).map(k=>[k,c.toDataURL()]));
    await applyMenu112(assets);
+   // Import a synthetic widgets.png through the same owner-GUI activation
+   // path; this checks the language sprite instead of the placeholder emoji.
+   const {applyGui112}=await import('./src/gui112-assets.js?v=1.8');
+   applyGui112(document.documentElement,{widgets:c.toDataURL(),icons:c.toDataURL(),inventory:c.toDataURL(),crafting:c.toDataURL()});
+   const langBg=getComputedStyle(document.getElementById('menuLanguage')).backgroundImage;
+   if(!langBg.includes('data:image/png'))throw Error('Owner 1.12.2 language icon not using widgets texture');
    const logo=document.getElementById('originalTitle112').getBoundingClientRect();
    const ok=document.documentElement.classList.contains('menu112-assets')&&logo.width>0&&logo.right<=innerWidth;
    return ok;
@@ -81,7 +87,7 @@ async function review(viewport,label,touch=false){
   // Record the synthetic owner-resource rendering instead of only a no-JAR title.
   await page.screenshot({path:'site-review/'+label+'-synthetic-owner-title.png'});
   await page.evaluate(()=>{
-   document.documentElement.classList.remove('menu112-assets');
+   document.documentElement.classList.remove('menu112-assets','gui112-assets');
    document.getElementById('menuPanorama').dispatchEvent(new CustomEvent('owner-panorama',{detail:null}));
   });
   // Exercise the owner-model path with independently authored block geometry.
