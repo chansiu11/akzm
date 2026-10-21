@@ -51,3 +51,8 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 - On owner-local import, traverse each available implemented block item model's safe relative parent chain and record only numeric `display.gui` transforms. Cache them privately, re-extracting the already saved JAR via the bumped version.
 - Render icon orientation, offset, and scale using these model transforms instead of imposing the same manually chosen pose on every block. No original JSON or texture bytes were committed.
 - WebGL rendering still differs from vanilla GPU lightmap, render-layer handling, and full parent/blockstate geometry. This is narrower, verifiable model-transform progress, not full pixel parity.
+
+## 2026-10-21: held hand and noncube block geometry
+- The first-person renderer previously hid the right arm whenever a block/tool/item was selected. The owner-local textured arm now remains visible when holding an object; exact vanilla positioning is not yet verified.
+- Slab, stairs and post model kinds no longer inherit the generic full-cube first-person geometry. The existing world quads and atlas face UVs are reused in a dedicated held geometry; cached noncube meshes are disposed on teardown.
+- No JAR PNGs, source model files, or skins are committed. Java vanilla screenshot comparison under matched FOV/view conditions remains necessary.
