@@ -36,3 +36,7 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 - Added an optional 3D player preview in the original inventory character recess. It is made from six body-part boxes and uses the locally extracted user skin, not any published model/texture asset.
 - The preview appears only after private owner assets are loaded. No-JAR fallback remains distinct. First-person model and user JAR caching are unchanged.
 - Source is an approximate 3D model; precise Minecraft player preview transforms, overlays, armor, body poses, and pixels have not been validated against the vanilla client.
+
+## 2026-10-21: preview visual inspection follow-up
+- The first preview smoke check only confirmed canvas size and placement; captured screenshots had an all-transparent synthetic skin, so a passing browser check did not prove model pixels were rendered.
+- The fixture now generates an opaque, independently authored two-tone synthetic skin and verifies rendered canvas alpha coverage, not just DOM visibility. This does not constitute vanilla-client screenshot parity or owner-JAR fidelity verification.
