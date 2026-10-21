@@ -41,10 +41,14 @@ async function review(viewport,label,touch=false){
    const box=await page.locator(selector).boundingBox();
    if(!box||box.x<0||box.y<0||box.x+box.width>viewport.width||box.y+box.height>viewport.height)throw Error('Menu control clipped: '+selector);
   }
+  const languageButton=await page.locator('#menuLanguage').boundingBox();
+  const optionsButton=await page.locator('#menuSettings').boundingBox();
+  if(!languageButton||!optionsButton||Math.abs(languageButton.y-optionsButton.y)>.6||languageButton.x+languageButton.width>optionsButton.x+1)throw Error('Owner language widget not aligned with bottom menu row');
   const titleGeometry=await page.locator('#menuSingle').boundingBox();
   const expectedScale=Math.max(1,Math.min(Math.floor(viewport.width/320),Math.floor(viewport.height/240)));
   if(Math.abs(titleGeometry.width-200*expectedScale)>.5||Math.abs(titleGeometry.height-20*expectedScale)>.5)throw Error('Title button dimensions differ from logical 200x20');
-  await page.locator('#menuSettings').click();
+  await page.locator('#menuLanguage').click();
+  await page.locator('#menuLanguageSelect').waitFor({state:'visible'});
   await page.locator('#loadJar112').waitFor({state:'visible'});
   await page.locator('#settingsBack').click();
   // An original transparent texel must replace, not overlay, generated fallback art.
@@ -71,11 +75,15 @@ async function review(viewport,label,touch=false){
    await applyMenu112(assets);
    const logo=document.getElementById('originalTitle112').getBoundingClientRect();
    const ok=document.documentElement.classList.contains('menu112-assets')&&logo.width>0&&logo.right<=innerWidth;
-   document.documentElement.classList.remove('menu112-assets');
-   document.getElementById('menuPanorama').dispatchEvent(new CustomEvent('owner-panorama',{detail:null}));
    return ok;
   });
   if(!ownerMenu)throw Error('Owner menu resources did not render');
+  // Record the synthetic owner-resource rendering instead of only a no-JAR title.
+  await page.screenshot({path:'site-review/'+label+'-synthetic-owner-title.png'});
+  await page.evaluate(()=>{
+   document.documentElement.classList.remove('menu112-assets');
+   document.getElementById('menuPanorama').dispatchEvent(new CustomEvent('owner-panorama',{detail:null}));
+  });
   // The menu navigation is installed by main.js, so this tests code executed, not only static HTML.
   await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
   await page.locator('#menuSingle').click({timeout:30000});
