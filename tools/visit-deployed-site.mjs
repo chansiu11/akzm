@@ -84,6 +84,26 @@ async function review(viewport,label,touch=false){
    document.documentElement.classList.remove('menu112-assets');
    document.getElementById('menuPanorama').dispatchEvent(new CustomEvent('owner-panorama',{detail:null}));
   });
+  // Exercise the owner-model path with independently authored block geometry.
+  const ownerBlockModelFixture=await page.evaluate(async()=>{
+   const {renderBlockItemIcons}=await import('./src/block-item-icons.js');
+   const canvas=document.createElement('canvas');canvas.width=128;canvas.height=96;
+   const ctx=canvas.getContext('2d');ctx.fillStyle='#947d67';ctx.fillRect(0,0,128,96);
+   const fromFallback=renderBlockItemIcons(canvas)[16];
+   const fromModel=renderBlockItemIcons(canvas,{},{
+    16:[{from:[0,0,0],to:[16,8,16],faces:{
+      south:{tile:6,uv:[0,8,16,16],rotation:0},
+      up:{tile:6,uv:[0,0,16,16],rotation:0}
+    }}]
+   })[16];
+   const image=document.createElement('img');image.id='ownerBlockModelFixture';
+   Object.assign(image.style,{position:'fixed',top:'0px',left:'0px',width:'64px',height:'64px',imageRendering:'pixelated',zIndex:'9999'});
+   image.src=fromModel;document.body.append(image);
+   return fromModel!==fromFallback;
+  });
+  if(!ownerBlockModelFixture)throw Error('Owner block JSON geometry did not replace procedural item geometry');
+  await page.locator('#ownerBlockModelFixture').screenshot({path:'site-review/'+label+'-synthetic-block-model.png'});
+  await page.evaluate(()=>document.getElementById('ownerBlockModelFixture')?.remove());
   // The menu navigation is installed by main.js, so this tests code executed, not only static HTML.
   await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
   await page.locator('#menuSingle').click({timeout:30000});
