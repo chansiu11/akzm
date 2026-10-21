@@ -25,7 +25,7 @@ function paint(node){
  let x=0;for(const g of glyphs){if(g.sw)ctx.drawImage(g.image,g.sx,g.sy,g.sw,g.sh,x,0,g.w,8);x+=g.advance;}
  ctx.globalCompositeOperation='source-in';ctx.fillStyle=node.id==='menuSplash'?'#ffff00':node.disabled?'#a0a0a0':node.matches(':hover')&&node.nodeName==='BUTTON'?'#ffffa0':node.closest('#inventory')&&!node.matches('span')?'#404040':'#e0e0e0';ctx.fillRect(0,0,layer.width,10);
  let canvas=node.querySelector(':scope > canvas.bitmap-text');if(!canvas){canvas=document.createElement('canvas');canvas.className='bitmap-text';canvas.setAttribute('aria-hidden','true');node.append(canvas);node.addEventListener('mouseenter',()=>paint(node));node.addEventListener('mouseleave',()=>paint(node));}
- const rect=node.getBoundingClientRect(),size=parseFloat(getComputedStyle(node).fontSize)||16,scale=Math.min(size/8,Math.max(1,rect.width-4)/layer.width);
+ const rect=node.getBoundingClientRect(),size=parseFloat(getComputedStyle(node).fontSize)||16,scale=node.id==='menuSplash'?(1.8*100/(logicalWidth+32))*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--menu-scale'))||1):Math.min(size/8,Math.max(1,rect.width-4)/layer.width);
  canvas.width=layer.width;canvas.height=10;canvas.style.width=layer.width*scale+'px';canvas.style.height=10*scale+'px';const out=canvas.getContext('2d');out.clearRect(0,0,canvas.width,canvas.height);
  if(!node.closest('#inventory')||node.matches('span')){out.drawImage(layer,1,1);out.globalCompositeOperation='source-in';out.fillStyle='#353535';out.fillRect(0,0,canvas.width,canvas.height);out.globalCompositeOperation='source-over';}
  out.drawImage(layer,0,0);node.classList.add('bitmap-label');

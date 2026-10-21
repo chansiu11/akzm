@@ -45,10 +45,13 @@ html.gui112-assets #overlay button.stone-button.bitmap-label{color:transparent!i
 #overlay #menu-title .menu-duo{margin-top:calc(8px * var(--menu-scale,1));gap:calc(4px * var(--menu-scale,1))}
 html.menu112-assets #menu-title .java-edition{position:absolute;left:calc(88px * var(--menu-scale,1));top:calc(37px * var(--menu-scale,1));width:calc(98px * var(--menu-scale,1));height:calc(14px * var(--menu-scale,1));margin:0;background-size:calc(128px * var(--menu-scale,1)) calc(16px * var(--menu-scale,1));background-position:0 0}
 html.menu112-assets #menuPanorama{inset:0;width:100%;height:100%;filter:blur(2px)!important;image-rendering:auto}
-#menuSplash{display:none;position:absolute;left:calc(172px * var(--menu-scale,1));top:calc(39px * var(--menu-scale,1));width:calc(150px * var(--menu-scale,1));height:calc(12px * var(--menu-scale,1));font-size:calc(10px * var(--menu-scale,1));color:#ffff00;white-space:nowrap;text-shadow:calc(1px * var(--menu-scale,1)) calc(1px * var(--menu-scale,1)) #3f3f00;transform:translate(-50%,-50%) rotate(-20deg);animation:splash112 1s ease-in-out infinite}
+#menuSplash{display:none;position:absolute;left:calc(227px * var(--menu-scale,1));top:calc(40px * var(--menu-scale,1));width:calc(150px * var(--menu-scale,1));height:calc(12px * var(--menu-scale,1));font-size:calc(10px * var(--menu-scale,1));color:#ffff00;white-space:nowrap;text-shadow:calc(1px * var(--menu-scale,1)) calc(1px * var(--menu-scale,1)) #3f3f00;transform:translate(-50%,-50%) rotate(-20deg);animation:splash112 1s ease-in-out infinite}
 html.menu112-assets #menuSplash:not(:empty){display:block}
 @keyframes splash112{50%{transform:translate(-50%,-50%) rotate(-20deg) scale(.95)}}
 .owner-resource-settings{display:flex;flex-direction:column;gap:8px;max-width:100%;margin:16px auto}
 .owner-resource-settings #packStatus{font-size:12px;max-width:440px}
 .owner-resource-settings #loadJar112{width:100%;min-width:220px}
 body:has(#menu-title:not(.hidden)) .menu-footer{font-size:calc(8px * var(--menu-scale,1));padding:calc(2px * var(--menu-scale,1));line-height:1.2}
+
+#overlay #menu-title button.stone-button{height:calc(20px * var(--menu-scale,1))!important;min-height:0!important;font-size:calc(8px * var(--menu-scale,1))!important}
+#overlay #menu-title .menu-duo{gap:calc(4px * var(--menu-scale,1))!important}

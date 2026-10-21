@@ -37,3 +37,6 @@ Base: 8e6f36d52a339b428388fd7af61c09b1240fd8ea.
 - Held tools and non-block items now use local original PNGs when present. These are planes; vanilla edge extrusion and exact display transforms remain missing.
 - No original game bytes were committed. Full pixel parity is NOT established: no matching vanilla runtime screenshot with identical resolution, GUI scale, language, time, world seed, position, yaw/pitch, graphics and gamma settings is available for image-difference measurement.
 - Remaining major differences: procedural fallback art before local import; incomplete block catalog/models; player skin/arm model; inventory player/equipment/recipe behavior; animated textures; biome tints; ambient occlusion and lightmap; terrain/structures/entities; gameplay and multiplayer.
+
+### Deployed review follow-up
+Public Chromium run 39520994680 passed on desktop and both mobile orientations. Screenshot inspection found an additional legacy mobile 38px button-height override; a follow-up removes it and asserts actual 200x20 logical bounds. Pointer movement is now accepted only while the canvas owns pointer lock, with the first lock-transition movement discarded to avoid an entry camera jump. This input fix still needs user-device testing across browsers.

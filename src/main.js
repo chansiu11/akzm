@@ -293,8 +293,9 @@ const commandUI=setupCommandUI({
   particle:(type,coords,spread,speed,count)=>effects.emit(type,coords,spread,speed,count)
  })
 });
-const onPointer=()=>{if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running)cancelUsing();if(!survival.dead&&!running&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
-document.addEventListener('mousemove',e=>{if(!running||touchMode)return;Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100))});
+let discardLockMovement=true;
+const onPointer=()=>{discardLockMovement=true;if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running)cancelUsing();if(!survival.dead&&!running&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
+document.addEventListener('mousemove',e=>{if(!running||touchMode||document.pointerLockElement!==canvas)return;if(discardLockMovement){discardLockMovement=false;return;}Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100))});
 // Minecraft-style touch: drag to look, tap to use/place, hold a block to mine.
 // Pointer-captured viewport gestures do not interfere with the independent D-pad.
 function endTouchLook(e,cancelled=false){
