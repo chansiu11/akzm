@@ -192,7 +192,7 @@ function iconClass(id){if(pngData(itemIconURI(id)))return ' owner-item-icon';ret
 function iconOffset(id){if(pngData(itemIconURI(id)))return `background-image:url('${itemIconURI(id)}')!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
  return `background-position:${(tile%8*100/7).toFixed(3)}% ${(Math.floor(tile/8)*100/(ATLAS_ROWS-1)).toFixed(3)}%`;
 }
-function showAtlas(canvas){try{blockItemIcons=renderBlockItemIcons(canvas,ownerBlockGuiModels,ownerBlockIconModels);}catch(error){console.warn('Block item icons:',error);}texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);updateUI();}
+function showAtlas(canvas,{owner=false}={}){waterMat.opacity=owner?1:.67;try{blockItemIcons=renderBlockItemIcons(canvas,ownerBlockGuiModels,ownerBlockIconModels);}catch(error){console.warn('Block item icons:',error);}texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);updateUI();}
 function updateUI(){
  replenishOverflow(inventory,inventoryOverflow);
  firstPerson.setItem(inventory[selected]?.count>0?inventory[selected].id:0);
@@ -367,7 +367,7 @@ async function importOwnerJar(jar){
  window.JSZip=JSZip;
  const atlas=await loadLocalResourcePack(jar);
  if(!applyGui112(document.documentElement,assets))throw Error('원본 HUD 이미지 적용 실패');
- applyOwnerAppearance(assets);showAtlas(atlas.canvas);
+ applyOwnerAppearance(assets);showAtlas(atlas.canvas,{owner:true});
  const saved=await writePrivateResources({version:PRIVATE_RESOURCE_VERSION,jar,assets,atlas:atlas.canvas.toDataURL('image/png')});
  if(!saved){storeGui112(assets);saveLocalAtlas(atlas.canvas);}
  return saved;
@@ -392,7 +392,7 @@ el('jar112Input').addEventListener('change',async event=>{
     if(cached.version===PRIVATE_RESOURCE_VERSION){
      const canvas=await decodePrivateAtlas(cached.atlas);
      if(!applyGui112(document.documentElement,cached.assets))throw Error('Invalid cached UI');
-     applyOwnerAppearance(cached.assets);showAtlas(canvas);
+     applyOwnerAppearance(cached.assets);showAtlas(canvas,{owner:true});
     }else if(cached.jar){await importOwnerJar(cached.jar);}
     else throw Error('Missing cached JAR');
     status.textContent='저장된 원본 메뉴·글꼴·UI·블록 자동 불러오기 완료';return;
