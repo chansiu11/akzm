@@ -34,7 +34,7 @@ test('owner sprite selectors target <html>, matching applyGui112(document.docume
  assert.match(css,/html\.gui112-chest body #inventory/);
  assert.match(css,/html\.gui112-furnace body #inventory/);
  assert.doesNotMatch(css,/body\.gui112-(?:assets|chest|furnace)/);
- assert.match(html,/gui112\.css\?v=1\.4/);
+ assert.match(html,/gui112\.css\?v=\d+\.\d+/);
 });
 test('owner-supplied four PNGs activate the root class and CSS properties',()=>{
  const names=new Set(),props={};
@@ -56,7 +56,7 @@ test('inventory overlay hides the gameplay HUD and restores it when closed',()=>
  assert.match(js,/inventoryOpen=true;document\.body\.classList\.add\('inventory-open'\)/);
  assert.match(js,/function closeInventory\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
  assert.match(js,/function requestPlay\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
- assert.match(html,/gui112\.css\?v=1\.4/);
+ assert.match(html,/gui112\.css\?v=\d+\.\d+/);
 });
 
 test('touch inventory and external close control fit short landscape screens',()=>{

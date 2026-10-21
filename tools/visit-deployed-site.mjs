@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -105,6 +105,15 @@ async function review(viewport,label,touch=false){
   const closeBounds=await page.locator('#closeInventory').boundingBox();
   if(!closeBounds||closeBounds.y<0||closeBounds.x<0||closeBounds.x+closeBounds.width>viewport.width)throw Error('Inventory close control is clipped');
   await page.screenshot({path:'site-review/'+label+'-inventory.png'});
+  const slotSprite=await page.evaluate(()=>{
+   const root=document.documentElement;root.classList.add('gui112-assets');
+   const slot=document.querySelector('#invItems button');slot.blur();
+   const result={background:getComputedStyle(slot).backgroundColor,shadow:getComputedStyle(slot).boxShadow};root.classList.remove('gui112-assets');return result;
+  });
+  if(slotSprite.background!=='rgba(0, 0, 0, 0)'||slotSprite.shadow!=='none')throw Error('CSS still covers original inventory slot sprite');
+  const iconApplied=await page.locator('#invItems .tileIcon').first().evaluate(el=>el.classList.contains('owner-item-icon')&&el.style.backgroundImage.includes('data:image/png'));
+  if(!iconApplied)throw Error('Block inventory icon was not rendered from the model');
+
   await page.locator('#closeInventory').click();
   await page.locator('#inventory').waitFor({state:'hidden'});
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));

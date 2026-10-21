@@ -139,3 +139,11 @@ html.gui112-furnace body #inventory .furnace-flame{position:absolute;left:calc(5
 body.inventory-open :is(#hotbar,#survivalHud,#crosshair,#miningIndicator,#target,#touchControls,#gameNotice){
  display:none!important
 }
+
+/* Override the two-ID slot rule above: the original PNG already contains recesses. */
+html.gui112-assets body #inventory[data-container] :is(#invItems,#craftGrid,#tileContents) button,
+html.gui112-assets body #inventory[data-container] #craftOutput{
+ background:transparent!important;box-shadow:none!important
+}
+html.gui112-assets body #inventory[data-container] :is(#invItems,#craftGrid,#tileContents) button:hover,
+html.gui112-assets body #inventory[data-container] #craftOutput:hover{background:#ffffff80!important}

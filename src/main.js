@@ -1,3 +1,4 @@
+import {renderBlockItemIcons} from './block-item-icons.js';
 import {installTitleLayout112} from './title-layout112.js';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
 import {applyBitmapFont112} from './bitmap-font112.js';
@@ -69,7 +70,7 @@ waterTexture.wrapS=THREE.RepeatWrapping;waterTexture.wrapT=THREE.RepeatWrapping;
 waterTexture.colorSpace=THREE.SRGBColorSpace;
 const solidMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,side:THREE.FrontSide});
 const leafMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,side:THREE.DoubleSide,alphaTest:.45});
-const glassMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,transparent:true,opacity:.44,depthWrite:false,side:THREE.DoubleSide});
+const glassMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,transparent:true,opacity:1,depthWrite:false,side:THREE.DoubleSide});
 const waterMat=new THREE.MeshLambertMaterial({map:waterTexture,vertexColors:true,transparent:true,opacity:.67,depthWrite:false,side:THREE.DoubleSide});
 const firstPerson=createFirstPerson(renderer,texture);const saved=readSave(),gameMode=activeWorldMode(),cheatsAllowed=activeWorldCheats(),world=new World(saved?.world,{seed:activeWorldSeed()});
 const inventoryRestore=restoreInventory(Array.isArray(saved?.inventory)?saved.inventory:gameMode==='survival'?[]:cleanInventory(null),saved?.inventoryOverflow);
@@ -184,12 +185,13 @@ function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot(
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
-let ownerItemIcons={};
-function iconClass(id){if(pngData(ownerItemIcons[id]))return ' owner-item-icon';return id>=110&&id<=114?' toolIcon tool-'+id:'';}
-function iconOffset(id){if(pngData(ownerItemIcons[id]))return `background-image:url("${ownerItemIcons[id]}")!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
+let ownerItemIcons={},blockItemIcons={};
+const itemIconURI=id=>ownerItemIcons[id]??blockItemIcons[id];
+function iconClass(id){if(pngData(itemIconURI(id)))return ' owner-item-icon';return id>=110&&id<=114?' toolIcon tool-'+id:'';}
+function iconOffset(id){if(pngData(itemIconURI(id)))return `background-image:url("${itemIconURI(id)}")!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
  return `background-position:${(tile%8*100/7).toFixed(3)}% ${(Math.floor(tile/8)*100/(ATLAS_ROWS-1)).toFixed(3)}%`;
 }
-function showAtlas(canvas){texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);}
+function showAtlas(canvas){try{blockItemIcons=renderBlockItemIcons(canvas);}catch(error){console.warn('Block item icons:',error);}texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);updateUI();}
 function updateUI(){
  replenishOverflow(inventory,inventoryOverflow);
  firstPerson.setItem(inventory[selected]?.count>0?inventory[selected].id:0);
