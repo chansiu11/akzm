@@ -43,5 +43,8 @@ export async function readOwner112Jar(file){
   const entry=zip.file('assets/minecraft/textures/items/'+(item.id===107?'dye_powder_blue':item.key.split(':')[1])+'.png');
   if(entry)a.itemIcons[item.id]='data:image/png;base64,'+await entry.async('base64');
  }
+ a.bitmapFont={ascii:'data:image/png;base64,'+await zip.file('assets/minecraft/textures/font/ascii.png').async('base64'),sizes:await zip.file('assets/minecraft/font/glyph_sizes.bin').async('base64'),pages:{}};
+ const pages=new Set([0,0x20,0x21,0x25,0x30,...Array.from({length:44},(_,i)=>0xac+i)]);
+ for(const page of pages){const f=zip.file('assets/minecraft/textures/font/unicode_page_'+page.toString(16).padStart(2,'0')+'.png');if(f)a.bitmapFont.pages[page]='data:image/png;base64,'+await f.async('base64');}
  return {assets:a,JSZip};
 }

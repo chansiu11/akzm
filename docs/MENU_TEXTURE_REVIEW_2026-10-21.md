@@ -19,3 +19,11 @@ Base: 8e6f36d52a339b428388fd7af61c09b1240fd8ea.
 - Public default screenshots are the no-JAR fallback. Reimport 1.12.2.jar on each device to use the expanded original artwork. Older GUI caches lack the new menu/item assets.
 - No running vanilla client was available for exact screenshot comparison. This is NOT a claim that every UI or block is identical.
 - Remaining: exact font rendering and localized strings, splash text, all settings/world screens, inventory player model/equipment, full recipe-book layout/behavior, non-cube held block models, every vanilla block/state/animation, biome colormaps, chest shape/animation, exact panorama projection/blur, and unimplemented systems documented in earlier audits.
+
+## Automatic private resource restore
+- Verified owner JAR, extracted UI/menu/font images, and six-row atlas are saved together in IndexedDB on this browser origin. No upload endpoint is involved.
+- On next visit the bundle is restored without opening the file picker. A resource schema change re-extracts the saved JAR automatically.
+- First use on another browser/device, cleared site data, or denied storage still requires one local file selection. Old image-only caches remain compatible, but need one JAR selection to enable future re-extraction.
+- Local bitmap font support covers ASCII and selected Unicode pages including Hangul, menu buttons and item counts; this is not a claim that all text rendering matches vanilla.
+- Node suite: 187 passing. Public-site browser check now exercises synthetic private resource persistence across reload on desktop, portrait and landscape. Synthetic fixtures contain no original asset bytes.
+- Prior stage a6c937 public screenshots were inspected: title controls fit desktop and portrait; landscape inventory fits, but player preview/equipment and world shading still differ substantially from vanilla.

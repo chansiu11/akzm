@@ -1,3 +1,5 @@
+import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
+import {applyBitmapFont112} from './bitmap-font112.js';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
@@ -43,7 +45,7 @@ import {createFirstPerson} from './first-person.js?v=1.3';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.2';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.3';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -353,32 +355,51 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){ownerItemIcons=assets?.itemIcons??{};applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
+async function importOwnerJar(jar){
+ const {assets,JSZip}=await readOwner112Jar(jar);
+ window.JSZip=JSZip;
+ const atlas=await loadLocalResourcePack(jar);
+ if(!applyGui112(document.documentElement,assets))throw Error('원본 HUD 이미지 적용 실패');
+ applyOwnerAppearance(assets);showAtlas(atlas.canvas);
+ const saved=await writePrivateResources({version:PRIVATE_RESOURCE_VERSION,jar,assets,atlas:atlas.canvas.toDataURL('image/png')});
+ if(!saved){storeGui112(assets);saveLocalAtlas(atlas.canvas);}
+ return saved;
+}
 el('loadJar112').addEventListener('click',()=>el('jar112Input').click());
 el('jar112Input').addEventListener('change',async event=>{
  const jar=event.target.files?.[0];if(!jar)return;
  const button=el('loadJar112'),status=el('packStatus');button.disabled=true;status.textContent='1.12.2.jar 검증 중…';
  try{
-  const {assets,JSZip}=await readOwner112Jar(jar);
-  if(!applyGui112(document.documentElement,assets))throw Error('원본 HUD 이미지 적용 실패');
-  applyOwnerAppearance(assets);
-  const stored=storeGui112(assets);
-  window.JSZip=JSZip;
-  const atlas=await loadLocalResourcePack(jar);
-  showAtlas(atlas.canvas);
-  const atlasStored=saveLocalAtlas(atlas.canvas);
-  status.textContent=`원본 메뉴·UI·아이템 · 블록 이미지 ${atlas.loaded}/${atlas.total} 적용`+(stored&&atlasStored?' · 이 기기에 저장됨':' · 저장공간 부족 가능');
+  const saved=await importOwnerJar(jar);
+  status.textContent='원본 메뉴·글꼴·UI·블록 이미지 적용'+(saved?' · 다음 접속부터 자동 불러오기':' · 자동 저장 실패: 다음 접속 시 다시 선택하세요');
  }catch(error){status.textContent='JAR 불러오기 실패: '+(error?.message??String(error));}
  finally{button.disabled=false;event.target.value='';}
 });
 (async()=>{
- const status=el('packStatus');
- const auto=await loadAutomaticTextures();
- if(auto){showAtlas(auto.canvas);status.textContent=`로컬 블록 텍스처 적용: ${auto.loaded}/${auto.total}`+(storedGui112?' · 저장된 1.12.2 HUD 적용':'');return;}
- const cached=await restoreLocalAtlas();
- if(cached){showAtlas(cached);status.textContent='저장된 블록 텍스처 복원'+(storedGui112?' · 1.12.2 HUD 적용':'');return;}
- status.textContent=storedGui112?'1.12.2 HUD 복원 · 블록은 기본 텍스처':'정품 1.12.2.jar를 선택하면 개인 브라우저에서 원본 HUD·블록 이미지를 적용합니다.';
+ const status=el('packStatus'),button=el('loadJar112');button.disabled=true;
+ status.textContent='저장된 원본 리소스 자동 불러오는 중…';
+ try{
+  const cached=await readPrivateResources();
+  if(cached){
+   try{
+    if(cached.version===PRIVATE_RESOURCE_VERSION){
+     const canvas=await decodePrivateAtlas(cached.atlas);
+     if(!applyGui112(document.documentElement,cached.assets))throw Error('Invalid cached UI');
+     applyOwnerAppearance(cached.assets);showAtlas(canvas);
+    }else if(cached.jar){await importOwnerJar(cached.jar);}
+    else throw Error('Missing cached JAR');
+    status.textContent='저장된 원본 메뉴·글꼴·UI·블록 자동 불러오기 완료';return;
+   }catch(error){console.warn('Private resource restore:',error);}
+  }
+  const auto=await loadAutomaticTextures();
+  if(auto){showAtlas(auto.canvas);status.textContent=`로컬 블록 텍스처 적용: ${auto.loaded}/${auto.total}`;return;}
+  const legacy=await restoreLocalAtlas();
+  if(legacy)showAtlas(legacy);
+  status.textContent=storedGui112||legacy?'이전 이미지 복원 · JAR을 한 번 다시 선택하면 이후 업데이트도 자동 적용됩니다.':'1.12.2.jar를 처음 한 번 선택하세요. 이후 이 브라우저에서 자동으로 불러옵니다.';
+ }catch(error){status.textContent='자동 불러오기 실패 · JAR을 직접 선택해 주세요.';}
+ finally{button.disabled=false;}
 })();
 const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=settings.renderDistance;camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
 const palette=el('blockCatalog');

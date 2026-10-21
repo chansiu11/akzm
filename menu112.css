@@ -31,3 +31,7 @@ html.gui112-assets #inventory[data-container] .container-slot{background:transpa
 html.gui112-assets #inventory[data-container] .container-slot:hover{background:#ffffff80!important}
 @media(max-width:600px){#overlay .brand-shadow{top:7dvh}#menu-title>.menu-stack{top:35dvh}#menu-title #menuHelp{bottom:100px}#menu-title #loadJar112{bottom:54px}#menu-title #packStatus{bottom:28px}#overlay .menu-footer{font-size:8px}}
 @media(max-height:450px){#overlay .brand-shadow{top:12px;width:210px}#menu-title>.menu-stack{top:100px}#menu-title #menuHelp{left:12px;bottom:34px;transform:none}#menu-title #loadJar112{left:auto;right:12px;bottom:34px;transform:none;width:200px}#menu-title #packStatus{bottom:16px}}
+
+.bitmap-label{color:transparent!important;text-shadow:none!important;position:relative}
+.bitmap-text{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;pointer-events:none;z-index:2}
+html.gui112-assets #overlay button.stone-button.bitmap-label{color:transparent!important;text-shadow:none!important}

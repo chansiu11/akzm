@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -89,7 +89,23 @@ async function review(viewport,label,touch=false){
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
   await page.locator('#inventory').waitFor({state:'visible'});
   if(await page.locator('#hotbar').evaluate(el=>getComputedStyle(el).display)!=='none')throw Error('HUD visible after reopening inventory');
-  console.log(JSON.stringify({label,menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok'}));
+  // Verify IndexedDB survives a real navigation and startup restores without a picker.
+  await page.evaluate(async()=>{
+   const {writePrivateResources,PRIVATE_RESOURCE_VERSION}=await import('./src/private-resource-cache.js');
+   const {GUI112_FILES}=await import('./src/gui112-assets.js');
+   const {MENU112_FILES}=await import('./src/menu112-assets.js');
+   const c=document.createElement('canvas');c.width=c.height=256;
+   c.getContext('2d').fillRect(0,0,256,256);
+   const assets=Object.fromEntries([...Object.keys(GUI112_FILES),...Object.keys(MENU112_FILES)].map(k=>[k,c.toDataURL()]));
+   assets.bitmapFont={ascii:c.toDataURL(),sizes:btoa(String.fromCharCode(15).repeat(65536)),pages:{172:c.toDataURL(),174:c.toDataURL(),179:c.toDataURL(),183:c.toDataURL(),185:c.toDataURL(),186:c.toDataURL(),189:c.toDataURL(),192:c.toDataURL(),196:c.toDataURL(),199:c.toDataURL(),200:c.toDataURL(),201:c.toDataURL(),203:c.toDataURL(),205:c.toDataURL(),208:c.toDataURL(),212:c.toDataURL()}};
+   c.width=128;c.height=96;
+   if(!await writePrivateResources({version:PRIVATE_RESOURCE_VERSION,assets,atlas:c.toDataURL()}))throw Error('Private cache write failed');
+  });
+  await page.reload();
+  await page.waitForFunction(()=>document.getElementById('packStatus')?.textContent.includes('자동 불러오기 완료'));
+  await page.waitForFunction(()=>document.documentElement.classList.contains('menu112-assets')&&document.documentElement.classList.contains('gui112-assets'));
+  await page.locator('#menu-title .menu-stack > button:nth-child(3) canvas.bitmap-text').waitFor({state:'attached'});
+  console.log(JSON.stringify({label,automaticResourceRestore:'ok',menu:'ok',worlds:'ok',ownerGuiCSS:result,inventory:'ok'}));
  }catch(e){failures.push(label+': '+e.message);await page.screenshot({path:'site-review/'+label+'-failure.png'}).catch(()=>{});}
  finally{await context.close();}
 }

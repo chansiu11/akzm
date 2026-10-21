@@ -22,3 +22,10 @@ test('furnace sandstone spruce and chest use their own face textures',()=>{
  assert.equal(tileForBlock(BLOCK.SPRUCE_LOG,[0,1,0]),40);
  assert.equal(tileForBlock(BLOCK.CHEST,[0,0,1]),43);
 });
+
+import {unicodeGlyphMetric} from '../src/bitmap-font112.js';
+test('Unicode bitmap metrics crop the source glyph without its side bearing',()=>{
+ assert.deepEqual(unicodeGlyphMetric(0x0f),{start:0,width:16});
+ assert.deepEqual(unicodeGlyphMetric(0x37),{start:3,width:5});
+ assert.deepEqual(unicodeGlyphMetric(0),{start:0,width:0});
+});
