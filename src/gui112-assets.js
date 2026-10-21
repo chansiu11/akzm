@@ -1,5 +1,6 @@
 import {MENU112_FILES,pngData} from './menu112-assets.js';
-import {ITEM_DEFS} from './item-registry.js';
+import {ITEM_DEFS,BLOCK_ITEMS} from './item-registry.js';
+import {readOwnerBlockGuiModels} from './item-model112.js';
 // Personal-use importer: all original images are read from a locally chosen JAR.
 // Never include proprietary game files or encoded copies in this public repository.
 export const GUI112_SHA1='0f275bc1547d01fa5f56ba34bdc87d981ee12daf';
@@ -53,6 +54,7 @@ export async function readOwner112Jar(file){
  for(const [key,path] of Object.entries(MENU112_FILES)){
   const entry=zip.file(path);if(entry)a[key]='data:image/png;base64,'+await entry.async('base64');
  }
+ a.blockGuiModels=await readOwnerBlockGuiModels(zip,BLOCK_ITEMS);
  const steve=zip.file('assets/minecraft/textures/entity/steve.png');if(steve)a.playerSkin='data:image/png;base64,'+await steve.async('base64');
  a.itemIcons={};
  for(const item of ITEM_DEFS.filter(i=>i.blockId===null)){

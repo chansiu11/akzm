@@ -1,9 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {BLOCK_ITEMS} from './item-registry.js';
+import {blockIconPose112} from './item-model112.js';
 // Render existing block geometry/face textures, rather than displaying one flat atlas tile.
 // The lighting and pose remain an approximation pending vanilla screenshot comparison.
-export function renderBlockItemIcons(atlas){
+export function renderBlockItemIcons(atlas,ownerGuiModels={}){
  const renderer=new THREE.WebGLRenderer({alpha:true,antialias:false,preserveDrawingBuffer:true});
  renderer.setSize(32,32,false);renderer.setPixelRatio(1);renderer.setClearColor(0,0);
  const texture=new THREE.CanvasTexture(atlas);texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;
@@ -17,7 +18,12 @@ export function renderBlockItemIcons(atlas){
    face.v.forEach((v,i)=>{positions.push(...v.map(n=>n-.5));uvs.push(...uv[i]);colors.push(shade,shade,shade);});indices.push(base,base+1,base+2,base,base+2,base+3);
   }
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setIndex(indices);
-  const mesh=new THREE.Mesh(geometry,material);mesh.rotation.set(Math.PI/6,Math.PI/4,0);scene.add(mesh);renderer.render(scene,camera);output[item.id]=renderer.domElement.toDataURL();scene.remove(mesh);geometry.dispose();
+  const mesh=new THREE.Mesh(geometry,material);
+  const pose=blockIconPose112(ownerGuiModels[item.id]);
+  mesh.rotation.set(...pose.rotation.map(value=>value*Math.PI/180));
+  mesh.position.set(...pose.translation);
+  mesh.scale.set(...pose.scale);
+  scene.add(mesh);renderer.render(scene,camera);output[item.id]=renderer.domElement.toDataURL();scene.remove(mesh);geometry.dispose();
  }}finally{texture.dispose();material.dispose();renderer.dispose();renderer.forceContextLoss();}
  return output;
 }

@@ -37,3 +37,35 @@ test('title scaling reserves a 320 by 240 logical viewport independently of touc
  assert.equal(titleLayout112(844,390).scale,1);
  const odd=titleLayout112(1365,767);assert.equal(odd.width,455);assert.equal(odd.height,256);
 });
+
+import {ownerBlockItemModelName,cleanGuiTransform112,readOwnerBlockGuiModels,blockIconPose112} from '../src/item-model112.js';
+test('vanilla 1.12.2 variant names use the local model JSON for oak and spruce items',()=>{
+ assert.equal(ownerBlockItemModelName({blockId:5,key:'minecraft:log'}),'oak_log');
+ assert.equal(ownerBlockItemModelName({blockId:24,key:'minecraft:log'}),'spruce_log');
+ assert.equal(ownerBlockItemModelName({blockId:15,key:'minecraft:wooden_slab'}),'oak_slab');
+ assert.equal(ownerBlockItemModelName({blockId:16,key:'minecraft:oak_stairs'}),'oak_stairs');
+ assert.equal(ownerBlockItemModelName({blockId:8,key:'minecraft:water'}),null);
+});
+test('owner model JSON inherits GUI pose through block parents without publishing assets',async()=>{
+ const prefix='assets/minecraft/models/';
+ const models={
+  [prefix+'item/oak_stairs.json']:{parent:'block/oak_stairs'},
+  [prefix+'block/oak_stairs.json']:{parent:'block/stairs'},
+  [prefix+'block/stairs.json']:{display:{gui:{rotation:[30,135,0],translation:[0,0,0],scale:[.625,.625,.625]}}},
+  [prefix+'item/grass.json']:{parent:'block/grass_normal'},
+  [prefix+'block/grass_normal.json']:{parent:'block/block'},
+  [prefix+'block/block.json']:{display:{gui:{rotation:[30,225,0],translation:[0,0,0],scale:[.625,.625,.625]}}}
+ };
+ const zip={file:path=>models[path]?{async:async()=>JSON.stringify(models[path])}:null};
+ const loaded=await readOwnerBlockGuiModels(zip,[{id:16,blockId:16,key:'minecraft:oak_stairs'},{id:1,blockId:1,key:'minecraft:grass'}]);
+ assert.deepEqual(loaded[16].rotation,[30,135,0]);
+ assert.deepEqual(loaded[1].rotation,[30,225,0]);
+ assert.deepEqual(blockIconPose112(loaded[1]).rotation,[30,45,0]);
+ assert.deepEqual(blockIconPose112(loaded[16]).rotation,[30,135,0]);
+ assert.deepEqual(blockIconPose112(loaded[16]).scale,[1,1,1]);
+ assert.equal(cleanGuiTransform112({rotation:['x',0,0],translation:[0,0,0],scale:[1,1,1]}),null);
+});
+test('restoring cached owner JAR recomputes local GUI models',async()=>{
+ const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
+ assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v5');
+});

@@ -45,3 +45,9 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 - The strengthened pixel test found an incorrect assumption in the test: on desktop, the actual screenshot visibly contained the synthetic avatar, while reading back `canvas.toDataURL()` reported zero pixels. Browser compositor screenshots and WebGL drawing-buffer readback are not equivalent.
 - Replaced the readback check with a color-pixel assertion on the element screenshot using known blue/orange synthetic fixture colors; now also waits for `src/player-preview112.js` to be deployed before visiting the site.
 - Reverted unnecessary WebGL `preserveDrawingBuffer`; the private resource import/privacy mechanism is unchanged.
+
+## 2026-10-21: locally inherited block-item GUI model transforms
+- Audited owner JAR SHA-1 `0f275bc1547d01fa5f56ba34bdc87d981ee12daf`. Its item-model JSONs inherit GUI transforms from block-model parents, including a stair-specific rotation absent from previous programmatic icons.
+- On owner-local import, traverse each available implemented block item model's safe relative parent chain and record only numeric `display.gui` transforms. Cache them privately, re-extracting the already saved JAR via the bumped version.
+- Render icon orientation, offset, and scale using these model transforms instead of imposing the same manually chosen pose on every block. No original JSON or texture bytes were committed.
+- WebGL rendering still differs from vanilla GPU lightmap, render-layer handling, and full parent/blockstate geometry. This is narrower, verifiable model-transform progress, not full pixel parity.
