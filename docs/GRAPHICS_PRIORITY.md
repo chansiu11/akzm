@@ -18,3 +18,5 @@ Deployed review 39523945412 passed all three browser configurations. The synthet
 - Removed the extra 0.44 glass material opacity multiplier, retaining transparency from the imported PNG itself.
 - Local original atlas changes regenerate the block icons, so an old procedural tile is not retained after loading the JAR. Non-block item PNGs still take precedence.
 - The public default remains generated artwork until a local JAR is selected; it must not be described as original vanilla textures. No proprietary assets were published.
+
+Public run 39525508155 confirmed the slot-background fix but caught an icon application failure. Root cause: double quotes inside `url(...)` prematurely terminated the HTML style attribute. Switched validated data URLs to single-quoted CSS URL syntax. This also fixes the previously added original non-block item icons, not just new block model icons.

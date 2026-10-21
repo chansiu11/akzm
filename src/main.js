@@ -188,7 +188,7 @@ function track(stat,amount=1){for(const g of progression.add(stat,amount))notify
 let ownerItemIcons={},blockItemIcons={};
 const itemIconURI=id=>ownerItemIcons[id]??blockItemIcons[id];
 function iconClass(id){if(pngData(itemIconURI(id)))return ' owner-item-icon';return id>=110&&id<=114?' toolIcon tool-'+id:'';}
-function iconOffset(id){if(pngData(itemIconURI(id)))return `background-image:url("${itemIconURI(id)}")!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
+function iconOffset(id){if(pngData(itemIconURI(id)))return `background-image:url('${itemIconURI(id)}')!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important`;const item=itemDefinition(id),tile=item?.iconTile??tileFor(id,[0,1,0]);
  return `background-position:${(tile%8*100/7).toFixed(3)}% ${(Math.floor(tile/8)*100/(ATLAS_ROWS-1)).toFixed(3)}%`;
 }
 function showAtlas(canvas){try{blockItemIcons=renderBlockItemIcons(canvas);}catch(error){console.warn('Block item icons:',error);}texture.image=canvas;texture.needsUpdate=true;waterTexture.image=extractWaterImage(canvas);waterTexture.needsUpdate=true;document.documentElement.style.setProperty('--block-atlas',`url("${canvas.toDataURL('image/png')}")`);updateUI();}
