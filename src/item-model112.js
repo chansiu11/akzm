@@ -44,9 +44,9 @@ export async function readOwnerBlockGuiModels(zip,items){
 // Java JSON GUI model rotations are stored in Java's block-model convention.
 // This adapts them to our front-facing Three.js mesh. Exact vanilla lightmap
 // and item framebuffer rasterization still need screenshot-based validation.
-export function blockIconPose112(gui){
+export function blockIconPose112(gui,{nativeModel=false}={}){
  if(!gui)return {rotation:[30,45,0],translation:[0,0,0],scale:[1,1,1]};
- const y=gui.rotation[1]>180?gui.rotation[1]-180:gui.rotation[1];
+ const y=nativeModel?gui.rotation[1]:(gui.rotation[1]>180?gui.rotation[1]-180:gui.rotation[1]);
  return {rotation:[gui.rotation[0],y,gui.rotation[2]],
   translation:gui.translation.map(v=>v/16),
   scale:gui.scale.map(v=>v/.625)};
