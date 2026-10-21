@@ -62,6 +62,7 @@ test('owner model JSON inherits GUI pose through block parents without publishin
  assert.deepEqual(loaded[16].rotation,[30,135,0]);
  assert.deepEqual(loaded[1].rotation,[30,225,0]);
  assert.deepEqual(blockIconPose112(loaded[1]).rotation,[30,45,0]);
+ assert.deepEqual(blockIconPose112(loaded[1],{nativeModel:true}).rotation,[30,225,0]);
  assert.deepEqual(blockIconPose112(loaded[16]).rotation,[30,135,0]);
  assert.deepEqual(blockIconPose112(loaded[16]).scale,[1,1,1]);
  assert.equal(cleanGuiTransform112({rotation:['x',0,0],translation:[0,0,0],scale:[1,1,1]}),null);
