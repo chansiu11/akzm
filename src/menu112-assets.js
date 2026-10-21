@@ -29,8 +29,13 @@ export async function applyMenu112(assets){
  const splash=document.getElementById('menuSplash');if(splash&&assets.splashes?.length)splash.textContent=assets.splashes[Math.floor(Math.random()*assets.splashes.length)];
  root.classList.add('menu112-assets');return true;
 }
+// Java 1.12.2 advances its panorama 0.1 degrees per 20 Hz game tick.
+export function panoramaAngles112(seconds){
+ const ticks=Math.max(0,Number(seconds)||0)*20;
+ return {yaw:-ticks*.1*Math.PI/180,pitch:(Math.sin(ticks/400)*25+20)*Math.PI/180};
+}
 export function drawOwnerPanorama(ctx,faces,time,width,height){
- const frame=ctx.createImageData(width,height),yaw=-time*.02*Math.PI/180*20,pitch=(Math.sin(time*20/400)*25+20)*Math.PI/180;
+ const frame=ctx.createImageData(width,height),{yaw,pitch}=panoramaAngles112(time);
  const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const cropX=width>height?1:width/height,cropY=height>width?1:height/width;
