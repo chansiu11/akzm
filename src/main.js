@@ -42,11 +42,11 @@ import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngre
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=1.4';
+import {createFirstPerson} from './first-person.js?v=1.5';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.4';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.5';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -357,7 +357,7 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);

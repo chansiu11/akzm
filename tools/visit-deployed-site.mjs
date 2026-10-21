@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -110,6 +110,25 @@ async function review(viewport,label,touch=false){
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
   await page.locator('#inventory').waitFor({state:'visible'});
   if(await page.locator('#hotbar').evaluate(el=>getComputedStyle(el).display)!=='none')throw Error('HUD visible after reopening inventory');
+  // Synthetic pixels exercise the same WebGL hand/item renderer without publishing owner art.
+  await page.evaluate(async()=>{
+   const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
+   const {createFirstPerson}=await import('./src/first-person.js?v=1.5');
+   const renderer=new THREE.WebGLRenderer({alpha:false,preserveDrawingBuffer:true});renderer.setSize(320,240);renderer.setClearColor('#9cc6df');
+   renderer.domElement.id='modelFixture';Object.assign(renderer.domElement.style,{position:'fixed',top:'0',left:'0',zIndex:'9999'});document.body.append(renderer.domElement);
+   const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');ctx.fillStyle='#88552a';ctx.fillRect(7,4,2,11);ctx.fillStyle='#35c8cf';ctx.fillRect(2,2,12,3);
+   const model=createFirstPerson(renderer,new THREE.CanvasTexture(c));await model.setOwnerItems({110:c.toDataURL()});model.setItem(110);renderer.clear();model.render(320,240);
+   if(renderer.info.render.triangles<=12)throw Error('Extruded item side geometry missing');
+   window.fixtureModel={model,renderer,c};
+  });
+  await page.locator('#modelFixture').screenshot({path:'site-review/'+label+'-synthetic-item.png'});
+  await page.evaluate(async()=>{
+   const {model,renderer,c}=window.fixtureModel;c.width=c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='#d6a177';ctx.fillRect(40,16,16,16);ctx.fillStyle='#26859a';ctx.fillRect(40,16,16,8);
+   await model.setOwnerSkin(c.toDataURL());model.setItem(0);renderer.clear();model.render(320,240);
+   if(renderer.info.render.triangles!==12)throw Error('Textured arm should replace separate cuff');
+  });
+  await page.locator('#modelFixture').screenshot({path:'site-review/'+label+'-synthetic-arm.png'});
+  await page.evaluate(()=>{const {model,renderer}=window.fixtureModel;model.dispose();renderer.domElement.remove();renderer.dispose();delete window.fixtureModel;});
   // Verify IndexedDB survives a real navigation and startup restores without a picker.
   await page.evaluate(async()=>{
    const {writePrivateResources,PRIVATE_RESOURCE_VERSION}=await import('./src/private-resource-cache.js');

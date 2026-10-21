@@ -1,3 +1,4 @@
+import {extrudeItemPixels,RIGHT_ARM_UV_RECTS,skinRectUV} from './item-extrusion.js';
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {uvFor} from './atlas.js?v=1.7';
@@ -24,22 +25,44 @@ export function createFirstPerson(renderer,atlasTexture){
  const shaft=cube(.072,.46,.09,stickMat);shaft.position.y=-.05;toolGroup.add(shaft);
  const head=cube(.38,.10,.12,toolMaterials[110]);head.position.y=.17;toolGroup.add(head);
  const tip=cube(.09,.09,.12,toolMaterials[110]);tip.position.set(-.14,.11,0);toolGroup.add(tip);
- const ownerTextures=new Map();
+ const ownerTextures=new Map(),ownerGeometry=new Map();
+ let ownerSkin=null,skinGeneration=0,itemGeneration=0;
  const spriteMaterial=new THREE.MeshBasicMaterial({transparent:true,alphaTest:.1,side:THREE.DoubleSide});
- const sprite=new THREE.Mesh(new THREE.PlaneGeometry(.42,.42),spriteMaterial);sprite.position.set(.45,-.30,-.85);sprite.rotation.set(.08,-.35,-.15);sprite.visible=false;group.add(sprite);
+ const placeholderGeometry=new THREE.PlaneGeometry(1,1);
+ const sprite=new THREE.Mesh(placeholderGeometry,spriteMaterial);sprite.scale.setScalar(.42);sprite.position.set(.45,-.30,-.85);sprite.rotation.set(.08,-.35,-.15);sprite.visible=false;group.add(sprite);
  async function setOwnerItems(icons){
+  const generation=++itemGeneration;
   const loaded=await Promise.all(Object.entries(icons??{}).filter(([,uri])=>/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(uri)).map(async([id,uri])=>{
-   const texture=await new THREE.TextureLoader().loadAsync(uri);texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;return [Number(id),texture];
+   const texture=await new THREE.TextureLoader().loadAsync(uri);texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;const c=document.createElement('canvas');c.width=texture.image.width;c.height=texture.image.height;
+   const ctx=c.getContext('2d');ctx.drawImage(texture.image,0,0);
+   const data=extrudeItemPixels(c.width,c.height,ctx.getImageData(0,0,c.width,c.height).data);
+   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(data.positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(data.uvs,2));geometry.setIndex(data.indices);geometry.computeVertexNormals();
+   return [Number(id),texture,geometry];
   }));
-  for(const texture of ownerTextures.values())texture.dispose();ownerTextures.clear();for(const [id,texture] of loaded)ownerTextures.set(id,texture);
+  if(generation!==itemGeneration){for(const [,texture,geometry] of loaded){texture.dispose();geometry.dispose();}return;}
+  sprite.geometry=placeholderGeometry;
+  for(const texture of ownerTextures.values())texture.dispose();for(const geometry of ownerGeometry.values())geometry.dispose();ownerTextures.clear();ownerGeometry.clear();
+  for(const [id,texture,geometry] of loaded){ownerTextures.set(id,texture);ownerGeometry.set(id,geometry);}
   const previous=itemId;itemId=null;setItem(previous);
+ }
+ async function setOwnerSkin(uri){
+  if(!/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(uri??''))return;
+  const generation=++skinGeneration,texture=await new THREE.TextureLoader().loadAsync(uri);
+  if(generation!==skinGeneration){texture.dispose();return;}
+  if(texture.image.width!==64||![32,64].includes(texture.image.height)){texture.dispose();throw Error('Invalid player skin dimensions');}
+  texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;
+  ownerSkin?.dispose();ownerSkin=texture;
+  arm.geometry.dispose();arm.geometry=new THREE.BoxGeometry(.25,.75,.25);
+  const uv=arm.geometry.attributes.uv;
+  RIGHT_ARM_UV_RECTS.forEach((rect,face)=>skinRectUV(rect,64,texture.image.height).forEach(([u,v],i)=>uv.setXY(face*4+i,u,v)));uv.needsUpdate=true;
+  skin.map=texture;skin.color.set('#ffffff');skin.needsUpdate=true;cuff.visible=false;
  }
  let itemId=null,age=0,swingRemaining=0;
  function setItem(id){const view=heldItemView(id);if(itemId===view.id)return;itemId=view.id;
   const original=ownerTextures.get(view.id);sprite.visible=!!original&&(view.kind==='tool'||view.kind==='item');
-  if(sprite.visible){spriteMaterial.map=original;spriteMaterial.needsUpdate=true;}
+  if(sprite.visible){sprite.geometry=ownerGeometry.get(view.id);spriteMaterial.map=original;spriteMaterial.needsUpdate=true;}
   toolGroup.visible=view.kind==='tool'&&!sprite.visible;held.visible=view.kind==='block'||(view.kind==='item'&&!sprite.visible);
-  arm.visible=cuff.visible=view.kind==='empty';
+  arm.visible=view.kind==='empty';cuff.visible=arm.visible&&!ownerSkin;
   if(view.kind==='tool'){head.material=tip.material=toolMaterials[id];return;}
   if(held.visible){textureBoxUV(held,view.tiles);held.scale.z=view.kind==='item'?.08:1;}
  }
@@ -55,5 +78,5 @@ export function createFirstPerson(renderer,atlasTexture){
  function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.fov=firstPersonFov(camera.aspect);camera.updateProjectionMatrix();
   const old=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(scene,camera);renderer.autoClear=old;
  }
- return {setItem,setOwnerItems,update,swing,render,dispose(){sprite.geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};
+ return {setItem,setOwnerItems,setOwnerSkin,update,swing,render,dispose(){++itemGeneration;++skinGeneration;ownerSkin?.dispose();placeholderGeometry.dispose();for(const geometry of ownerGeometry.values())geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};
 }

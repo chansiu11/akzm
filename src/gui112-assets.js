@@ -39,6 +39,7 @@ export async function readOwner112Jar(file){
  for(const [key,path] of Object.entries(MENU112_FILES)){
   const entry=zip.file(path);if(entry)a[key]='data:image/png;base64,'+await entry.async('base64');
  }
+ const steve=zip.file('assets/minecraft/textures/entity/steve.png');if(steve)a.playerSkin='data:image/png;base64,'+await steve.async('base64');
  a.itemIcons={};
  for(const item of ITEM_DEFS.filter(i=>i.blockId===null)){
   const entry=zip.file('assets/minecraft/textures/items/'+(item.id===107?'dye_powder_blue':item.key.split(':')[1])+'.png');
