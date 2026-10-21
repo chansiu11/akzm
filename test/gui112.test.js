@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {GUI112,gui112Scale} from '../src/gui112-layout.js';
-import {GUI112_FILES,GUI112_SHA1,validGui112Assets,applyGui112} from '../src/gui112-assets.js';
+import {GUI112_FILES,GUI112_SHA1,validGui112Assets,applyGui112,ownerItemTexturePath} from '../src/gui112-assets.js';
 test('audited original 1.12.2 HUD sprite coordinates',()=>{
  assert.deepEqual(GUI112.hotbar,{x:0,y:0,w:182,h:22});
  assert.deepEqual(GUI112.selection,{x:0,y:22,w:24,h:22});
@@ -65,4 +65,23 @@ test('touch inventory and external close control fit short landscape screens',()
   assert.ok(166*scale+40*scale<=h);
   assert.ok(182*scale<=w);
  }
+});
+
+test('1.12.2 item models choose real owner-local PNG paths instead of guessing from item IDs',()=>{
+ const item=(id,key)=>({id,key:'minecraft:'+key});
+ const src=(name)=>'assets/minecraft/textures/items/'+name+'.png';
+ assert.equal(ownerItemTexturePath(item(110,'wooden_pickaxe')),src('wood_pickaxe'));
+ assert.equal(ownerItemTexturePath(item(113,'golden_pickaxe')),src('gold_pickaxe'));
+ assert.equal(ownerItemTexturePath(item(105,'redstone')),src('redstone_dust'));
+ assert.equal(ownerItemTexturePath(item(111,'stone_pickaxe')),src('stone_pickaxe'));
+ assert.equal(ownerItemTexturePath(item(107,'dye'),{textures:{layer0:'items/dye_powder_black'}}),src('dye_powder_blue'));
+ assert.equal(ownerItemTexturePath(item(110,'wooden_pickaxe'),{textures:{layer0:'items/wood_pickaxe'}}),src('wood_pickaxe'));
+ assert.equal(ownerItemTexturePath(item(110,'wooden_pickaxe'),{textures:{layer0:'minecraft:items/custom_wood'}}),src('custom_wood'));
+ assert.equal(ownerItemTexturePath(item(100,'coal'),{textures:{layer0:'https://example.com/tracker'}}),src('coal'));
+ assert.equal(ownerItemTexturePath(item(100,'coal'),{textures:{layer0:'items/../leak'}}),src('coal'));
+ assert.equal(ownerItemTexturePath({id:1,key:'../bad'}),null);
+});
+test('new item model resolution triggers private cached JAR re-extraction',async()=>{
+ const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
+ assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v4');
 });

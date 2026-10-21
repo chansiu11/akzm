@@ -20,3 +20,10 @@ Deployed review 39523945412 passed all three browser configurations. The synthet
 - The public default remains generated artwork until a local JAR is selected; it must not be described as original vanilla textures. No proprietary assets were published.
 
 Public run 39525508155 confirmed the slot-background fix but caught an icon application failure. Root cause: double quotes inside `url(...)` prematurely terminated the HTML style attribute. Switched validated data URLs to single-quoted CSS URL syntax. This also fixes the previously added original non-block item icons, not just new block model icons.
+
+## 2026-10-21: owner item texture path correction
+- Cause: item registry IDs are not always PNG basenames in 1.12.2. Wooden and golden pickaxes and redstone dust were looked up as nonexistent files, silently leaving generated icons and handheld-tool silhouettes after a valid owner JAR load.
+- The owner-only JAR importer now reads each `models/item/<id>.json` layer0 texture mapping where available, checks local `items/` paths, and falls back to legacy 1.12.2 aliases. Lapis dye metadata stays explicitly blue. Original JSON/PNG bytes remain on the user's browser origin.
+- A private cache schema bump automatically re-extracts retained JARs rather than preserving missing item icons from old caches. Regression tests cover aliases, model-defined texture paths, malicious/unusable paths, and cache version.
+- One-pixel owner HUD slot inset and selected-frame positioning now align hotbar icons with the 182px background sprite instead of the inherited fallback layout. Full vanilla pixel parity is not claimed.
+- Public browser fixtures use synthetic art, not the user's owner JAR; they cannot validate original-resource pixel fidelity.

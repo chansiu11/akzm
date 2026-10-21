@@ -147,3 +147,8 @@ html.gui112-assets body #inventory[data-container] #craftOutput{
 }
 html.gui112-assets body #inventory[data-container] :is(#invItems,#craftGrid,#tileContents) button:hover,
 html.gui112-assets body #inventory[data-container] #craftOutput:hover{background:#ffffff80!important}
+
+/* Native 182px hotbar contains nine 20px slots with one-pixel left inset.
+   Without it the icon row and active slot frame drift left of the owner sprite. */
+html.gui112-assets body #hotbar .slot:first-child{margin-left:calc(1px * var(--gui-scale))!important}
+html.gui112-assets body #hotbar .slot.active:before{left:calc(-1px * var(--gui-scale))}

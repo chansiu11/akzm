@@ -13,6 +13,20 @@ export const GUI112_FILES=Object.freeze({
  furnace:'assets/minecraft/textures/gui/container/furnace.png',
  recipeBook:'assets/minecraft/textures/gui/recipe_book.png'
 });
+// 1.12.2 item model IDs and PNG basenames can differ (e.g. wooden -> wood).
+// Prefer the layer0 path declared by the owner's local model JSON. Do not publish it.
+const ITEM112_ALIASES=Object.freeze({wooden_pickaxe:'wood_pickaxe',golden_pickaxe:'gold_pickaxe',redstone:'redstone_dust',dye:'dye_powder_blue'});
+export function ownerItemTexturePath(item,model=null){
+ const name=String(item?.key??'').split(':').pop();
+ if(!/^[a-z0-9_]+$/.test(name))return null;
+ // Lapis is dye metadata 4 in 1.12.2: do not use the model's generic dye default.
+ if(item.id!==107){
+  const layer=String(model?.textures?.layer0??'').replace(/^minecraft:/,'');
+  if(/^items\/[a-z0-9_/-]+$/.test(layer)&&!layer.includes('..'))
+   return 'assets/minecraft/textures/'+layer+'.png';
+ }
+ return 'assets/minecraft/textures/items/'+(ITEM112_ALIASES[name]??name)+'.png';
+}
 export function validGui112Assets(a){return ['widgets','icons','inventory','crafting'].every(k=>typeof a?.[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));}
 export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))if(typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
 export function restoreGui112(root){try{const a=JSON.parse(localStorage.getItem(GUI112_KEY)||'null');return applyGui112(root,a)?a:null;}catch{return null;}}
@@ -42,7 +56,12 @@ export async function readOwner112Jar(file){
  const steve=zip.file('assets/minecraft/textures/entity/steve.png');if(steve)a.playerSkin='data:image/png;base64,'+await steve.async('base64');
  a.itemIcons={};
  for(const item of ITEM_DEFS.filter(i=>i.blockId===null)){
-  const entry=zip.file('assets/minecraft/textures/items/'+(item.id===107?'dye_powder_blue':item.key.split(':')[1])+'.png');
+  const modelName=item.key.split(':')[1];
+  const modelEntry=zip.file('assets/minecraft/models/item/'+modelName+'.json');
+  let model=null;
+  if(modelEntry){try{model=JSON.parse(await modelEntry.async('string'));}catch{/* use 1.12.2 fallback naming */}}
+  const path=ownerItemTexturePath(item,model);
+  const entry=path&&zip.file(path);
   if(entry)a.itemIcons[item.id]='data:image/png;base64,'+await entry.async('base64');
  }
  a.bitmapFont={ascii:'data:image/png;base64,'+await zip.file('assets/minecraft/textures/font/ascii.png').async('base64'),sizes:await zip.file('assets/minecraft/font/glyph_sizes.bin').async('base64'),pages:{}};
