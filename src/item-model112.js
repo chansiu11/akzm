@@ -51,3 +51,89 @@ export function blockIconPose112(gui){
   translation:gui.translation.map(v=>v/16),
   scale:gui.scale.map(v=>v/.625)};
 }
+
+
+/* Owner-local vanilla block-item face shapes. Only numeric geometry references
+   are cached on this browser origin; original JSON and image files never enter
+   the public repository or its CI artifacts. */
+import {REQUIRED_TILES,EXTRA_FACE_TILES} from './resource-pack.js';
+const TILE_BY_NAME=new Map(REQUIRED_TILES.map((name,i)=>[name,i]));
+for(const [id,name] of Object.entries(EXTRA_FACE_TILES))TILE_BY_NAME.set(name,Number(id));
+const SIDE_NORMALS=Object.freeze({
+ south:[0,0,1],north:[0,0,-1],east:[1,0,0],west:[-1,0,0],up:[0,1,0],down:[0,-1,0]
+});
+const FACE_VERTICES=Object.freeze({
+ south:[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],
+ north:[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],
+ east:[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],
+ west:[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],
+ up:[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],
+ down:[[0,0,0],[1,0,0],[1,0,1],[0,0,1]]
+});
+const vec=(v,max=16)=>Array.isArray(v)&&v.length===3&&v.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=max);
+const uvRect=v=>Array.isArray(v)&&v.length===4&&v.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=16);
+export function resolveOwnerBlockTile112(ref,textures){
+ let value=String(ref??'');
+ for(let i=0;i<8&&value.startsWith('#');i++)value=String(textures[value.slice(1)]??'');
+ if(!value.startsWith('blocks/'))return null;
+ const name=value.slice(7);
+ // grass_side is already alpha-composited with its tint overlay in our atlas.
+ if(name==='grass_side_overlay')return null;
+ return TILE_BY_NAME.get(name)??null;
+}
+export async function readOwnerBlockIconModels(zip,items){
+ const result={};
+ for(const item of items){
+  const name=ownerBlockItemModelName(item);
+  if(!name)continue;
+  let path='assets/minecraft/models/item/'+name+'.json';
+  const seen=new Set(),textures={},models=[];
+  let elements=null;
+  for(let depth=0;depth<16&&!seen.has(path);depth++){
+   seen.add(path);
+   const entry=zip.file(path);if(!entry)break;
+   let model;
+   try{model=JSON.parse(await entry.async('string'));}catch{break;}
+   if(!elements&&Array.isArray(model.elements))elements=model.elements;
+   for(const [key,value] of Object.entries(model.textures??{}))if(!(key in textures))textures[key]=value;
+   const parent=String(model.parent??'').replace(/^minecraft:/,'');
+   if(!/^(?:block|item)\/[a-z0-9_/-]+$/.test(parent)||parent.includes('..'))break;
+   path='assets/minecraft/models/'+parent+'.json';
+  }
+  if(!elements)continue;
+  const parsed=[];
+  for(const element of elements){
+   if(!vec(element.from)||!vec(element.to)||element.from.some((n,i)=>n>element.to[i])||element.rotation)continue;
+   const faces={};
+   for(const [direction,face] of Object.entries(element.faces??{})){
+    if(!(direction in SIDE_NORMALS)||!face||typeof face!=='object')continue;
+    const tile=resolveOwnerBlockTile112(face.texture,textures);
+    const uv=face.uv??[0,0,16,16],rotation=face.rotation??0;
+    if(tile===null||!uvRect(uv)||![0,90,180,270].includes(rotation))continue;
+    faces[direction]={tile,uv:uv.slice(),rotation};
+   }
+   if(Object.keys(faces).length)parsed.push({from:element.from.slice(),to:element.to.slice(),faces});
+  }
+  if(parsed.length)result[item.id]=parsed;
+ }
+ return result;
+}
+export function ownerBlockQuads112(elements){
+ const out=[];
+ for(const element of elements??[]){
+  for(const [direction,face] of Object.entries(element.faces??{})){
+   const vertices=FACE_VERTICES[direction],normal=SIDE_NORMALS[direction];
+   if(!vertices||!normal||!Number.isInteger(face.tile))continue;
+   const v=vertices.map(point=>point.map((n,i)=>(element.from[i]+n*(element.to[i]-element.from[i]))/16-.5));
+   const [u0,v0,u1,v1]=face.uv;
+   const corners=[[u0,v1],[u1,v1],[u1,v0],[u0,v0]];
+   const steps=(face.rotation/90)%4;
+   const uv=corners.map((_,i)=>{
+    const [u,t]=corners[(i+steps)%4],col=face.tile%8,row=Math.floor(face.tile/8);
+    return [(col+u/16)/8,1-(row+t/16)/6];
+   });
+   out.push({d:normal,v,uv,tile:face.tile});
+  }
+ }
+ return out;
+}
