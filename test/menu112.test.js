@@ -68,7 +68,7 @@ test('owner model JSON inherits GUI pose through block parents without publishin
 });
 test('restoring cached owner JAR recomputes local GUI models',async()=>{
  const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
- assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v5');
+ assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v6');
 });
 
 import {panoramaAngles112} from '../src/menu112-assets.js';
@@ -86,4 +86,30 @@ test('title includes owner-local language button at vanilla bottom row and funct
  assert.match(css,/title-language-y/);assert.match(css,/margin-top:calc\(12px/);
  assert.match(css,/-106px/);assert.match(css,/-126px/);
  assert.match(menu,/menuLanguageSelect/);
+});
+
+import {readOwnerBlockIconModels,ownerBlockQuads112,resolveOwnerBlockTile112} from '../src/item-model112.js';
+test('local 1.12.2 block model elements and per-face UV drive the icons',async()=>{
+ const root='assets/minecraft/models/';
+ const models={
+  [root+'item/oak_stairs.json']:{parent:'block/oak_stairs'},
+  [root+'block/oak_stairs.json']:{parent:'block/stairs'},
+  [root+'block/stairs.json']:{
+   textures:{top:'blocks/planks_oak',side:'blocks/planks_oak'},
+   elements:[
+    {from:[0,0,0],to:[16,8,16],faces:{south:{texture:'#side',uv:[0,8,16,16]},up:{texture:'#top',uv:[0,0,16,16]}}},
+    {from:[8,8,0],to:[16,16,16],faces:{south:{texture:'#side',uv:[0,0,8,8]}}}
+   ]
+  }
+ };
+ const zip={file:path=>models[path]?{async:async()=>JSON.stringify(models[path])}:null};
+ const parsed=await readOwnerBlockIconModels(zip,[{id:16,blockId:16,key:'minecraft:oak_stairs'}]);
+ assert.equal(parsed[16].length,2);
+ const quads=ownerBlockQuads112(parsed[16]);
+ assert.equal(quads.length,3);
+ assert.deepEqual(quads[0].v[0],[-.5,-.5,.5]);
+ assert.deepEqual(quads[2].v[2],[.5,.5,.5]);
+ assert.ok(quads[0].uv.every(x=>x.every(n=>Number.isFinite(n))));
+ assert.equal(resolveOwnerBlockTile112('#side',{side:'blocks/planks_oak'}),30);
+ assert.equal(resolveOwnerBlockTile112('#overlay',{overlay:'blocks/grass_side_overlay'}),null);
 });
