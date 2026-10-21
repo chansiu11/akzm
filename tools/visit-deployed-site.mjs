@@ -113,7 +113,7 @@ async function review(viewport,label,touch=false){
   // Synthetic pixels exercise the same WebGL hand/item renderer without publishing owner art.
   await page.evaluate(async()=>{
    const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
-   const {createFirstPerson}=await import('./src/first-person.js?v=1.5');
+   const {createFirstPerson}=await import('./src/first-person.js?v=1.6');
    const renderer=new THREE.WebGLRenderer({alpha:false,preserveDrawingBuffer:true});renderer.setSize(320,240);renderer.setClearColor('#9cc6df');
    renderer.domElement.id='modelFixture';Object.assign(renderer.domElement.style,{position:'fixed',top:'0',left:'0',zIndex:'9999'});document.body.append(renderer.domElement);
    const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');ctx.fillStyle='#88552a';ctx.fillRect(7,4,2,11);ctx.fillStyle='#35c8cf';ctx.fillRect(2,2,12,3);

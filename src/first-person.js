@@ -52,6 +52,8 @@ export function createFirstPerson(renderer,atlasTexture){
   if(texture.image.width!==64||![32,64].includes(texture.image.height)){texture.dispose();throw Error('Invalid player skin dimensions');}
   texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;
   ownerSkin?.dispose();ownerSkin=texture;
+  // Skin UV top is the shoulder: point it toward the bottom of the view.
+  arm.rotation.z=Math.PI-.29;
   arm.geometry.dispose();arm.geometry=new THREE.BoxGeometry(.25,.75,.25);
   const uv=arm.geometry.attributes.uv;
   RIGHT_ARM_UV_RECTS.forEach((rect,face)=>skinRectUV(rect,64,texture.image.height).forEach(([u,v],i)=>uv.setXY(face*4+i,u,v)));uv.needsUpdate=true;

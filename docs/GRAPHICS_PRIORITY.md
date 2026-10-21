@@ -9,3 +9,5 @@ Target: Minecraft Java Edition 1.12.2 vanilla default resources. Design and grap
 - Unit coverage checks depth, internal-edge removal, holes, texture bounds and arm UVs. Public Chromium additionally renders synthetic tool and arm fixtures on all three viewport configurations, with screenshots and triangle checks.
 
 Not verified as vanilla-identical: exact hand pose, equip/swing transforms, first-person lighting, edge merging algorithm, skin overlay layer, inventory player preview, all block/item models, animated textures, biome tinting, world lighting/ambient occlusion, terrain and entities. Matching vanilla runtime screenshots under identical settings are still needed for pixel-difference claims.
+
+Deployed review 39523945412 passed all three browser configurations. The synthetic arm screenshot exposed an inverted shoulder/wrist orientation; the follow-up rotates the textured arm so the sleeve points toward the bottom of the view.
