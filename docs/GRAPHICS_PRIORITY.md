@@ -60,3 +60,10 @@ Public run 39525508155 confirmed the slot-background fix but caught an icon appl
 ## 2026-10-21: held-model deployed browser regression
 - Added WebGL browser check on desktop and both mobile orientations: the held stair must emit more visible triangles than the held cube. Captures a separate synthetic first-person stair/hand screenshot.
 - Existing empty-hand textured-skin test remains in place. A passing fixture checks geometry integration but does not establish vanilla-identical transforms or lighting.
+
+## 2026-10-22: 1.12.2 title and block-only continuation
+- Constrained this increment to the main menu and supported block/item surfaces. Inspected the owner's SHA-1-verified 1.12.2 JAR locally; none of its image, font, class or model files have been committed.
+- Main menu: the options/exit row moves to vanilla buttonY+84; a correctly positioned 20x20 language sprite is sampled from the owner's widgets.png (normal Y=106, hover Y=126). Korean and English title button texts can be changed in Settings, without pretending to implement all vanilla language packs.
+- Owner panorama: fixed yaw speed to 0.1 degree per 20 Hz tick; reset its epoch on import; retained the 1.12.2 sinusoidal pitch. Synthetic owner menu screenshot is now captured in deployed Chromium; a no-JAR screenshot is explicitly not original-resource verification.
+- Block item render: previously, stair and slab icons used procedural mesh decomposition, ignoring native model JSON element face UVs. The owner-local importer now walks 1.12.2 parent-model chains, resolves inherited texture names and stores only validated face coordinates/UVs in the private IndexedDB asset bundle. The block icon renderer uses these data, retaining synthetic fallback when missing. Existing grass-side compositing is preserved; the duplicate vanilla grass overlay layer is skipped in the icon descriptor.
+- The original block atlas used for the world still supports a limited registry; complete blockstates, ambient occlusion, transparent ordering, animated UVs and full 1.12.2 model coverage remain open. No blanket visual or pixel parity claim.
