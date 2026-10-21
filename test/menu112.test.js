@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MENU112_FILES,menuAssetsReady,cubeSample} from '../src/menu112-assets.js';
@@ -68,4 +69,21 @@ test('owner model JSON inherits GUI pose through block parents without publishin
 test('restoring cached owner JAR recomputes local GUI models',async()=>{
  const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
  assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v5');
+});
+
+import {panoramaAngles112} from '../src/menu112-assets.js';
+test('vanilla 1.12.2 panorama rotates two degrees per second',()=>{
+ const a=panoramaAngles112(0),b=panoramaAngles112(1);
+ assert.ok(Math.abs(a.pitch-20*Math.PI/180)<1e-9);
+ assert.ok(Math.abs(b.yaw+2*Math.PI/180)<1e-9);
+ assert.equal(panoramaAngles112(-5).yaw,0);
+});
+test('title includes owner-local language button at vanilla bottom row and functional settings',()=>{
+ const css=readFileSync(new URL('../menu112.css',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const menu=readFileSync(new URL('../src/menu.js',import.meta.url),'utf8');
+ assert.match(html,/id="menuLanguage"/);assert.match(html,/id="menuLanguageSelect"/);
+ assert.match(css,/title-language-y/);assert.match(css,/margin-top:calc\(12px/);
+ assert.match(css,/-106px/);assert.match(css,/-126px/);
+ assert.match(menu,/menuLanguageSelect/);
 });
