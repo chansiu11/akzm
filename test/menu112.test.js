@@ -29,3 +29,11 @@ test('Unicode bitmap metrics crop the source glyph without its side bearing',()=
  assert.deepEqual(unicodeGlyphMetric(0x37),{start:3,width:5});
  assert.deepEqual(unicodeGlyphMetric(0),{start:0,width:0});
 });
+
+import {titleLayout112} from '../src/title-layout112.js';
+test('title scaling reserves a 320 by 240 logical viewport independently of touch HUD',()=>{
+ assert.deepEqual(titleLayout112(1440,900),{scale:3,width:480,height:300,logoX:103,logoY:30,buttonX:140,buttonY:123});
+ assert.equal(titleLayout112(390,844).scale,1);
+ assert.equal(titleLayout112(844,390).scale,1);
+ const odd=titleLayout112(1365,767);assert.equal(odd.width,455);assert.equal(odd.height,256);
+});

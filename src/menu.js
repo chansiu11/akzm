@@ -76,6 +76,8 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  for(const id of ['settingFov','settingDistance','settingSensitivity'])$(id).addEventListener('input',updateSettingLabels);
  $('settingsSave').addEventListener('click',saveSettings);
  $('settingsBack').addEventListener('click',()=>open(settingsBack));
+ $('menuMultiplayer').addEventListener('click',()=>open('help'));
+ $('menuRealms').addEventListener('click',()=>open('help'));
  $('menuHelp').addEventListener('click',()=>open('help'));
  $('helpBack').addEventListener('click',()=>open('title'));
  $('pauseResume').addEventListener('click',()=>{close();play()});

@@ -1,3 +1,4 @@
+import {installTitleLayout112} from './title-layout112.js';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
 import {applyBitmapFont112} from './bitmap-font112.js';
 import {applyMenu112,pngData} from './menu112-assets.js';
@@ -8,7 +9,7 @@ import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-regis
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {beginChunk,progressChunk} from './chunk-builder.js';
-import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.1';
+import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.2';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
@@ -41,11 +42,11 @@ import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngre
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=1.3';
+import {createFirstPerson} from './first-person.js?v=1.4';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.3';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.4';
 
 const el=id=>document.getElementById(id);
 const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=createHud(el('survivalHud'));const renderer=new THREE.WebGLRenderer({canvas,antialias:false});
@@ -355,7 +356,7 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);
@@ -402,6 +403,7 @@ el('jar112Input').addEventListener('change',async event=>{
  finally{button.disabled=false;}
 })();
 const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=settings.renderDistance;camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
+installTitleLayout112();
 document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
 if(gameMode==='survival'){palette.classList.add('hidden');document.querySelector('.catalog-title')?.classList.add('hidden');document.querySelector('.catalog-title')?.nextElementSibling?.classList.add('hidden');}

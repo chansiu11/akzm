@@ -24,9 +24,21 @@ export function createFirstPerson(renderer,atlasTexture){
  const shaft=cube(.072,.46,.09,stickMat);shaft.position.y=-.05;toolGroup.add(shaft);
  const head=cube(.38,.10,.12,toolMaterials[110]);head.position.y=.17;toolGroup.add(head);
  const tip=cube(.09,.09,.12,toolMaterials[110]);tip.position.set(-.14,.11,0);toolGroup.add(tip);
+ const ownerTextures=new Map();
+ const spriteMaterial=new THREE.MeshBasicMaterial({transparent:true,alphaTest:.1,side:THREE.DoubleSide});
+ const sprite=new THREE.Mesh(new THREE.PlaneGeometry(.42,.42),spriteMaterial);sprite.position.set(.45,-.30,-.85);sprite.rotation.set(.08,-.35,-.15);sprite.visible=false;group.add(sprite);
+ async function setOwnerItems(icons){
+  const loaded=await Promise.all(Object.entries(icons??{}).filter(([,uri])=>/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(uri)).map(async([id,uri])=>{
+   const texture=await new THREE.TextureLoader().loadAsync(uri);texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;return [Number(id),texture];
+  }));
+  for(const texture of ownerTextures.values())texture.dispose();ownerTextures.clear();for(const [id,texture] of loaded)ownerTextures.set(id,texture);
+  const previous=itemId;itemId=null;setItem(previous);
+ }
  let itemId=null,age=0,swingRemaining=0;
  function setItem(id){const view=heldItemView(id);if(itemId===view.id)return;itemId=view.id;
-  toolGroup.visible=view.kind==='tool';held.visible=view.kind==='block'||view.kind==='item';
+  const original=ownerTextures.get(view.id);sprite.visible=!!original&&(view.kind==='tool'||view.kind==='item');
+  if(sprite.visible){spriteMaterial.map=original;spriteMaterial.needsUpdate=true;}
+  toolGroup.visible=view.kind==='tool'&&!sprite.visible;held.visible=view.kind==='block'||(view.kind==='item'&&!sprite.visible);
   arm.visible=cuff.visible=view.kind==='empty';
   if(view.kind==='tool'){head.material=tip.material=toolMaterials[id];return;}
   if(held.visible){textureBoxUV(held,view.tiles);held.scale.z=view.kind==='item'?.08:1;}
@@ -43,5 +55,5 @@ export function createFirstPerson(renderer,atlasTexture){
  function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.fov=firstPersonFov(camera.aspect);camera.updateProjectionMatrix();
   const old=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(scene,camera);renderer.autoClear=old;
  }
- return {setItem,update,swing,render,dispose(){for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};
+ return {setItem,setOwnerItems,update,swing,render,dispose(){sprite.geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();for(const m of [arm,cuff,held])m.geometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};
 }

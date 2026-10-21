@@ -2,7 +2,7 @@
 import {pngData} from './menu112-assets.js';
 export function unicodeGlyphMetric(byte){return {start:byte>>>4,width:byte?((byte&15)-(byte>>>4)+1):0};}
 let font=null,observer=null,pending=false;
-const selectors='#overlay button,#overlay h2,#inventory .inventory-head strong,#inventory .container-slot span,#hotbar .slot span';
+const selectors='#overlay button,#overlay h2,#inventory .inventory-head strong,#inventory .container-slot span,#hotbar .slot span,#menuSplash';
 async function imageData(uri){const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=uri;});return image;}
 export async function applyBitmapFont112(assets){
  const data=assets?.bitmapFont;if(!pngData(data?.ascii)||typeof data?.sizes!=='string'||!data?.pages)return false;
@@ -23,7 +23,7 @@ function paint(node){
  if(glyphs.some(g=>!g.image))return;
  const logicalWidth=Math.ceil(glyphs.reduce((s,g)=>s+g.advance,0)),layer=document.createElement('canvas');layer.width=logicalWidth+1;layer.height=10;const ctx=layer.getContext('2d');ctx.imageSmoothingEnabled=false;
  let x=0;for(const g of glyphs){if(g.sw)ctx.drawImage(g.image,g.sx,g.sy,g.sw,g.sh,x,0,g.w,8);x+=g.advance;}
- ctx.globalCompositeOperation='source-in';ctx.fillStyle=node.disabled?'#a0a0a0':node.matches(':hover')&&node.nodeName==='BUTTON'?'#ffffa0':node.closest('#inventory')&&!node.matches('span')?'#404040':'#e0e0e0';ctx.fillRect(0,0,layer.width,10);
+ ctx.globalCompositeOperation='source-in';ctx.fillStyle=node.id==='menuSplash'?'#ffff00':node.disabled?'#a0a0a0':node.matches(':hover')&&node.nodeName==='BUTTON'?'#ffffa0':node.closest('#inventory')&&!node.matches('span')?'#404040':'#e0e0e0';ctx.fillRect(0,0,layer.width,10);
  let canvas=node.querySelector(':scope > canvas.bitmap-text');if(!canvas){canvas=document.createElement('canvas');canvas.className='bitmap-text';canvas.setAttribute('aria-hidden','true');node.append(canvas);node.addEventListener('mouseenter',()=>paint(node));node.addEventListener('mouseleave',()=>paint(node));}
  const rect=node.getBoundingClientRect(),size=parseFloat(getComputedStyle(node).fontSize)||16,scale=Math.min(size/8,Math.max(1,rect.width-4)/layer.width);
  canvas.width=layer.width;canvas.height=10;canvas.style.width=layer.width*scale+'px';canvas.style.height=10*scale+'px';const out=canvas.getContext('2d');out.clearRect(0,0,canvas.width,canvas.height);

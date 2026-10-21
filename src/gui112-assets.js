@@ -27,6 +27,7 @@ export async function readOwner112Jar(file){
  const JSZip=m.default??m;
  const zip=await JSZip.loadAsync(data,{checkCRC32:true});
  const a={};
+ const splashes=zip.file('assets/minecraft/texts/splashes.txt');if(splashes)a.splashes=(await splashes.async('string')).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
  for(const [key,path] of Object.entries(GUI112_FILES)){
   const f=zip.file(path);if(!f)throw Error('원본 UI PNG 누락: '+path);
   const b=await f.async('uint8array');

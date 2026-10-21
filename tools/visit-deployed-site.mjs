@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -33,13 +33,30 @@ async function review(viewport,label,touch=false){
  try{
   const response=await page.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
   if(!response?.ok())throw Error('Website HTTP status '+response?.status());
+  await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
   await page.locator('#menuSingle').waitFor({state:'visible',timeout:30000});
   await page.screenshot({path:'site-review/'+label+'-title.png',fullPage:true});
   if(!await page.title().then(t=>t.includes('Minecraft 1.12.2')))throw Error('Game title mismatch');
-  for(const selector of ['#menuSingle','#menuSettings','#loadJar112']){
+  for(const selector of ['#menuSingle','#menuSettings','#menuExit']){
    const box=await page.locator(selector).boundingBox();
    if(!box||box.x<0||box.y<0||box.x+box.width>viewport.width||box.y+box.height>viewport.height)throw Error('Menu control clipped: '+selector);
   }
+  await page.locator('#menuSettings').click();
+  await page.locator('#loadJar112').waitFor({state:'visible'});
+  await page.locator('#settingsBack').click();
+  // An original transparent texel must replace, not overlay, generated fallback art.
+  await page.evaluate(async()=>{
+   const {loadLocalResourcePack}=await import('./src/resource-pack.js?v=1.2');
+   const c=document.createElement('canvas');c.width=c.height=16;
+   const bytes=new Uint8Array(await (await fetch(c.toDataURL())).arrayBuffer());
+   const previous=window.JSZip;
+   try{
+    const entry={async:async()=>bytes};
+    window.JSZip={loadAsync:async()=>({files:{'assets/minecraft/textures/blocks/glass.png':entry},file:path=>path.endsWith('/glass.png')?entry:null})};
+    const result=await loadLocalResourcePack(new Blob(['fixture']));
+    if(result.canvas.getContext('2d').getImageData(7*16,16,1,1).data[3]!==0)throw Error('Original transparent glass retains fallback pixels');
+   }finally{window.JSZip=previous;}
+  });
   // Synthetic PNGs validate the local resource rendering path without uploading
   // the owner's JAR or copyrighted image bytes to Actions.
   const ownerMenu=await page.evaluate(async()=>{

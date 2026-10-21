@@ -27,3 +27,13 @@ Base: 8e6f36d52a339b428388fd7af61c09b1240fd8ea.
 - Local bitmap font support covers ASCII and selected Unicode pages including Hangul, menu buttons and item counts; this is not a claim that all text rendering matches vanilla.
 - Node suite: 187 passing. Public-site browser check now exercises synthetic private resource persistence across reload on desktop, portrait and landscape. Synthetic fixtures contain no original asset bytes.
 - Prior stage a6c937 public screenshots were inspected: title controls fit desktop and portrait; landscape inventory fits, but player preview/equipment and world shading still differ substantially from vanilla.
+
+## Vanilla title and in-game asset follow-up
+- Reference is Java Edition 1.12.2 vanilla default resources, not Bedrock or a modern resource pack.
+- Title uses its own integer GUI scale; mobile gameplay controls no longer inflate the title layout. Removed the additional CSS logo shadow and corrected edition image cropping to the 98x14 opaque region inspected in the owner's 128x16 PNG.
+- Removed a legacy `!important` brightness/saturation filter affecting imported panorama images. Panorama view/motion is closer, but its CPU sampling/blur is not a verified match to vanilla's multipass renderer.
+- Local JAR splash text now appears; resource import/help controls moved into settings. Multiplayer/Realms buttons route to a truthful development information screen; these services are not implemented.
+- Fixed atlas replacement alpha: transparent original glass/leaves previously composited over opaque generated tiles. Grass/foliage now use plains-like baseline tint; biome-specific colormap sampling remains missing.
+- Held tools and non-block items now use local original PNGs when present. These are planes; vanilla edge extrusion and exact display transforms remain missing.
+- No original game bytes were committed. Full pixel parity is NOT established: no matching vanilla runtime screenshot with identical resolution, GUI scale, language, time, world seed, position, yaw/pitch, graphics and gamma settings is available for image-difference measurement.
+- Remaining major differences: procedural fallback art before local import; incomplete block catalog/models; player skin/arm model; inventory player/equipment/recipe behavior; animated textures; biome tints; ambient occlusion and lightmap; terrain/structures/entities; gameplay and multiplayer.

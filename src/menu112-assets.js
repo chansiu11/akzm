@@ -26,13 +26,15 @@ export async function applyMenu112(assets){
  const faces=Array.from({length:6},(_,i)=>{const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');ctx.drawImage(map['panorama'+i],0,0);return ctx.getImageData(0,0,256,256).data;});
  const canvas=document.getElementById('menuPanorama');
  canvas.dispatchEvent(new CustomEvent('owner-panorama',{detail:faces}));
+ const splash=document.getElementById('menuSplash');if(splash&&assets.splashes?.length)splash.textContent=assets.splashes[Math.floor(Math.random()*assets.splashes.length)];
  root.classList.add('menu112-assets');return true;
 }
 export function drawOwnerPanorama(ctx,faces,time,width,height){
- const frame=ctx.createImageData(width,height),yaw=time*.012,pitch=.12+Math.sin(time*.025)*.035,aspect=width/height;
+ const frame=ctx.createImageData(width,height),yaw=-time*.02*Math.PI/180*20,pitch=(Math.sin(time*20/400)*25+20)*Math.PI/180;
  const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-  const vx=(2*(x+.5)/width-1)*aspect,vy=1-2*(y+.5)/height;
+  const cropX=width>height?1:width/height,cropY=height>width?1:height/width;
+  const vx=(2*(x+.5)/width-1)*cropX*Math.sqrt(3),vy=(1-2*(y+.5)/height)*cropY*Math.sqrt(3);
   const py=vy*cp-sp,pz=vy*sp+cp;
   const sample=cubeSample(vx*cy+pz*sy,py,-vx*sy+pz*cy);
   const source=(Math.min(255,Math.max(0,Math.floor(sample.v*256)))*256+Math.min(255,Math.max(0,Math.floor(sample.u*256))))*4;

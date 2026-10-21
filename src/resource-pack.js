@@ -35,7 +35,7 @@ function tintedImage(img,size,tint){
  drawSquare(ctx,img,0,0,size);
  const d=ctx.getImageData(0,0,size,size);for(let i=0;i<d.data.length;i+=4){d.data[i]=Math.round(d.data[i]*tint[0]/255);d.data[i+1]=Math.round(d.data[i+1]*tint[1]/255);d.data[i+2]=Math.round(d.data[i+2]*tint[2]/255)}ctx.putImageData(d,0,0);return c;
 }
-const TINT={grass_top:[142,199,97],leaves_oak:[115,163,85],leaves_spruce:[97,153,97]};
+const TINT={grass_top:[145,189,89],leaves_oak:[119,171,47],leaves_spruce:[97,153,97]};
 async function decodePNG(entry){
  const bytes=await entry.async('uint8array');const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
  try{return await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('PNG를 읽지 못했습니다'));image.src=url})}
@@ -62,11 +62,14 @@ export async function loadLocalResourcePack(file){
   const x=i%8*tileSize,y=Math.floor(i/8)*tileSize,name=TILE_NAMES[i];
   const asset=assets.get(name);
   if(!asset){ctx.drawImage(fallback,i%8*16,Math.floor(i/8)*16,16,16,x,y,tileSize,tileSize);continue;}
+  // Replace the fallback tile, including its alpha. Otherwise glass/leaves
+  // inherit opaque procedural pixels beneath transparent source pixels.
+  ctx.clearRect(x,y,tileSize,tileSize);
   const tint=TINT[name];
   if(tint)ctx.drawImage(tintedImage(asset,tileSize,tint),x,y);
   else drawSquare(ctx,asset,x,y,tileSize);
   // Older grass block models combine a grass_side texture with a tinted transparent overlay.
-  if(name==='grass_side'&&assets.has('grass_side_overlay'))ctx.drawImage(tintedImage(assets.get('grass_side_overlay'),tileSize,[142,199,97]),x,y);
+  if(name==='grass_side'&&assets.has('grass_side_overlay'))ctx.drawImage(tintedImage(assets.get('grass_side_overlay'),tileSize,TINT.grass_top),x,y);
  }
  for(const [index,name] of Object.entries(EXTRA_FACE_TILES)){
   const img=assets.get(name);if(img)drawSquare(ctx,img,index%8*tileSize,Math.floor(index/8)*tileSize,tileSize);
