@@ -21,7 +21,7 @@ export function renderBlockItemIcons(atlas,ownerGuiModels={},ownerIconModels={})
   }
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setIndex(indices);
   const mesh=new THREE.Mesh(geometry,material);
-  const pose=blockIconPose112(ownerGuiModels[item.id]);
+  const pose=blockIconPose112(ownerGuiModels[item.id],{nativeModel:fromOriginal});
   mesh.rotation.set(...pose.rotation.map(value=>value*Math.PI/180));
   mesh.position.set(...pose.translation);
   mesh.scale.set(...pose.scale);
