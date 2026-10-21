@@ -55,6 +55,7 @@ async function review(viewport,label,touch=false){
   });
   if(!ownerMenu)throw Error('Owner menu resources did not render');
   // The menu navigation is installed by main.js, so this tests code executed, not only static HTML.
+  await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
   await page.locator('#menuSingle').click({timeout:30000});
   await page.locator('#menu-worlds').waitFor({state:'visible',timeout:30000});
   await page.screenshot({path:'site-review/'+label+'-worlds.png'});

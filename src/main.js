@@ -402,6 +402,7 @@ el('jar112Input').addEventListener('change',async event=>{
  finally{button.disabled=false;}
 })();
 const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=settings.renderDistance;camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
+document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
 if(gameMode==='survival'){palette.classList.add('hidden');document.querySelector('.catalog-title')?.classList.add('hidden');document.querySelector('.catalog-title')?.nextElementSibling?.classList.add('hidden');}
 const recipePane=el('craftRecipes');
