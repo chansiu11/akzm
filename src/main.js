@@ -4,7 +4,7 @@ import {installTitleLayout112} from './title-layout112.js';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.2';
 import {applyMenu112,pngData} from './menu112-assets.js';
-import {installBundledSiteTheme112} from './site-default112.js';
+import {installBundledSiteTheme112} from './site-default112.js?v=1.1';
 import {MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
