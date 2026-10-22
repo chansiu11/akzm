@@ -19,17 +19,17 @@ export class Survival {
  consume(food=4,saturationModifier=.6){if(this.dead)return false;this.hunger=clamp(this.hunger+food,0,20);this.saturation=clamp(this.saturation+food*saturationModifier*2,0,this.hunger);return true;}
  exert(amount){if(Number.isFinite(amount)&&amount>0)this.exhaustion+=amount;while(this.exhaustion>=4){this.exhaustion-=4;if(this.saturation>0)this.saturation=Math.max(0,this.saturation-1);else this.hunger=clamp(this.hunger-1,0,20);}}
  fall(distance){if(distance<=3||!Number.isFinite(distance))return 0;return this.damage(Math.max(0,Math.floor(distance-3)));}
- tick(dt,{underwater=false,moving=false,sprinting=false,travelDistance=null}={}){
+ tick(dt,{underwater=false,swimming=false,moving=false,sprinting=false,travelDistance=null}={}){
   if(this.dead)return;
   if(underwater){this.air=clamp(this.air-dt*20,0,300);if(this.air===0){this.waterTimer+=dt;if(this.waterTimer>=1){this.waterTimer-=1;this.damage(2)}}}
   else{this.air=300;this.waterTimer=0;}
   // Java 1.8-era movement exhaustion is based on distance, not just time.
   const traveled=Number.isFinite(travelDistance)&&travelDistance>=0?travelDistance:(moving?dt*(sprinting?5.7:4.4):0);
-  if(traveled>0)this.exert(traveled*(sprinting?.1:underwater?.015:.01));
+  if(traveled>0)this.exert(traveled*(sprinting?.1:swimming?.01:0));
   // Do not bank unlimited regeneration time while already at full health.
   if(this.hunger>=18&&this.health<20){
    this.regenTimer+=dt;
-   if(this.regenTimer>=4){this.heal(1);this.exert(3);this.regenTimer=0;}
+   if(this.regenTimer>=4){this.heal(1);this.exert(6);this.regenTimer=0;}
   }else this.regenTimer=0;
   // The starvation timer must not carry over from normal fed play.
   if(this.hunger===0 && this.difficulty!=='peaceful'){
