@@ -10,13 +10,36 @@ const MIN_PICK_LEVEL=new Map([
 ]);
 export function pickaxeLevel(itemId){return itemDefinition(itemId)?.pickaxeLevel??-1;}
 export function canHarvest(blockId,toolId){if(!MIN_PICK_LEVEL.has(blockId))return true;return pickaxeLevel(toolId)>=MIN_PICK_LEVEL.get(blockId);}
-export function mineSeconds(blockId,toolId){const def=definition(blockId);if(!def||def.hardness<0)return Infinity;
- const level=pickaxeLevel(toolId);const correct=MIN_PICK_LEVEL.has(blockId)&&level>=0;
- const speed=({110:2,111:4,112:6,113:12,114:8})[toolId]??1;
- // Base estimate using 1.8 style break speed / effective-tool divisor;
- // no Haste, underwater, airborne, potion, or enchantment modifiers yet.
- return correct&&canHarvest(blockId,toolId)?def.hardness*1.5/speed:def.hardness*5;
+const MINE_TOOL_SPEED=Object.freeze({110:2,111:4,112:6,113:12,114:8});
+const PICK_EFFECTIVE=new Set([BLOCK.STONE,BLOCK.COBBLE,BLOCK.COAL,BLOCK.IRON_ORE,BLOCK.GOLD_ORE,BLOCK.DIAMOND,BLOCK.LAPIS_ORE,BLOCK.REDSTONE_ORE,BLOCK.EMERALD_ORE,BLOCK.FURNACE]);
+export function mineSeconds(blockId,toolOrSlot=0,options={}){
+ const def=definition(blockId);
+ if(!def||def.hardness<0)return Infinity;
+ if(def.hardness===0)return 0;
+ const slot=typeof toolOrSlot==='object'&&toolOrSlot!==null?toolOrSlot:{id:toolOrSlot};
+ const id=slot.id??0,helpful=PICK_EFFECTIVE.has(blockId)&&pickaxeLevel(id)>=0;
+ const canCollect=canHarvest(blockId,id);
+ let speed=helpful?MINE_TOOL_SPEED[id]:1;
+ // Efficiency is applied only when the equipped tool is effective on this block.
+ const enchant=slot.enchantments??slot.enchants??{};
+ const efficiency=Math.max(0,Math.min(5,Math.floor(Number(enchant.efficiency??enchant.Efficiency??0)||0)));
+ if(helpful&&efficiency)speed+=efficiency*efficiency+1;
+ const haste=Math.max(0,Math.floor(Number(options.haste??0)||0));
+ const fatigue=Math.max(0,Math.floor(Number(options.miningFatigue??0)||0));
+ speed*=1+.2*haste;
+ if(fatigue)speed*=[1,.3,.09,.0027,.00081][Math.min(fatigue,4)];
+ if(options.underwater&&!options.aquaAffinity)speed/=5;
+ if(options.onGround===false)speed/=5;
+ const damage=speed/def.hardness/(canCollect?30:100);
+ if(damage>=1)return 0;
+ return Math.ceil(1/damage)/20;
 }
+export function mineStage112(seconds,requiredSeconds){
+ if(!Number.isFinite(requiredSeconds))return -1;
+ if(requiredSeconds<=0)return 9;
+ return Math.max(0,Math.min(9,Math.floor(seconds/requiredSeconds*10)));
+}
+
 function n(rng,lo,hi){const r=Math.min(.999999,Math.max(0,Number(rng())));return lo+Math.floor(r*(hi-lo+1));}
 export function blockDrops(blockId,{toolId=0,silkTouch=false,fortune=0,rng=Math.random}={}){
  if(blockId===BLOCK.AIR||blockId===BLOCK.BEDROCK||blockId===BLOCK.WATER)return [];
