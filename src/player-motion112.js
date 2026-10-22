@@ -1,13 +1,18 @@
 // Browser-only, independent movement integrator. World collision stays in main.js.
 // Speeds are blocks/second; movement accelerates and slows smoothly.
-export const MOVE_SPEED112=Object.freeze({walk:4.317,sprint:5.612,sneak:1.296,jump:8.35,gravity:30,terminal:38});
+// Legacy Java tick constants: 0.42 block/tick jump; 0.08/t gravity and .98 drag.
+export const MOVE_SPEED112=Object.freeze({walk:4.317,sprint:5.612,sneak:1.296,jump:8.4,gravity:32,terminal:78.4});
 export function horizontalVelocity112(vx,vz,targetX,targetZ,dt,{ground=true,water=false}={}){
  const blend=1-Math.exp(-Math.max(0,dt)*(water?8:ground?18:5));
  return {x:vx+(targetX-vx)*blend,z:vz+(targetZ-vz)*blend};
 }
 export function verticalVelocity112(vy,dt,{water=false}={}){
- const gravity=water?6:MOVE_SPEED112.gravity;
- return Math.max(-MOVE_SPEED112.terminal,vy-gravity*Math.max(0,dt));
+ // Analytic continuation of the Java per-tick velocity recurrence. Input and
+ // output use blocks/s, Java motion is blocks/tick.
+ const ticks=Math.max(0,Math.min(5,dt*20));
+ const drag=water?.8:.98;
+ const equilibrium=water?-1.6:-78.4;
+ return equilibrium+(vy-equilibrium)*Math.pow(drag,ticks);
 }
 /**
  * Java 1.12.2 players have a 0.6 block-wide bounding box. A player can
