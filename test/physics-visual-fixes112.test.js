@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {bitmapTextSupported112} from '../src/bitmap-font112.js';
 import {horizontalVelocity112,verticalVelocity112,MOVE_SPEED112,defaultRenderDistance112,sanitizeRenderDistance112,fogDistances112} from '../src/player-motion112.js';
 import {faceLight} from '../src/voxel-light.js';
+import {lightingInfo} from '../src/environment.js';
 
 test('Korean labels never get hidden underneath unreadable owner bitmap font sprites',()=>{
  assert.equal(bitmapTextSupported112('Singleplayer'),true);
@@ -45,4 +46,23 @@ test('new placements show a mesh immediately and reprioritize dirty chunks',()=>
  assert.match(main,/pending\.unshift\(\[cx,cz\]\)/);
  assert.match(main,/clearPlacementPreviews\(cx,cz\)/);
  assert.match(main,/progressChunk\(activeBuild,touchMode\?12:28\)/);
+});
+
+test('daytime is materially brighter with a less aggressive face-shadow multiplier',()=>{
+ const noon=lightingInfo(6000,'clear'),night=lightingInfo(18000,'clear');
+ assert.ok(noon.sunIntensity>1.5);
+ assert.ok(noon.ambientIntensity>1.2);
+ assert.ok(noon.sunIntensity>night.sunIntensity);
+ const light=readFileSync(new URL('../src/voxel-light.js',import.meta.url),'utf8');
+ assert.match(light,/normal\[1\]<0\?\.72/);
+ assert.match(light,/const skylight=open\?1:\.23/);
+});
+test('physics and terrain refresh code wire into the real game frame',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(main,/horizontalVelocity112\(player\.vx,player\.vz/);
+ assert.match(main,/verticalVelocity112\(player\.vy,dt,\{water\}\)/);
+ assert.match(main,/player\.vx=player\.vz=player\.vy=0/);
+ assert.match(main,/showPlacementPreview\(nx,ny,nz\)/);
+ assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius\)/);
+ assert.match(main,/activeBuild\?\.cx===cx\+dx/);
 });
