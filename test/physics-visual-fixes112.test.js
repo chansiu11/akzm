@@ -90,7 +90,7 @@ test('water contact follows a 0.6-block player footprint at the shoreline',()=>{
  assert.equal(waterExitLift112(-1,{jump:true,inWater:true}),4);
  assert.equal(waterExitLift112(-1,{jump:false,inWater:true}),-1);
 });
-test('water jump held continuously does not charge jump exhaustion each animation frame',()=>{
+test('water jump held continuously does not charge jump exhaustion each animation frame',async()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/if\(jumpPressed&&water\)player\.vy=waterExitLift112/);
  assert.match(main,/else if\(jumpPressed&&player\.onGround\)/);
