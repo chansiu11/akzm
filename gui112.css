@@ -162,3 +162,12 @@ html.gui112-assets body #inventory[data-container="inventory"] #ownerPlayerPrevi
  height:calc(72px * var(--gui-scale));z-index:1;
  pointer-events:none;background:transparent;image-rendering:pixelated
 }
+
+/* Site-owned character sprite appears in the blank inventory recess, while a
+   privately imported 1.12.2 player skin always overrides its pixels. */
+html:not(.gui112-assets) body #inventory[data-container="inventory"] #ownerPlayerPreview112.owner-preview-ready{
+ display:block;position:absolute;left:calc(26px * var(--gui-scale));
+ top:calc(8px * var(--gui-scale));width:calc(51px * var(--gui-scale));
+ height:calc(72px * var(--gui-scale));z-index:1;pointer-events:none;
+ background:transparent;image-rendering:pixelated
+}
