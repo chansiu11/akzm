@@ -236,3 +236,18 @@ html.gui112-assets #deathScreen .death-buttons112 button:disabled{
  border-image-source:var(--owner-death-button-disabled,var(--site112-disabled))!important
 }
 #deathScreen #deathReason112:empty{display:none!important}
+
+/* Live Chromium 1440x900 and 390x844 audit: the old .command-panel
+   translateX(-50%) survived from style.css, pushing the input offscreen.
+   Java bottom chat anchors to both viewport edges, with no centering transform. */
+#commandPanel.command-panel{
+ left:calc(2px * var(--gui-scale,1))!important;
+ right:calc(2px * var(--gui-scale,1))!important;
+ width:auto!important;max-width:none!important;
+ transform:none!important;translate:none!important;
+ box-sizing:border-box!important;
+}
+#commandPanel .command-entry,#commandPanel #commandInput{
+ transform:none!important;box-sizing:border-box!important;
+ max-width:100%!important;min-width:0!important
+}
