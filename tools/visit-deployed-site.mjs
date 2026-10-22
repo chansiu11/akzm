@@ -101,7 +101,8 @@ async function review(viewport,label,touch=false){
     await worldPage.locator('#menu-create').waitFor({state:'visible'});
     await worldPage.locator('#worldName').fill('자동 검사 새 세계');
     await worldPage.screenshot({path:'site-review/world-create-form.png'});
-    await clickAndCapture(worldPage,'#createConfirm','world-click03-create-confirm');
+    await worldPage.locator('#createConfirm').click();
+    console.log('Clicked #createConfirm; verifying newly loaded world before screenshot.');
     await worldPage.waitForFunction(()=>{
      try{
       const a=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
@@ -113,6 +114,7 @@ async function review(viewport,label,touch=false){
      return worlds.find(w=>w.name==='자동 검사 새 세계').id;
     });
     await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),null,{timeout:65000});
+    await worldPage.screenshot({path:'site-review/world-click03-created-gameplay.png'});
     await worldPage.screenshot({path:'site-review/world-created-gameplay.png'});
     await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
     await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
@@ -289,7 +291,13 @@ async function review(viewport,label,touch=false){
   if(!commandBounds||commandBounds.x<0||commandBounds.y<0||
     commandBounds.x+commandBounds.width>viewport.width+2||
     commandBounds.y+commandBounds.height>viewport.height+2)
-   throw Error('Command bar clipped: '+JSON.stringify(commandBounds));
+   throw Error('Command bar clipped: '+JSON.stringify({
+    rect:commandBounds,computed:await page.locator('#commandPanel').evaluate(panel=>({
+     transform:getComputedStyle(panel).transform,
+     left:getComputedStyle(panel).left,right:getComputedStyle(panel).right,
+     width:getComputedStyle(panel).width,inlineTransform:panel.style.transform
+    }))
+   }));
   if(await page.locator('#commandInput').inputValue()!=='/')
    throw Error('Opening command chat must prefill a slash');
   await page.screenshot({path:'site-review/'+label+'-command-chat.png'});
