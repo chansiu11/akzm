@@ -267,7 +267,7 @@ function breakBlock(t){
     drops.spawn(drop.id,t.x+.5,t.y+.6,t.z+.5,drop.count);
   }
   track('mined');if(t.id===BLOCK.LOG||t.id===BLOCK.SPRUCE_LOG)track('woodMined');survival.exert(.005);
-  const wear=usePickaxe(inventory[selected]);if(wear.broken)notify('곡괭이가 부서졌습니다.');
+  const wear=usePickaxe(inventory[selected]);if(wear.broken)notify('도구가 부서졌습니다.');
   firstPerson.swing();effects.emit('block',[t.x+.5,t.y+.5,t.z+.5],[.35,.35,.35],.2,12);audio.beep('break');breakOverlay.clear();updateUI();saveTimer=7;
  }
 }
