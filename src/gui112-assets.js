@@ -32,6 +32,7 @@ export function validGui112Assets(a){return ['widgets','icons','inventory','craf
 // Render only on the user's device. No original widgets.png bytes are
 // included in the published repo or persisted in CI artifacts.
 function applyOwnerDeathButtons112(root,uri){
+ if(typeof Image==='undefined'||typeof document==='undefined')return;
  const image=new Image();
  image.onload=()=>{
   const canvas=document.createElement('canvas');canvas.width=200;canvas.height=20;
