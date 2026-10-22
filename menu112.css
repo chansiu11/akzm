@@ -322,3 +322,14 @@ body:has(.menu-page.menu-vanilla112:not(.hidden)) #overlay .menu-footer{display:
  gap:calc(4px * var(--menu-scale,1))!important;z-index:4!important
 }
 #overlay .menu-page.menu-vanilla112 > h2{pointer-events:none!important}
+
+/* Reference review: the Java 1.12.2 title panorama is softly blended and
+   blurred. The independently rendered default panorama must not look like
+   a sharply scaled 2D illustration behind the title buttons. */
+html.site-default112:not(.menu112-assets) body:has(#menu-title:not(.hidden)) #menuPanorama{
+ filter:blur(calc(1.6px * var(--menu-scale,1))) brightness(.86) saturate(.90)!important;
+ image-rendering:auto!important;
+}
+html.site-default112:not(.menu112-assets) #overlay:has(#menu-title:not(.hidden)){
+ background:linear-gradient(to bottom,#ffffff16,#0000000b 58%,#00000038)!important;
+}
