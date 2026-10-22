@@ -1,6 +1,7 @@
 // Procedural cloud/sky-weather visuals; uses no commercial art.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-import {lightingInfo} from './environment.js?v=1.2';
+import {lightingInfo} from './environment.js?v=1.3';
+import {activeLampsNear} from './voxel-light.js';
 import {fogDistances112} from './player-motion112.js';
 import {precipitationType} from './precipitation.js';
 import {celestialPositions,CELESTIAL_DISTANCE} from './sky-cycle.js';
@@ -35,10 +36,32 @@ export function createWorldVisuals(scene,renderer,world=null){
  const colors=new Float32Array(count*6);rainGeo.setAttribute('color',new THREE.BufferAttribute(colors,3));
  const rain=new THREE.LineSegments(rainGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.35,depthWrite:false}));rain.frustumCulled=false;scene.add(rain);
  const offsets=Array.from({length:count},(_,i)=>[(i*31.37%41)-20,(i*13.17%18),(i*71.61%41)-20]);
- let clock=0;
- function update(dt,ticks,weather,player,sun,ambient,renderRadius=6){
-  clock+=dt;const l=lightingInfo(ticks,weather);const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255));scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);const range=fogDistances112(renderRadius,weather);scene.fog.near=range.near;scene.fog.far=range.far}
+ // Fixed-size pool avoids growing the Three.js light/shader count as players build.
+ const lampLights=Array.from({length:4},()=>{
+  const light=new THREE.PointLight('#ffffff',0,18,2);
+  light.visible=false;scene.add(light);return light;
+ });
+ let clock=0,lampUpdateTimer=0;
+ function update(dt,ticks,weather,player,sun,ambient,renderRadius=6,{nightVision=false}={}){
+
+  clock+=dt;const l=lightingInfo(ticks,weather,{nightVision});const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255));scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);const range=fogDistances112(renderRadius,weather);scene.fog.near=range.near;scene.fog.far=range.far}
   sun.intensity=l.sunIntensity;ambient.intensity=l.ambientIntensity;
+  lampUpdateTimer+=dt;
+  if(lampUpdateTimer>=.2 || lampUpdateTimer===dt){
+   lampUpdateTimer=0;
+   const nearby=world?activeLampsNear(world,Math.floor(player.x/16),Math.floor(player.z/16),20):[];
+   nearby.sort((a,b)=>
+    (a.x-player.x)**2+(a.y-player.y)**2+(a.z-player.z)**2-
+    ((b.x-player.x)**2+(b.y-player.y)**2+(b.z-player.z)**2)
+   );
+   for(let i=0;i<lampLights.length;i++){
+    const light=lampLights[i],source=nearby[i];
+    light.visible=!!source;
+    if(!source)continue;
+    light.position.set(source.x,source.y,source.z);
+    light.intensity=nightVision?.9:2.2;
+   }
+  }
   cloudRoot.position.set(player.x+clock*.35,player.y-118,player.z);
   stars.position.set(player.x,player.y,player.z);
   starMaterial.opacity=l.stars;
@@ -66,5 +89,5 @@ export function createWorldVisuals(scene,renderer,world=null){
    rainGeo.attributes.position.needsUpdate=true;rainGeo.attributes.color.needsUpdate=true;
   }
  }
- return {update,dispose(){scene.remove(cloudRoot,stars,sunDisc,moonDisc,rain);cloudGeo.dispose();cloudMaterial.dispose();starGeometry.dispose();starMaterial.dispose();celestialGeo.dispose();sunMaterial.dispose();moonMaterial.dispose();rainGeo.dispose();rain.material.dispose()}};
+ return {update,dispose(){scene.remove(cloudRoot,stars,sunDisc,moonDisc,rain,...lampLights);cloudGeo.dispose();cloudMaterial.dispose();starGeometry.dispose();starMaterial.dispose();celestialGeo.dispose();sunMaterial.dispose();moonMaterial.dispose();rainGeo.dispose();rain.material.dispose()}};
 }
