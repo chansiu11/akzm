@@ -38,7 +38,7 @@ const base = [
  [32,'Lamp','minecraft:redstone_lamp',33,'opaque','cube',true]
 ];
 export const BLOCK=Object.freeze({AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,LOG:5,LEAVES:6,PLANKS:7,WATER:8,COBBLE:9,COAL:10,SNOW:11,BRICK:12,BEDROCK:13,GLASS:14,SLAB:15,STAIRS:16,CRAFTING_TABLE:17,IRON_ORE:18,GOLD_ORE:19,DIAMOND:20,GRAVEL:21,SANDSTONE:22,CLAY:23,SPRUCE_LOG:24,SPRUCE_LEAVES:25,LAPIS_ORE:26,REDSTONE_ORE:27,EMERALD_ORE:28,CHEST:29,FURNACE:30,LEVER:31,LAMP:32});
-const hardness=Object.freeze({1:.6,2:.55,3:1.6,4:.5,5:1.2,6:.25,7:.8,9:1.7,10:1.9,11:.15,12:1.7,13:-1,14:.3,15:.8,16:.8,17:2.5,18:3,19:3,20:3,21:.6,22:.8,23:.6,24:2,25:.2,26:3,27:3,28:3,29:2.5,30:3.5,31:.5,32:.3});
+const hardness=Object.freeze({1:.6,2:.5,3:1.5,4:.5,5:2,6:.2,7:2,9:2,10:3,11:.2,12:2,13:-1,14:.3,15:2,16:2,17:2.5,18:3,19:3,20:3,21:.6,22:.8,23:.6,24:2,25:.2,26:3,27:3,28:3,29:2.5,30:3.5,31:.5,32:.3});
 export const BLOCK_DEFS=Object.freeze(base.map(([id,name,key,tile,layer,model,solid])=>Object.freeze({
  id,name,key,tile,layer,model,solid,hardness:hardness[id]??0,
  interact:id===BLOCK.CRAFTING_TABLE?'crafting':id===BLOCK.CHEST?'chest':id===BLOCK.FURNACE?'furnace':id===BLOCK.LEVER?'lever':null,
