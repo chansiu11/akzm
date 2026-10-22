@@ -251,3 +251,34 @@ html.gui112-assets #deathScreen .death-buttons112 button:disabled{
  transform:none!important;box-sizing:border-box!important;
  max-width:100%!important;min-width:0!important
 }
+
+/* Public fallback sprites are an independently drawn 9x9 pixel atlas.
+   Private 1.12.2 icons.png always overrides these selectors. */
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital{
+ box-sizing:content-box!important;
+ width:calc(9px * var(--gui-scale))!important;
+ height:calc(9px * var(--gui-scale))!important;
+ display:block!important;flex:none!important;
+ background-size:100% 100%!important;background-position:center!important;
+ background-repeat:no-repeat!important;
+ transform:none!important;clip-path:none!important;
+ border:0!important;border-radius:0!important;
+ filter:none!important;box-shadow:none!important;opacity:1!important;
+ image-rendering:pixelated!important
+}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital:not(:last-child){
+ margin-right:calc(-1px * var(--gui-scale))!important
+}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital:before,
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital:after{
+ display:none!important;content:none!important
+}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.heart{background-image:var(--fallback112-heart-full)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.heart[data-fill="0.5"]{background-image:var(--fallback112-heart-half)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.heart[data-fill="0"]{background-image:var(--fallback112-heart-empty)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.food{background-image:var(--fallback112-food-full)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.food[data-fill="0.5"]{background-image:var(--fallback112-food-half)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.food[data-fill="0"]{background-image:var(--fallback112-food-empty)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble{background-image:var(--fallback112-bubble-full)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble[data-fill="0.5"]{background-image:var(--fallback112-bubble-half)!important}
+html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble[data-fill="0"]{background-image:var(--fallback112-bubble-empty)!important}
