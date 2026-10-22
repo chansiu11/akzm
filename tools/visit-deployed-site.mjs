@@ -118,7 +118,7 @@ async function review(viewport,label,touch=false){
     await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),null,{timeout:90000});
     // Wait for a committed terrain mesh before recording completed gameplay.
     await worldPage.waitForFunction(()=>{
-     const match=document.querySelector('#status')?.textContent?.match(/청크\\s+(\\d+)/);
+     const match=document.querySelector('#status')?.textContent?.match(/청크\s+(\d+)/);
      return match&&Number(match[1])>0;
     },null,{timeout:90000});
     await worldPage.screenshot({path:'site-review/world-click03-created-gameplay.png'});
