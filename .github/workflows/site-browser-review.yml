@@ -14,10 +14,39 @@ concurrency:
   group: akzm-deployed-visual-review
   cancel-in-progress: true
 jobs:
+  command-chat:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile, mobile-landscape]
+    env:
+      REVIEW_VIEWPORT: ${{ matrix.viewport }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Verify live command bar and screenshot clicks
+        run: node tools/verify-deployed-command.mjs
+      - name: Upload command window screenshots and geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akzm-command-review-${{ matrix.viewport }}
+          path: command-review/
+          if-no-files-found: warn
+          retention-days: 7
   visit-site:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:

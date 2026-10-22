@@ -290,3 +290,10 @@ html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble[d
 #commandPanel .command-choices{display:none!important}
 body.inventory-open #chatHistory112,
 body:has(#deathScreen:not(.hidden)) #chatHistory112{display:none!important}
+
+/* Keep the live command input fully inside even narrow/notched screens. */
+#commandPanel.command-panel:not(.hidden){
+ left:max(calc(2px * var(--gui-scale,1)),env(safe-area-inset-left))!important;
+ right:max(calc(2px * var(--gui-scale,1)),env(safe-area-inset-right))!important;
+ margin:0!important;transform:none!important;translate:none!important;
+}
