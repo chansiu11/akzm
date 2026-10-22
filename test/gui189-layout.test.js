@@ -23,7 +23,9 @@ test('GUI is arranged like a classic world menu and inventory rather than card d
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const css=readFileSync(new URL('../legacy189-gui.css',import.meta.url),'utf8');
  assert.match(html,/legacy189-gui\.css\?v=1\.7/);
- assert.match(html,/id="menuHelp" class="secondary-help"/);
+ assert.match(html,/id="menuHelp" class="stone-button"/);
+ assert.match(html,/id="worldRecreate" class="stone-button"/);
+ assert.match(html,/id="settingsVideo" class="stone-button"/);
  assert.match(html,/id="menuExit" class="stone-button"/);
  assert.match(html,/class="supplemental"/);
  assert.match(css,/repeat\(9,minmax\(0,1fr\)\)/);
