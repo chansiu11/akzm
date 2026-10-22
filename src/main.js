@@ -92,10 +92,12 @@ const survival=new Survival(saved?.survival);
 const weatherCycle=new WeatherCycle(saved?.weather);
 const worldVisuals=createWorldVisuals(scene,renderer,world);
 const audio=createAudio();
+let hurtTime=0,hurtCause='generic',lastDeathCause='generic',hurtSource=null;
+function registerHurt(cause='generic',source=null){hurtTime=.55;hurtCause=cause;hurtSource=source;lastDeathCause=cause;}
 const breakOverlay=createBreakOverlay112(scene,world);
 const progression=new Progression(saved?.progression);const tiles=new TileStore(saved?.tiles);let activeTile=null;
 let craftingSize=2;let craftingCells=emptyCraftGrid(2);
-const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){audio.beep('hit');notify(`${e.kind}에게 피해를 받았습니다 (-${amount})`)}if(survival.dead)showDeath()},saved?.entities);
+const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){audio.beep('hit');registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
 const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInteger(damage)?giveDamagedItem(inventory,id,count,damage):giveItem(inventory,id,count);if(left<count){updateUI();saveTimer=0;audio.beep('craft')}return left},saved?.drops);
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
@@ -168,6 +170,7 @@ function moveAxis(axis,delta){
    if(axis!=='y' && player.onGround && !collides(tx,player.y+.6,tz)){
     player.y+=.6;player[axis]=nv;player.onGround=false;continue;
    }
+   if(axis!=='y'&&(keys.has('Space')||mobileJump)&&world.get(Math.floor(player.x),Math.floor(player.y+.1),Math.floor(player.z))===BLOCK.WATER)player.vy=Math.max(player.vy,5.2);
    if(axis==='y'){if(d<0)player.onGround=true;player.vy=0}
    return;
   }
@@ -183,15 +186,17 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
   moveAxis('x',player.vx*dt);moveAxis('z',player.vz*dt);
  const water=world.get(Math.floor(player.x),Math.floor(player.y+.7),Math.floor(player.z))===BLOCK.WATER;
  const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER;
- if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.8:.2)}
+ if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05)}
  player.vy=verticalVelocity112(player.vy,dt,{water});player.onGround=false;moveAxis('y',player.vy*dt);
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
- if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');notify(`낙하 피해 -${amount}`)}}fallDistance=0;}
- survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:Math.hypot(player.x-startX,player.z-startZ)});
+ if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');registerHurt('fall');}}fallDistance=0;}
+ survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:Math.hypot(player.x-startX,player.z-startZ),swimming:water});
  if(survival.dead)showDeath();
  if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;survival.damage(4);}}else voidDamageTime=0;
  if(survival.dead)showDeath();
- camera.position.set(player.x,player.y+1.62,player.z);camera.rotation.set(player.pitch,player.yaw,0);}
+ camera.position.set(player.x,player.y+1.62,player.z);
+ const tilt=hurtTime>0?Math.sin((.55-hurtTime)*24)*.05*(hurtTime/.55):0;
+ camera.rotation.set(player.pitch,player.yaw,tilt);}
 const selectOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:'#141818',depthTest:true}));selectOutline.visible=false;scene.add(selectOutline);
 const raycaster=new THREE.Raycaster();raycaster.far=5;const forward=new THREE.Vector3();let currentHit=null;
 function look(){
@@ -249,7 +254,7 @@ function breakBlock(t){
   for(const drop of blockDrops(t.id,{toolId:inventory[selected]?.id??0})){
     drops.spawn(drop.id,t.x+.5,t.y+.6,t.z+.5,drop.count);
   }
-  track('mined');if(t.id===BLOCK.LOG||t.id===BLOCK.SPRUCE_LOG)track('woodMined');survival.exert(.025);
+  track('mined');if(t.id===BLOCK.LOG||t.id===BLOCK.SPRUCE_LOG)track('woodMined');survival.exert(.005);
   const wear=usePickaxe(inventory[selected]);if(wear.broken)notify('곡괭이가 부서졌습니다.');
   firstPerson.swing();effects.emit('block',[t.x+.5,t.y+.5,t.z+.5],[.35,.35,.35],.2,12);audio.beep('break');breakOverlay.clear();updateUI();saveTimer=7;
  }
@@ -371,7 +376,7 @@ function endTouchLook(e,cancelled=false){
  if(wasMining){clickHold=false;damage=0;aimKey='';return;}
  if(!cancelled&&running&&!gesture.moved&&performance.now()-gesture.start<550){
   const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));
-  if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.2,victim.z],[.3,.3,.3],.1,6);audio.beep('hit');track('entityHits');survival.exert(.3);}
+  if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.2,victim.z],[.3,.3,.3],.1,6);audio.beep('hit');track('entityHits');survival.exert(.1);}
   else useOrPlace();
  }
 }
@@ -384,7 +389,7 @@ canvas.addEventListener('pointermove',e=>{
  if(!running||!activeLook||activeLook.id!==e.pointerId)return;
  e.preventDefault();const g=activeLook,dx=e.clientX-g.x,dy=e.clientY-g.y;
  g.x=e.clientX;g.y=e.clientY;g.distance+=Math.hypot(dx,dy);
- if(g.distance>10){g.moved=true;if(g.mining){clickHold=false;damage=0;g.mining=false;}}
+ if(g.distance>10){g.moved=true;/* Mining continues when looking around the same target. */}
  if(g.moved)Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100*1.46));
 });
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
@@ -538,7 +543,7 @@ el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');i
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});playerPreview112.draw();});
 function loop(now){requestAnimationFrame(loop);
- if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
+ if(touchMode&&running&&activeLook&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
   for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);
   if(running){const lastX=player.x,lastZ=player.z;stepPhysics(dt);track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
@@ -567,6 +572,7 @@ function loop(now){requestAnimationFrame(loop);
   // CPU mesh generation is spread over multiple animation frames.
   if(progressChunkWithinBudget(activeBuild,{budgetMs:touchMode?3:6,maxColumns:touchMode?12:32})){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
  }
+ if(hurtTime>0){hurtTime=Math.max(0,hurtTime-dt);el('hurtFlash112')?.style.setProperty('--hurt-opacity',String(.17*hurtTime/.55));}
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
 updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}});
