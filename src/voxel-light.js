@@ -4,7 +4,7 @@ import {BLOCK,definition} from './block-registry.js';
 
 export const LIGHT_RADIUS=15;
 const clamp=(x,low,high)=>Math.min(high,Math.max(low,x));
-const faceBrightness=normal=>normal[1]>0?1:normal[1]<0?.58:normal[0]!==0?.78:.87;
+const faceBrightness=normal=>normal[1]>0?1:normal[1]<0?.72:normal[0]!==0?.88:.95;
 
 export function activeLampsNear(world,cx,cz,radius=LIGHT_RADIUS){
  const out=[];
@@ -43,7 +43,7 @@ export function faceLight(world,face,sources=[]){
  const normal=face.d;
  const ax=Math.floor(x+normal[0]*.05),ay=Math.floor(y+normal[1]*.05),az=Math.floor(z+normal[2]*.05);
  const open=ay>world.columnTop(ax,az);
- const skylight=open?1:.18;
+ const skylight=open?1:.23;
  let lamp=0;
  for(const source of sources){
   const dist=Math.abs(source.x-x)+Math.abs(source.y-y)+Math.abs(source.z-z);
@@ -52,7 +52,7 @@ export function faceLight(world,face,sources=[]){
   if(strength<=lamp||!unblockedLightRay(world,source,{x:x+normal[0]*.06,y:y+normal[1]*.06,z:z+normal[2]*.06}))continue;
   lamp=strength;
  }
- const value=clamp(Math.max(skylight,lamp)*faceBrightness(normal),.08,1);
+ const value=clamp(Math.max(skylight,lamp)*faceBrightness(normal),.13,1);
  const warmth=lamp>skylight?Math.min(1,(lamp-skylight)*.35):0;
  return [value, value*(1-warmth*.24),value*(1-warmth*.55)];
 }
