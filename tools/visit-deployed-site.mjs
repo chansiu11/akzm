@@ -390,6 +390,14 @@ async function review(viewport,label,touch=false){
   if(!bounds||bounds.x<0||bounds.y<0||bounds.x+bounds.width>viewport.width||bounds.y+bounds.height>viewport.height)throw Error('Inventory panel exceeds viewport');
   const closeBounds=await page.locator('#closeInventory').boundingBox();
   if(!closeBounds||closeBounds.y<0||closeBounds.x<0||closeBounds.x+closeBounds.width>viewport.width)throw Error('Inventory close control is clipped');
+  await page.locator('#ownerPlayerPreview112.owner-preview-ready').waitFor({state:'visible',timeout:15000});
+  const inventoryAvatar=await page.locator('#ownerPlayerPreview112').evaluate(canvas=>({
+   shown:getComputedStyle(canvas).display!=='none',
+   width:canvas.getBoundingClientRect().width,
+   height:canvas.getBoundingClientRect().height
+  }));
+  if(!inventoryAvatar.shown||inventoryAvatar.width<30||inventoryAvatar.height<40)
+   throw Error('Missing inventory player avatar: '+JSON.stringify(inventoryAvatar));
   await page.screenshot({path:'site-review/'+label+'-inventory.png'});
   const slotSprite=await page.evaluate(()=>{
    const root=document.documentElement;root.classList.add('gui112-assets');
