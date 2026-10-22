@@ -92,7 +92,7 @@ const survival=new Survival(saved?.survival);
 const weatherCycle=new WeatherCycle(saved?.weather);
 const worldVisuals=createWorldVisuals(scene,renderer,world);
 const audio=createAudio();
-let hurtTime=0,hurtCause='generic',lastDeathCause='generic',hurtSource=null;
+let hurtTime=0,hurtCause='generic',lastDeathCause='generic',hurtSource=null,ownerDeathTexts={};
 function registerHurt(cause='generic',source=null){hurtTime=.55;hurtCause=cause;hurtSource=source;lastDeathCause=cause;}
 const breakOverlay=createBreakOverlay112(scene,world);
 const progression=new Progression(saved?.progression);const tiles=new TileStore(saved?.tiles);let activeTile=null;
@@ -192,7 +192,7 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');registerHurt('fall');}}fallDistance=0;}
  survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:Math.hypot(player.x-startX,player.z-startZ),swimming:water});
  if(survival.dead)showDeath();
- if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;survival.damage(4);}}else voidDamageTime=0;
+ if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;survival.damage(4);registerHurt('void');}}else voidDamageTime=0;
  if(survival.dead)showDeath();
  camera.position.set(player.x,player.y+1.62,player.z);
  const tilt=hurtTime>0?Math.sin((.55-hurtTime)*24)*.05*(hurtTime/.55):0;
@@ -226,6 +226,18 @@ function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,
 function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()));notify('월드 저장 완료')}catch{notify('저장할 수 없습니다: 브라우저 저장공간을 확인하세요')}}
 function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
+function chatReply112(text){
+ const area=el('chatHistory112');if(!area)return;
+ const row=document.createElement('div');row.textContent=String(text??'');area.append(row);
+ while(area.childElementCount>7)area.firstChild.remove();
+}
+function ownerDeathReason112(cause='generic'){
+ const key=({fall:'death.attack.fall',drown:'death.attack.drown',starve:'death.attack.starve',
+  void:'death.attack.outOfWorld',mob:'death.attack.generic',generic:'death.attack.generic'})[cause]??'death.attack.generic';
+ const message=ownerDeathTexts[key];
+ if(typeof message!=='string')return '';
+ return message.replace(/%1\\\$s|%s/g,'Player').replace(/%2\\\$s/g,'Player');
+}
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
 let ownerItemIcons={},blockItemIcons={},ownerBlockGuiModels={},ownerBlockIconModels={};
 const itemIconURI=id=>ownerItemIcons[id]??blockItemIcons[id];
@@ -315,7 +327,7 @@ function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;runn
 const commandUI=setupCommandUI({
  onOpen:()=>{running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.()},
  onClose:()=>{if(!survival.dead)requestPlay();},
- onResult:result=>notify(result.message),
+ onResult:result=>chatReply112(result.message),
  context:()=>({
   position:()=>[player.x,player.y,player.z],
   blockTarget:()=>{const b=look();return b?{x:b.x,y:b.y,z:b.z}:null;},
@@ -395,7 +407,7 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
-window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&cheatsAllowed&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
+window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
@@ -420,15 +432,15 @@ el('touchSneak').addEventListener('click',()=>{
  el('touchSneak').classList.toggle('pressed',mobileSneak);
  el('touchSneak').setAttribute('aria-pressed',String(mobileSneak));
 });
-el('touchCommand').classList.toggle('hidden',!cheatsAllowed);
-el('touchCommand').addEventListener('click',()=>{if(running&&cheatsAllowed)commandUI.show()});
+el('touchCommand').classList.remove('hidden');
+el('touchCommand').addEventListener('click',()=>{if(running)commandUI.show()});
 el('touchBag').addEventListener('click',()=>{if(running)openInventory()});
 el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // Automatically use every supported existing tile from locally prepared resources.
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){breakOverlay.setOwnerStages(assets?.breakStages).catch(error=>console.warn('Crack textures:',error));playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){ownerDeathTexts=assets?.deathMessages??{};breakOverlay.setOwnerStages(assets?.breakStages).catch(error=>console.warn('Crack textures:',error));playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);
@@ -520,13 +532,18 @@ el('craftOutput').addEventListener('click',()=>{const product=craftGridOnce(craf
  if(product){audio.beep('craft');track('crafted');if(product.id===BLOCK.CRAFTING_TABLE)track('craftedTable');if(product.id>=110&&product.id<=114)track('craftedPickaxe');updateUI();renderCrafting();notify(`아이템 ×${product.count} 제작 완료`);saveTimer=0;}
 });
 el('weatherToggle').addEventListener('click',()=>{weatherCycle.set(weatherCycle.kind==='clear'?'rain':weatherCycle.kind==='rain'?'thunder':'clear');el('weatherToggle').textContent='날씨 미리보기: '+weatherCycle.kind;notify('날씨: '+weatherCycle.kind)});
-el('respawnButton').addEventListener('click',()=>{survival.respawn();const requestedSpawn=commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z];const safeRespawn=restoreSafePlayerPosition(world,{x:requestedSpawn[0],y:requestedSpawn[1],z:requestedSpawn[2]},spawn);player.x=safeRespawn.x;player.y=safeRespawn.y;player.z=safeRespawn.z;player.vx=player.vz=player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');requestPlay();saveTimer=0});
+el('respawnButton').addEventListener('click',()=>{survival.respawn();const requestedSpawn=commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z];const safeRespawn=restoreSafePlayerPosition(world,{x:requestedSpawn[0],y:requestedSpawn[1],z:requestedSpawn[2]},spawn);player.x=safeRespawn.x;player.y=safeRespawn.y;player.z=safeRespawn.z;player.vx=player.vz=player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');lastDeathCause='generic';requestPlay();saveTimer=0});
 function showDeath(){if(!survival.dead||!el('deathScreen').classList.contains('hidden'))return;
+ el('deathReason112').textContent=ownerDeathReason112(lastDeathCause);
  cancelUsing();running=false;document.exitPointerLock?.();
  if(gameMode==='survival'&&!commandState.rules.keepInventory){for(const item of dropInventoryOnDeath(inventory,inventoryOverflow)){
    if(!drops.spawn(item.id,player.x,Math.max(1,player.y)+1,player.z,item.count,0,item.damage))inventoryOverflow.push(item);
   }updateUI();}
  el('deathScreen').classList.remove('hidden');worldPaused=true;saveTimer=0;}
+el('deathToTitle').addEventListener('click',()=>{
+ el('deathScreen').classList.add('hidden');worldPaused=true;running=false;enteredWorld=false;
+ menus.open('title');
+});
 
 for(const def of BLOCK_ITEMS.filter(item=>item.blockId!==BLOCK.BEDROCK&&item.blockId!==BLOCK.WATER)){
  const button=document.createElement('button');button.type='button';button.className='catalog-item';
@@ -546,7 +563,8 @@ function loop(now){requestAnimationFrame(loop);
  if(touchMode&&running&&activeLook&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
   for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);
-  if(running){const lastX=player.x,lastZ=player.z;stepPhysics(dt);track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
+  if(running){const lastX=player.x,lastZ=player.z,healthBefore=survival.health;stepPhysics(dt);
+   if(survival.health<healthBefore&&hurtTime<=0){const cause=survival.air===0?'drown':survival.hunger===0?'starve':'generic';registerHurt(cause);audio.beep('hit');}track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
    if(usingFood){foodHold+=dt;const food=foodFor(inventory[selected]?.id);if(!food||survival.dead)cancelUsing();else if(foodHold>=food.seconds){if(eatHeld(inventory,selected,survival)){audio.beep('craft');updateUI();notify('음식을 먹었습니다.');saveTimer=0;}cancelUsing();}}
   }
   else survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
