@@ -84,7 +84,7 @@ test('1.12.2 item models choose real owner-local PNG paths instead of guessing f
 });
 test('new item model resolution triggers private cached JAR re-extraction',async()=>{
  const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
- assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v7');
+ assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v8');
 });
 
 test('original JAR block atlas water retains source PNG transparency',()=>{
