@@ -10,7 +10,7 @@ test('world names and player saves stay isolated by selected world',()=>{
  assert.equal(activeWorldId(),'test-new');assert.equal(worldSaveKey(),'voxel-frontier-save-v1-test-new');assert.equal(listWorlds()[0].name,'시험 세계');
 });
 test('settings are sanitized before use',()=>{
- mockStorage();assert.deepEqual(loadSettings(),{fov:75,renderDistance:2,sensitivity:.24,showCoordinates:true});
+ mockStorage();assert.deepEqual(loadSettings(),{fov:75,renderDistance:6,sensitivity:.24,showCoordinates:true});
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({fov:10000,renderDistance:99,sensitivity:-2,showCoordinates:false}));
- assert.deepEqual(loadSettings(),{fov:100,renderDistance:3,sensitivity:.08,showCoordinates:false});
+ assert.deepEqual(loadSettings(),{fov:100,renderDistance:10,sensitivity:.08,showCoordinates:false});
 });
