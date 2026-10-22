@@ -2,25 +2,30 @@
 import {pngData} from './menu112-assets.js';
 export function unicodeGlyphMetric(byte){return {start:byte>>>4,width:byte?((byte&15)-(byte>>>4)+1):0};}
 let font=null,observer=null,pending=false;
+// The 1.12.2 unicode_page sheets cannot be drawn at the old ASCII cell size
+// without clipping or smearing Korean glyphs. Preserve readable native text
+// until a faithful Unicode rasterizer is available.
+export function bitmapTextSupported112(value){return [...String(value??'')].every(c=>{const n=c.codePointAt(0);return n>=32&&n<127;});}
+function clearBitmap(node){node.querySelector(':scope > canvas.bitmap-text')?.remove();node.classList.remove('bitmap-label');}
 const selectors='#overlay button,#overlay h2,#inventory .inventory-head strong,#inventory .container-slot span,#hotbar .slot span,#menuSplash';
 async function imageData(uri){const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=uri;});return image;}
 export async function applyBitmapFont112(assets){
  const data=assets?.bitmapFont;if(!pngData(data?.ascii)||typeof data?.sizes!=='string'||!data?.pages)return false;
  const sizes=Uint8Array.from(atob(data.sizes),c=>c.charCodeAt(0));if(sizes.length!==65536)return false;
- const ascii=await imageData(data.ascii),pages=new Map();
- for(const [key,uri] of Object.entries(data.pages))if(pngData(uri))pages.set(Number(key),await imageData(uri));
+ const ascii=await imageData(data.ascii);
  const probe=document.createElement('canvas');probe.width=probe.height=128;const ctx=probe.getContext('2d');ctx.drawImage(ascii,0,0);const pixels=ctx.getImageData(0,0,128,128).data;
  const widths=Array.from({length:128},(_,code)=>{if(code===32)return 3;let width=0;for(let x=0;x<8;x++)for(let y=0;y<8;y++)if(pixels[((Math.floor(code/16)*8+y)*128+code%16*8+x)*4+3]>0)width=Math.max(width,x+1);return width;});
- font={ascii,pages,sizes,widths};
+ font={ascii,sizes,widths};
  if(!observer){observer=new MutationObserver(records=>{if(records.every(r=>(r.type==='attributes'&&r.target.classList.contains('bitmap-label'))||r.type==='childList'&&[...r.addedNodes,...r.removedNodes].every(n=>n.nodeName==='CANVAS')))return;schedule();});observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','class']});window.addEventListener('resize',schedule);}
  schedule();return true;
 }
 function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;document.querySelectorAll(selectors).forEach(paint);});}
 function paint(node){
  if(!font||!node.getBoundingClientRect().width)return;
- const text=[...node.childNodes].filter(n=>n.nodeName!=='CANVAS').map(n=>n.textContent).join('').trim();if(!text)return;
- const glyphs=[...text].map(c=>{const code=c.codePointAt(0);if(code<128)return {image:font.ascii,sx:code%16*8,sy:Math.floor(code/16)*8,sw:font.widths[code],sh:8,w:font.widths[code],advance:font.widths[code]+1};const m=unicodeGlyphMetric(font.sizes[code]??0);return {image:font.pages.get(code>>>8),sx:code%16*16+m.start,sy:Math.floor(code%256/16)*16,sw:m.width,sh:16,w:m.width/2,advance:m.width/2+1};});
- if(glyphs.some(g=>!g.image))return;
+ const text=[...node.childNodes].filter(n=>n.nodeName!=='CANVAS').map(n=>n.textContent).join('').trim();
+ if(!text||!bitmapTextSupported112(text)){clearBitmap(node);return;}
+ const glyphs=[...text].map(c=>{const code=c.codePointAt(0),w=font.widths[code];return {image:font.ascii,sx:code%16*8,sy:Math.floor(code/16)*8,sw:w,sh:8,w,advance:w+1};});
+ if(glyphs.some(g=>!g.image||!Number.isFinite(g.w)||(g.w===0&&text.trim()))){clearBitmap(node);return;}
  const logicalWidth=Math.ceil(glyphs.reduce((s,g)=>s+g.advance,0)),layer=document.createElement('canvas');layer.width=logicalWidth+1;layer.height=10;const ctx=layer.getContext('2d');ctx.imageSmoothingEnabled=false;
  let x=0;for(const g of glyphs){if(g.sw)ctx.drawImage(g.image,g.sx,g.sy,g.sw,g.sh,x,0,g.w,8);x+=g.advance;}
  ctx.globalCompositeOperation='source-in';ctx.fillStyle=node.id==='menuSplash'?'#ffff00':node.disabled?'#a0a0a0':node.matches(':hover')&&node.nodeName==='BUTTON'?'#ffffa0':node.closest('#inventory')&&!node.matches('span')?'#404040':'#e0e0e0';ctx.fillRect(0,0,layer.width,10);
