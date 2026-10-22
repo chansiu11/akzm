@@ -18,3 +18,16 @@ export function progressChunk(task,columns=8){
  }
  task.index=end;return task.index===size*size;
 }
+
+/** Spend a bounded amount of each animation frame on a single chunk.
+ * Small batches avoid visible freezes while fast devices may finish dozens
+ * of columns in one frame. clock is injectable for deterministic tests. */
+export function progressChunkWithinBudget(task,{budgetMs=5,maxColumns=28,batchColumns=4,clock=()=>performance.now()}={}){
+ const max=Math.max(1,Math.floor(maxColumns)),batch=Math.max(1,Math.floor(batchColumns));
+ const start=clock(),startIndex=task.index;let done=false;
+ do{
+  const remaining=max-(task.index-startIndex);
+  done=progressChunk(task,Math.min(batch,remaining));
+ }while(!done&&task.index-startIndex<max&&clock()-start<budgetMs);
+ return done;
+}
