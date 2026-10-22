@@ -389,6 +389,12 @@ async function review(viewport,label,touch=false){
   // Original 1.12.2's in-game pause is a dim overlay, not a second dirt menu.
   if(touch)await clickAndCapture(page,'#touchPause',label+'-click-pause','#menu-pause');
   else{
+   const escBefore=await page.evaluate(()=>({
+    activeElement:document.activeElement?.id||document.activeElement?.tagName,
+    pointerLocked:!!document.pointerLockElement,
+    overlayOpen:document.getElementById('overlay').classList.contains('show')
+   }));
+   console.log('Desktop Escape preflight: '+JSON.stringify(escBefore));
    await page.keyboard.press('Escape');
    await page.locator('#menu-pause').waitFor({state:'visible',timeout:12000});
    await page.screenshot({path:'site-review/'+label+'-click-pause.png'});

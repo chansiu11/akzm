@@ -83,6 +83,36 @@ try{
  if(!reply.length)throw Error('Enter did not execute /help into chat history');
  await page.screenshot({path:'command-review/'+label+'-06-after-help.png'});
  console.log('COMMAND_CHAT_PASS '+label);
+ // The desktop must pause on Escape even if there is no pointer lock.
+ // On mobile, the touch pause control follows the same menu path.
+ const beforePause=await page.evaluate(()=>({
+  activeElement:document.activeElement?.id||document.activeElement?.tagName,
+  overlayVisible:document.getElementById('overlay').classList.contains('show'),
+  pointerLocked:!!document.pointerLockElement,
+  pauseHidden:document.getElementById('menu-pause').classList.contains('hidden')
+ }));
+ console.log('PAUSE_BEFORE '+JSON.stringify({label,...beforePause}));
+ if(touch)await page.locator('#touchPause').click();
+ else await page.keyboard.press('Escape');
+ await page.locator('#menu-pause').waitFor({state:'visible',timeout:15000});
+ const pauseCheck=await page.evaluate(()=>{
+  const pause=document.getElementById('menu-pause');
+  return {shown:getComputedStyle(pause).display!=='none',buttons:pause.querySelectorAll('.pause-buttons112 button.stone-button').length,
+    worldCovered:document.getElementById('overlay').classList.contains('show')};
+ });
+ if(!pauseCheck.shown||pauseCheck.buttons!==6||!pauseCheck.worldCovered)
+  throw Error('Pause menu malformed: '+JSON.stringify(pauseCheck));
+ await page.screenshot({path:'command-review/'+label+'-07-pause-open.png'});
+ await page.locator('#pauseSettings').click();
+ await page.locator('#menu-settings').waitFor({state:'visible'});
+ await page.screenshot({path:'command-review/'+label+'-08-pause-settings.png'});
+ await page.locator('#settingsSave').click();
+ await page.locator('#menu-pause').waitFor({state:'visible'});
+ await page.screenshot({path:'command-review/'+label+'-09-return-pause.png'});
+ await page.locator('#pauseResume').click();
+ await page.locator('#overlay:not(.show)').waitFor({state:'attached',timeout:15000});
+ await page.screenshot({path:'command-review/'+label+'-10-resume-game.png'});
+ console.log('PAUSE_FLOW_PASS '+label);
 } catch(error){
  console.error('COMMAND_CHAT_FAIL '+label+': '+error?.stack);
  if(page)await page.screenshot({path:'command-review/'+label+'-failure.png'}).catch(()=>{});
