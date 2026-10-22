@@ -341,3 +341,43 @@ html.site-default112:not(.menu112-assets) #overlay .menu-page.menu-vanilla112{
  background-size:auto,calc(32px * var(--panel-s)) calc(32px * var(--panel-s))!important;
  background-repeat:repeat!important;
 }
+
+/* Java 1.12.2 pause layout: in-game scene stays dimly visible.
+   Owner GUI buttons from widgets.png override the original site sprites. */
+#overlay:has(#menu-pause:not(.hidden)){
+ background:rgba(0,0,0,.55)!important;
+ backdrop-filter:none!important;
+}
+#overlay #menu-pause.menu-pause112{
+ display:block!important;position:fixed!important;inset:0!important;
+ width:100%!important;max-width:none!important;
+ height:100dvh!important;min-height:0!important;
+ padding:0!important;margin:0!important;
+ background:none!important;overflow:hidden!important;
+ text-align:center;
+}
+#overlay #menu-pause.menu-pause112.hidden{display:none!important}
+#overlay #menu-pause.menu-pause112 h2{
+ position:absolute;top:calc(38px * var(--gui-scale,1));left:0;right:0;
+ margin:0!important;padding:0!important;color:#fff;
+ font:normal calc(10px * var(--gui-scale,1))/1.2 monospace!important;
+ letter-spacing:0!important;text-shadow:calc(1px * var(--gui-scale,1)) calc(1px * var(--gui-scale,1)) #222;
+}
+#overlay #menu-pause .pause-buttons112{
+ position:absolute;top:calc(70px * var(--gui-scale,1));left:50%;
+ transform:translateX(-50%);
+ width:calc(200px * var(--gui-scale,1));max-width:calc(100% - 12px);
+ display:flex;flex-direction:column;gap:calc(4px * var(--gui-scale,1));
+}
+#overlay #menu-pause .pause-pair112{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:calc(4px * var(--gui-scale,1));width:100%;
+}
+#overlay #menu-pause .pause-buttons112 button.stone-button{
+ margin:0!important;width:100%!important;min-width:0!important;
+ height:calc(20px * var(--gui-scale,1))!important;
+ min-height:0!important;padding:0 calc(2px * var(--gui-scale,1))!important;
+ font:normal calc(8px * var(--gui-scale,1))/1 monospace!important;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#overlay #menu-pause #weatherToggle{display:none!important}

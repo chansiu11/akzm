@@ -381,6 +381,26 @@ async function review(viewport,label,touch=false){
    await page.screenshot({path:'site-review/'+label+'-touch-controls.png'});
   }
 
+  // Original 1.12.2's in-game pause is a dim overlay, not a second dirt menu.
+  if(touch)await clickAndCapture(page,'#touchPause',label+'-click-pause','#menu-pause');
+  else{
+   await page.keyboard.press('Escape');
+   await page.locator('#menu-pause').waitFor({state:'visible',timeout:12000});
+   await page.screenshot({path:'site-review/'+label+'-click-pause.png'});
+  }
+  const pauseUI=await page.evaluate(()=>{
+   const pause=document.getElementById('menu-pause'),a=document.getElementById('pauseResume').getBoundingClientRect();
+   const b=document.getElementById('pauseTitle').getBoundingClientRect();
+   const bg=getComputedStyle(pause).backgroundImage;
+   return {buttons:pause.querySelectorAll('.pause-buttons112 button.stone-button').length,
+     aligned:Math.abs(a.x-b.x)<1&&Math.abs(a.width-b.width)<1,
+     titleBelow:b.y>a.y,background:bg};
+  });
+  if(pauseUI.buttons!==6||!pauseUI.aligned||!pauseUI.titleBelow||pauseUI.background!=='none')
+   throw Error('Stage pause screen differs from Java GUI: '+JSON.stringify(pauseUI));
+  await clickAndCapture(page,'#pauseSettings',label+'-click-pause-options','#menu-settings');
+  await clickAndCapture(page,'#settingsSave',label+'-click-return-pause','#menu-pause');
+  await clickAndCapture(page,'#pauseResume',label+'-click-resume-game');
   // Opening inventory also checks the interactive JavaScript hooks for the 1.12.2 GUI.
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
   await page.locator('#inventory').waitFor({state:'visible',timeout:12000});
