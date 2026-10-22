@@ -48,6 +48,8 @@ test('atlas receives individual procedural texture details instead of flat swatc
 test('standalone pickaxes have hand-built silhouettes and held 3D tool geometry',()=>{
  assert.match(main,/toolIcon tool-/);
  assert.match(firstPerson,/const toolGroup=new THREE.Group\(\)/);
- assert.match(firstPerson,/head\.material=tip\.material=toolMaterials\[id\]/);
+ assert.match(firstPerson,/head\.material=tip\.material=toolMaterials\[Math\.max\(0,toolMaterialTier112\(id\)\)\]/);
+ assert.match(firstPerson,/const family=toolFamily112\(id\)/);
+ assert.match(firstPerson,/head\.geometry=shape\.head;tip\.geometry=shape\.tip/);
  assert.match(css,/\.tileIcon\.toolIcon/);
 });
