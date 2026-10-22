@@ -34,7 +34,7 @@ import {createDrops} from './drops.js';
 import {createAudio} from './audio.js';
 import {TileStore,processFurnace,depositOne,withdrawOne,tileDrops,tileKey} from './tile-data.js';
 import {Progression,GOALS} from './progression.js';
-import {blockDrops,mineSeconds} from './vanilla-mining.js';
+import {blockDrops,mineSeconds,miningProgressPerTick112} from './vanilla-mining.js';
 import {createBreakOverlay112} from './break-overlay112.js';
 import {recomputeNearbyLamps} from './redstone-lite.js';
 import {usePickaxe} from './tool-durability.js';
@@ -85,7 +85,7 @@ const commandState=new CommandWorldState(saved?.commandState);
 const spawn=findSafeSpawn(world);
 const restoredPosition=restoreSafePlayerPosition(world,saved?.player,spawn);
 const player={x:restoredPosition.x,y:restoredPosition.y,z:restoredPosition.z,vx:0,vz:0,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
-let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,clickHold=false,damage=0,aimKey='',saveTimer=0,noticeTimer=0;
+let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,clickHold=false,damage=0,mineTickRemainder=0,missedMineTime=0,aimKey='',saveTimer=0,noticeTimer=0;
 const keys=new Set(),meshes=new Map(),pending=[],queued=new Set(),placementPreviews=new Map();let activeBuild=null;
 const effects=createParticles(scene);
 const survival=new Survival(saved?.survival);
@@ -408,7 +408,7 @@ canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
 window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
-canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;mineTickRemainder=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
 const heldDirections=new Set();
@@ -569,16 +569,30 @@ function loop(now){requestAnimationFrame(loop);
   }
   else survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
   weatherCycle.update(dt);entityWorld.update(dt,player);drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
-  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;
-    const equipped=inventory[selected]??{id:0},duration=mineSeconds(t.id,equipped,{
+  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){
+    const id=`${t.x},${t.y},${t.z}`;
+    if(id!==aimKey){aimKey=id;damage=0;mineTickRemainder=0;}
+    missedMineTime=0;
+    const equipped=inventory[selected]??{id:0};
+    const conditions={
      underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER,
      onGround:player.onGround,haste:player.hasteLevel??0,miningFatigue:player.fatigueLevel??0,
      aquaAffinity:!!player.aquaAffinity
-    });
-    const ratio=duration<=0?1:Math.min(1,damage/duration);
+    };
+    mineTickRemainder+=dt;
+    while(mineTickRemainder>=.05){
+     mineTickRemainder-=.05;
+     damage+=miningProgressPerTick112(t.id,equipped,conditions);
+    }
+    const ratio=Math.min(1,damage);
     breakOverlay.setTarget(t,ratio);mineProgress(el('miningIndicator'),0);
-    if(damage>=duration){breakBlock(t);damage=0;breakOverlay.clear();}
-   }else{damage=0;breakOverlay.clear();mineProgress(el('miningIndicator'),0);}
+    if(damage>=1){breakBlock(t);damage=0;mineTickRemainder=0;breakOverlay.clear();}
+   }else if(clickHold&&aimKey&&!t&&missedMineTime<.12){
+    missedMineTime+=dt;
+   }else{
+    damage=0;mineTickRemainder=0;missedMineTime=0;aimKey='';
+    breakOverlay.clear();mineProgress(el('miningIndicator'),0);
+   }
  saveTimer-=dt;if(saveTimer<=0){saveTimer=20;try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}}
  }
  loadArea();if(!activeBuild && pending.length){
