@@ -18,7 +18,7 @@ import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
 import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js';
-import {setupCommandUI} from './command-ui.js';
+import {setupCommandUI} from './command-ui.js?v=1.1';
 import {createParticles} from './particles.js';
 import {WeatherCycle} from './environment.js?v=1.2';
 import {createWorldVisuals} from './world-visuals.js?v=1.2';
@@ -47,11 +47,11 @@ import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngre
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=1.8';
+import {createFirstPerson} from './first-person.js?v=1.9';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=1.9';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.0';
 
 const el=id=>document.getElementById(id);
 installBundledSiteTheme112();
