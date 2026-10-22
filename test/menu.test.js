@@ -13,4 +13,9 @@ test('settings are sanitized before use',()=>{
  mockStorage();assert.deepEqual(loadSettings(),{fov:75,renderDistance:6,sensitivity:.24,showCoordinates:true});
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({fov:10000,renderDistance:99,sensitivity:-2,showCoordinates:false}));
  assert.deepEqual(loadSettings(),{fov:100,renderDistance:10,sensitivity:.08,showCoordinates:false});
+ localStorage.setItem(SETTINGS_KEY,JSON.stringify({renderDistance:2}));
+ assert.equal(loadSettings().renderDistance,6,'upgrade old 2-chunk setting to a usable 6 chunks');
+ localStorage.setItem(SETTINGS_KEY,JSON.stringify({renderDistance:2,renderDistanceV2:true}));
+ assert.equal(loadSettings().renderDistance,2,'a new deliberate 2-chunk setting must persist');
+
 });
