@@ -21,10 +21,11 @@ test('health, hunger, oxygen are clamped and independently represented as ten ha
  assert.equal(vitalsModel(-4,99,300).food.every(x=>x===1),true);
  assert.equal(vitalsModel(20,20,300).bubbles.length,0);
 });
-test('game HUD has no emoji-only bars and block mining progress is visible',()=>{
+test('game HUD uses half hearts and damage is displayed on the mined block, not as a web progress bar',()=>{
  assert.ok(!main.includes("el('survivalHud').textContent="));
  assert.match(main,/hud\.update\(survival\.health,survival\.hunger,survival\.air\)/);
- assert.match(main,/mineProgress\(el\('miningIndicator'\),ratio/);
+ assert.match(main,/breakOverlay\.setTarget\(t,ratio\)/);
+ assert.match(css,/#miningIndicator,#miningIndicator\.visible\{display:none!important\}/);
  assert.match(html,/id="miningIndicator"/);
  assert.match(css,/#hotbar \.slot/);assert.match(css,/\.pixel-vital\.heart/);assert.match(css,/\.pixel-vital\.food/);
 });
