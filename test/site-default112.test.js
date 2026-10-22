@@ -20,6 +20,9 @@ test('new site visitor receives bundled UI and blocks without uploading a JAR',(
  assert.match(main,/사이트 기본 블록·메뉴 그래픽이 자동 적용되었습니다/);
  assert.match(css,/site-default112:not\(\.gui112-assets\)/);
  assert.match(css,/--site112-normal/);
+ assert.match(css,/--site112-dirt/);
+ const site=readFileSync(new URL('../src/site-default112.js',import.meta.url),'utf8');
+ assert.match(site,/sprites\.dirt=dirt\.toDataURL\('image\/png'\)/);
  assert.match(html,/원본 1\.12\.2\.jar 불러오기 \(선택\)/);
  assert.doesNotMatch(main,/1\.12\.2\.jar를 처음 한 번 선택하세요/);
 });
