@@ -5,7 +5,7 @@ import {ownerBlockQuads112,firstPersonPose112} from './item-model112.js';
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {uvFor} from './atlas.js?v=1.7';
-import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov} from './held-item-view.js?v=1.2';
+import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov,toolFamily112,toolMaterialTier112} from './held-item-view.js?v=1.2';
 const skin=new THREE.MeshLambertMaterial({color:'#d9ab86'});
 const sleeve=new THREE.MeshLambertMaterial({color:'#477c92'});
 function cube(w,h,d,material){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material)}
@@ -25,10 +25,15 @@ export function createFirstPerson(renderer,atlasTexture){
  const blockCubeGeometry=held.geometry,nonCubeGeometries=new Map();
  const toolGroup=new THREE.Group();toolGroup.position.set(.50,-.37,-.82);toolGroup.rotation.set(.10,0,-.53);group.add(toolGroup);
  const stickMat=new THREE.MeshLambertMaterial({color:'#94673f'});
- const toolMaterials={110:new THREE.MeshLambertMaterial({color:'#a77f53'}),111:new THREE.MeshLambertMaterial({color:'#8e989c'}),112:new THREE.MeshLambertMaterial({color:'#d2d9db'}),113:new THREE.MeshLambertMaterial({color:'#f0c652'}),114:new THREE.MeshLambertMaterial({color:'#56c2be'})};
+ const toolMaterials=['#a77f53','#8e989c','#d2d9db','#f0c652','#56c2be'].map(color=>new THREE.MeshLambertMaterial({color}));
+ const toolGeometry={
+  pickaxe:{head:new THREE.BoxGeometry(.38,.10,.12),tip:new THREE.BoxGeometry(.09,.09,.12)},
+  axe:{head:new THREE.BoxGeometry(.24,.22,.13),tip:new THREE.BoxGeometry(.07,.18,.13)},
+  shovel:{head:new THREE.BoxGeometry(.17,.25,.12),tip:new THREE.BoxGeometry(.10,.05,.12)}
+ };
  const shaft=cube(.072,.46,.09,stickMat);shaft.position.y=-.05;toolGroup.add(shaft);
- const head=cube(.38,.10,.12,toolMaterials[110]);head.position.y=.17;toolGroup.add(head);
- const tip=cube(.09,.09,.12,toolMaterials[110]);tip.position.set(-.14,.11,0);toolGroup.add(tip);
+ const head=new THREE.Mesh(toolGeometry.pickaxe.head,toolMaterials[0]);head.position.y=.17;toolGroup.add(head);
+ const tip=new THREE.Mesh(toolGeometry.pickaxe.tip,toolMaterials[0]);tip.position.set(-.14,.11,0);toolGroup.add(tip);
  const ownerTextures=new Map(),ownerGeometry=new Map(),ownerBlockGeometry=new Map();
  let ownerHeldTransforms={};
  let ownerSkin=null,skinGeneration=0,itemGeneration=0;
@@ -132,7 +137,15 @@ export function createFirstPerson(renderer,atlasTexture){
   }
   // Vanilla renders the right arm holding an object, not only an empty hand.
   arm.visible=true;cuff.visible=!ownerSkin;
-  if(view.kind==='tool'){head.material=tip.material=toolMaterials[id];return;}
+  if(view.kind==='tool'){
+   const family=toolFamily112(id)??'pickaxe',shape=toolGeometry[family];
+   head.geometry=shape.head;tip.geometry=shape.tip;
+   head.material=tip.material=toolMaterials[Math.max(0,toolMaterialTier112(id))];
+   head.position.set(family==='axe' ? -.1 : 0,family==='shovel'?.16:.17,0);
+   tip.position.set(family==='pickaxe'?-.14:family==='axe'?-.22:0,family==='shovel'?.31:.11,0);
+   tip.visible=family!=='shovel';
+   return;
+  }
   if(held.visible){
    const shape=view.kind==='block'?definition(view.id)?.model:null;
    held.geometry=ownerBlockGeometry.get(view.id)??(shape&&shape!=='cube'?nonCubeGeometry(view.id):blockCubeGeometry);
@@ -152,5 +165,5 @@ export function createFirstPerson(renderer,atlasTexture){
  function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.fov=firstPersonFov(camera.aspect);camera.updateProjectionMatrix();
   const old=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(scene,camera);renderer.autoClear=old;
  }
- return {setItem,setOwnerItems,setOwnerSkin,setOwnerModels,update,swing,render,dispose(){++itemGeneration;++skinGeneration;ownerSkin?.dispose();placeholderGeometry.dispose();for(const geometry of ownerGeometry.values())geometry.dispose();for(const geometry of nonCubeGeometries.values())geometry.dispose();for(const geometry of ownerBlockGeometry.values())geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();for(const m of [arm,cuff])m.geometry.dispose();blockCubeGeometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of Object.values(toolMaterials))mat.dispose();for(const m of [shaft,head,tip])m.geometry.dispose();skin.dispose();sleeve.dispose();}};
+ return {setItem,setOwnerItems,setOwnerSkin,setOwnerModels,update,swing,render,dispose(){++itemGeneration;++skinGeneration;ownerSkin?.dispose();placeholderGeometry.dispose();for(const geometry of ownerGeometry.values())geometry.dispose();for(const geometry of nonCubeGeometries.values())geometry.dispose();for(const geometry of ownerBlockGeometry.values())geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();for(const m of [arm,cuff])m.geometry.dispose();blockCubeGeometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of toolMaterials)mat.dispose();shaft.geometry.dispose();for(const type of Object.values(toolGeometry)){type.head.dispose();type.tip.dispose();}skin.dispose();sleeve.dispose();}};
 }
