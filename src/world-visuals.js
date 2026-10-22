@@ -44,7 +44,7 @@ export function createWorldVisuals(scene,renderer,world=null){
  let clock=0,lampUpdateTimer=0;
  function update(dt,ticks,weather,player,sun,ambient,renderRadius=6,{nightVision=false}={}){
 
-  clock+=dt;const l=lightingInfo(ticks,weather,{nightVision});const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255));scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);const range=fogDistances112(renderRadius,weather);scene.fog.near=range.near;scene.fog.far=range.far}
+  clock+=dt;const l=lightingInfo(ticks,weather,{nightVision});const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255),THREE.SRGBColorSpace);scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);const range=fogDistances112(renderRadius,weather);scene.fog.near=range.near;scene.fog.far=range.far}
   sun.intensity=l.sunIntensity;ambient.intensity=l.ambientIntensity;
   lampUpdateTimer+=dt;
   if(lampUpdateTimer>=.2 || lampUpdateTimer===dt){
