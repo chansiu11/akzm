@@ -195,7 +195,7 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  const jumpPressed=keys.has('Space')||mobileJump;
  if(jumpPressed&&water)player.vy=waterExitLift112(player.vy,{jump:true,inWater:true});
  else if(jumpPressed&&player.onGround){player.vy=MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05);}
- player.vy=verticalVelocity112(player.vy,dt,{water});player.onGround=false;moveAxis('y',player.vy*dt);
+ const verticalStep=player.vy;player.onGround=false;moveAxis('y',verticalStep*dt);if(!player.onGround)player.vy=verticalVelocity112(player.vy,dt,{water});
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
  if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');registerHurt('fall');}}fallDistance=0;}
  survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:water?Math.hypot(player.x-startX,player.y-initialY,player.z-startZ):Math.hypot(player.x-startX,player.z-startZ),swimming:water});
