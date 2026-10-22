@@ -133,7 +133,11 @@ export function createFirstPerson(renderer,atlasTexture){
    const pose=firstPersonPose112(native,{item:false});
    held.position.set(.42+pose.offset[0]*.45,-.30+pose.offset[1]*.45,-.79+pose.offset[2]*.45);
    held.rotation.set(...pose.rotation);
-   held.scale.set(...pose.scale);
+   // Native model JSON element vertices are 16/16 = 1 whole block, while
+   // this first-person item's legacy cube geometry was only 0.28 wide.
+   // Normalize the owner element geometry to the same held-object anchor.
+   const nativeBlock=ownerBlockGeometry.get(view.id)===held.geometry;
+   held.scale.set(...pose.scale.map(value=>value*(nativeBlock?.28:1)));
   }
   // Vanilla renders the right arm holding an object, not only an empty hand.
   arm.visible=true;cuff.visible=!ownerSkin;
