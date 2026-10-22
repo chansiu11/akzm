@@ -104,7 +104,7 @@ let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 if(touchMode)document.body.classList.add('touch-ui');
 applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
-const mobileMove={forward:0,strafe:0};let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
+const mobileMove={forward:0,strafe:0};const heldControls112=new Map();let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
@@ -316,7 +316,7 @@ function startUseSelected(){
 }
 function cancelUsing(){usingFood=false;foodHold=0;}
 
-function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));playerPreview112.draw()}
+function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));playerPreview112.draw()}
 function closeInventory(){document.body.classList.remove('inventory-open');recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
 let pendingFullscreenAfterWorldCreation112=false;
 document.addEventListener('pointerdown',()=>{
@@ -343,10 +343,11 @@ function requestPlay({autoResume=false}={}){
   lock?.catch?.(()=>{/* Click the canvas again to enable mouse capture. */});
  }
 }
-function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
+function resetTouchHolds112(){for(const reset of heldControls112.values())reset();}
+function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.();menus.showPause()}
 // Initial command subset; commands never bypass the same World.set limits as normal placing.
 const commandUI=setupCommandUI({
- onOpen:()=>{document.body.classList.add('command-open112');running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.()},
+ onOpen:()=>{document.body.classList.add('command-open112');running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.()},
  onClose:()=>{document.body.classList.remove('command-open112');if(!survival.dead)requestPlay();},
  onResult:result=>chatReply112(result.message),
  context:()=>({
@@ -439,6 +440,12 @@ function syncDpad(){
 }
 function holdAction(id,onStart,onEnd){
  const b=el(id);let heldPointer=null;
+ function release(){
+  if(heldPointer===null)return;
+  heldPointer=null;b.classList.remove('pressed');b.setAttribute('aria-pressed','false');
+  onEnd?.();
+ }
+ heldControls112.set(id,release);
  b.addEventListener('pointerdown',e=>{
   if(!running||heldPointer!==null)return;
   e.preventDefault();heldPointer=e.pointerId;
@@ -446,15 +453,9 @@ function holdAction(id,onStart,onEnd){
   b.setPointerCapture?.(e.pointerId);onStart();
  });
  for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,e=>{
-  if(e.pointerId!==heldPointer)return;
-  heldPointer=null;b.classList.remove('pressed');b.setAttribute('aria-pressed','false');
-  onEnd?.();
+  if(e.pointerId===heldPointer)release();
  });
- window.addEventListener('blur',()=>{
-  if(heldPointer===null)return;
-  heldPointer=null;b.classList.remove('pressed');b.setAttribute('aria-pressed','false');
-  onEnd?.();
- });
+ window.addEventListener('blur',release);
 }
 for(const [direction,id] of [['up','touchUp'],['down','touchDown'],['left','touchLeft'],['right','touchRight']]){
  holdAction(id,()=>{heldDirections.add(direction);syncDpad()},()=>{heldDirections.delete(direction);syncDpad()});
