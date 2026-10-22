@@ -47,7 +47,7 @@ import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngre
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=1.7';
+import {createFirstPerson} from './first-person.js?v=1.8';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
@@ -461,7 +461,7 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){ownerDeathTexts=assets?.deathMessages??{};breakOverlay.setOwnerStages(assets?.breakStages).catch(error=>console.warn('Crack textures:',error));playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){ownerDeathTexts=assets?.deathMessages??{};breakOverlay.setOwnerStages(assets?.breakStages).catch(error=>console.warn('Crack textures:',error));playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerModels(assets?.firstPersonModels,assets?.blockIconModels);firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);
