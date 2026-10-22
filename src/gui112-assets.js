@@ -42,6 +42,20 @@ export async function readOwner112Jar(file){
  const JSZip=m.default??m;
  const zip=await JSZip.loadAsync(data,{checkCRC32:true});
  const a={};
+ // Private translation strings are read from the owner's client only.
+ // No copyrighted language or death-message text is shipped in GitHub.
+ a.deathMessages={};
+ for(const lang of ['ko_kr','en_us']){
+  const entry=zip.file('assets/minecraft/lang/'+lang+'.lang');
+  if(!entry)continue;
+  for(const line of (await entry.async('string')).split(/\r?\n/)){
+   if(!line.startsWith('death.attack.'))continue;
+   const cut=line.indexOf('=');
+   if(cut<0)continue;
+   const key=line.slice(0,cut),value=line.slice(cut+1);
+   if(/^death\.attack\.[a-zA-Z.]+$/.test(key)&&value.length<220&&!(key in a.deathMessages))a.deathMessages[key]=value;
+  }
+ }
  const splashes=zip.file('assets/minecraft/texts/splashes.txt');if(splashes)a.splashes=(await splashes.async('string')).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
  for(const [key,path] of Object.entries(GUI112_FILES)){
   const f=zip.file(path);if(!f)throw Error('원본 UI PNG 누락: '+path);
