@@ -27,10 +27,10 @@ export function listWorlds(){
  if(!Array.isArray(worlds)||!worlds.length)return [{...DEFAULT_WORLD}];
  return worlds.filter(w=>w&&typeof w.id==='string'&&typeof w.name==='string').slice(0,30);
 }
-export const DEFAULT_SETTINGS=Object.freeze({fov:75,renderDistance:2,sensitivity:0.24,showCoordinates:true});
+export const DEFAULT_SETTINGS=Object.freeze({fov:75,renderDistance:6,sensitivity:0.24,showCoordinates:true});
 export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
  fov:Math.max(60,Math.min(100,Number(s?.fov)||75)),
- renderDistance:Math.max(1,Math.min(3,Math.round(Number(s?.renderDistance)||2))),
+ renderDistance:Math.max(2,Math.min(10,Math.round(Number(s?.renderDistance)||6))),
  sensitivity:Math.max(.08,Math.min(.6,Number(s?.sensitivity)||.24)),
  showCoordinates:s?.showCoordinates!==false
 };}
