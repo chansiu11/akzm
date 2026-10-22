@@ -268,3 +268,7 @@ html.menu112-assets #overlay .menu-page.menu-vanilla112{
  #overlay #menu-settings .options-grid112{top:calc(31px * var(--panel-s))}
  #overlay #menu-settings .options-grid112 > :is(:nth-child(1),:nth-child(2)){margin-bottom:calc(5px * var(--panel-s))!important}
 }
+
+/* The official world/options dialogs don't carry the title-screen legal footer;
+   keep our notice on the title but prevent it from covering the bottom controls. */
+body:has(.menu-page.menu-vanilla112:not(.hidden)) #overlay .menu-footer{display:none!important}
