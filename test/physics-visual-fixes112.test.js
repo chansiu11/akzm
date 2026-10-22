@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {bitmapTextSupported112} from '../src/bitmap-font112.js';
-import {horizontalVelocity112,verticalVelocity112,MOVE_SPEED112,defaultRenderDistance112,sanitizeRenderDistance112,fogDistances112} from '../src/player-motion112.js';
+import {horizontalVelocity112,verticalVelocity112,MOVE_SPEED112,defaultRenderDistance112,sanitizeRenderDistance112,fogDistances112,waterContact112,waterExitLift112} from '../src/player-motion112.js';
 import {faceLight} from '../src/voxel-light.js';
 import {lightingInfo} from '../src/environment.js';
 
@@ -77,4 +77,29 @@ test('chunk work respects a maximum per frame while still yielding immediate upd
  const next=progressChunkWithinBudget(t,{budgetMs:10,maxColumns:28,batchColumns:4,clock:()=>1});
  assert.equal(next,false);
  assert.equal(t.index,32);
+});
+
+test('water contact follows a 0.6-block player footprint at the shoreline',()=>{
+ const world={get:(x,y,z)=>(x===0&&y===64&&z===0?8:0)};
+ const player={x:1.10,y:64,z:.5};
+ // Centre is in air, but the west edge of the avatar overlaps water.
+ assert.equal(world.get(Math.floor(player.x),64,Math.floor(player.z)),0);
+ assert.equal(waterContact112(world,player,8),true);
+ assert.equal(waterContact112(world,{...player,x:1.4},8),false);
+ assert.equal(waterExitLift112(-1,{jump:true,inWater:true,blockedByShore:true}),5.2);
+ assert.equal(waterExitLift112(-1,{jump:true,inWater:true}),4);
+ assert.equal(waterExitLift112(-1,{jump:false,inWater:true}),-1);
+});
+test('water jump held continuously does not charge jump exhaustion each animation frame',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.match(main,/if\(jumpPressed&&water\)player\.vy=waterExitLift112/);
+ assert.match(main,/else if\(jumpPressed&&player\.onGround\)/);
+ assert.match(main,/water\?Math\.hypot\(player\.x-startX,player\.y-initialY,player\.z-startZ\)/);
+ const {Survival}=await import('../src/survival.js');
+ const swimmer=new Survival({saturation:0,hunger:20});
+ const walker=new Survival({saturation:0,hunger:20});
+ for(let t=0;t<1200;t++){swimmer.tick(.05,{swimming:true,moving:true,travelDistance:.1});walker.tick(.05,{moving:true,travelDistance:.1});}
+ assert.ok(Math.abs(swimmer.exhaustion-1.2)<.001);
+ assert.equal(walker.exhaustion,0);
+ assert.equal(swimmer.hunger,20);
 });
