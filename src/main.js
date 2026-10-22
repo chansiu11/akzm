@@ -12,7 +12,7 @@ import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
 import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-registry.js';
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
-import {beginChunk,progressChunk} from './chunk-builder.js';
+import {beginChunk,progressChunkWithinBudget} from './chunk-builder.js';
 import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.2';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
@@ -528,7 +528,7 @@ function loop(now){requestAnimationFrame(loop);
  }
  if(activeBuild){
   // CPU mesh generation is spread over multiple animation frames.
-  if(progressChunk(activeBuild,touchMode?12:28)){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
+  if(progressChunkWithinBudget(activeBuild,{budgetMs:touchMode?3:6,maxColumns:touchMode?12:32})){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
  }
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
