@@ -333,3 +333,11 @@ html.site-default112:not(.menu112-assets) body:has(#menu-title:not(.hidden)) #me
 html.site-default112:not(.menu112-assets) #overlay:has(#menu-title:not(.hidden)){
  background:linear-gradient(to bottom,#ffffff16,#0000000b 58%,#00000038)!important;
 }
+
+/* Fresh visitors receive a repeatable independent pixel texture instead of
+   a flat gradient. Private owner JAR dirt.png still takes precedence. */
+html.site-default112:not(.menu112-assets) #overlay .menu-page.menu-vanilla112{
+ background-image:linear-gradient(#0009,#0009),var(--site112-dirt)!important;
+ background-size:auto,calc(32px * var(--panel-s)) calc(32px * var(--panel-s))!important;
+ background-repeat:repeat!important;
+}
