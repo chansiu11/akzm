@@ -5,6 +5,7 @@ import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,deco
 import {applyBitmapFont112} from './bitmap-font112.js';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import {installBundledSiteTheme112} from './site-default112.js';
+import {MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112} from './player-motion112.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
 import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
@@ -82,9 +83,9 @@ let selected=Number.isInteger(saved?.selected)?Math.max(0,Math.min(8,saved.selec
 const commandState=new CommandWorldState(saved?.commandState);
 const spawn=findSafeSpawn(world);
 const restoredPosition=restoreSafePlayerPosition(world,saved?.player,spawn);
-const player={x:restoredPosition.x,y:restoredPosition.y,z:restoredPosition.z,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
+const player={x:restoredPosition.x,y:restoredPosition.y,z:restoredPosition.z,vx:0,vz:0,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
 let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,clickHold=false,damage=0,aimKey='',saveTimer=0,noticeTimer=0;
-const keys=new Set(),meshes=new Map(),pending=[],queued=new Set();let activeBuild=null;
+const keys=new Set(),meshes=new Map(),pending=[],queued=new Set(),placementPreviews=new Map();let activeBuild=null;
 const effects=createParticles(scene);
 const survival=new Survival(saved?.survival);
 const weatherCycle=new WeatherCycle(saved?.weather);
@@ -98,7 +99,7 @@ let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 if(touchMode)document.body.classList.add('touch-ui');
 applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
-const mobileMove={forward:0,strafe:0};let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=settings.renderDistance;let lastChunk='';
+const mobileMove={forward:0,strafe:0};let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
@@ -107,6 +108,26 @@ function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],co
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indexes);g.computeBoundingSphere();return g;
 }
 function chunkId(cx,cz){return `${cx},${cz}`}
+function clearPlacementPreviews(cx,cz){
+ for(const [key,preview] of placementPreviews){
+  if(preview.cx!==cx||preview.cz!==cz)continue;
+  scene.remove(preview.mesh);preview.mesh.geometry.dispose();placementPreviews.delete(key);
+ }
+}
+function showPlacementPreview(x,y,z){
+ const block=world.getBlock(x,y,z),layer=definition(block.id)?.layer;
+ if(!layer||!['opaque','cutout','glass','water'].includes(layer))return;
+ const key=x+','+y+','+z,old=placementPreviews.get(key);
+ if(old){scene.remove(old.mesh);old.mesh.geometry.dispose();placementPreviews.delete(key);}
+ const quads=visibleBlockQuads(world,x,y,z);if(!quads.length)return;
+ const cx=Math.floor(x/size),cz=Math.floor(z/size),mat={opaque:solidMat,cutout:leafMat,glass:glassMat,water:waterMat}[layer];
+ const mesh=new THREE.Mesh(makeGeo(quads,createChunkLight(world,cx,cz),layer==='water'),mat);
+ scene.add(mesh);placementPreviews.set(key,{cx,cz,mesh});
+ if(placementPreviews.size>72){
+  const [oldest,value]=placementPreviews.entries().next().value;
+  scene.remove(value.mesh);value.mesh.geometry.dispose();placementPreviews.delete(oldest);
+ }
+}
 function commitChunk(task){
  const {cx,cz,layers}=task,id=chunkId(cx,cz);
  if(meshes.has(id))for(const m of meshes.get(id)){scene.remove(m);m.geometry.dispose();}
@@ -115,18 +136,23 @@ function commitChunk(task){
   if(!layers[key].length)continue;const mesh=new THREE.Mesh(makeGeo(layers[key],lightForFace,key==='water'),mat);mesh.frustumCulled=true;scene.add(mesh);entries.push(mesh);
  }
  meshes.set(id,entries);
- if(task.dirty)enqueue(cx,cz);
+ if(!task.dirty)clearPlacementPreviews(cx,cz);
+ if(task.dirty)enqueue(cx,cz,true);
 }
-function enqueue(cx,cz){
+function enqueue(cx,cz,urgent=false){
  if(activeBuild?.cx===cx&&activeBuild?.cz===cz){activeBuild.dirty=true;return;}
  const k=chunkId(cx,cz);
- if(!queued.has(k)){queued.add(k);pending.push([cx,cz])}
+ if(queued.has(k)){
+  if(urgent){const i=pending.findIndex(([x,z])=>x===cx&&z===cz);if(i>=0){pending.splice(i,1);pending.unshift([cx,cz]);}}
+  return;
+ }
+ queued.add(k);if(urgent)pending.unshift([cx,cz]);else pending.push([cx,cz]);
 }
 function loadArea(){const cx=Math.floor(player.x/size),cz=Math.floor(player.z/size),base=chunkId(cx,cz);if(base===lastChunk)return;lastChunk=base;
  for(let r=0;r<=renderRadius;r++)for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=cx+dx,z=cz+dz;if(!meshes.has(chunkId(x,z)))enqueue(x,z)}
  for(const [id,list] of [...meshes]){const [a,b]=id.split(',').map(Number);if(Math.abs(a-cx)>renderRadius+1||Math.abs(b-cz)>renderRadius+1){for(const m of list){scene.remove(m);m.geometry.dispose()}meshes.delete(id)}}}
 const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{updateNearBlock(x,z);saveTimer=0;});
-function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))enqueue(cx+dx,cz+dz)}
+function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))enqueue(cx+dx,cz+dz,true)}
 function collides(x,y,z){return playerCollides(world,x,y,z)}
 function moveAxis(axis,delta){
  if(!delta)return;
@@ -171,7 +197,7 @@ function look(){
   return blocked;
  }
  raycaster.setFromCamera({x:0,y:0},camera);
- const targets=[...meshes.values()].flat();
+ const targets=[...meshes.values()].flat().concat([...placementPreviews.values()].map(v=>v.mesh));
  const hits=raycaster.intersectObjects(targets,false);
  const h=hits.find(hit=>hit.object.material!==waterMat);currentHit=h||null;
  if(h){
@@ -206,6 +232,7 @@ function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClas
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;
  if(world.set(t.x,t.y,t.z,0)){
+   const preview=placementPreviews.get(t.x+','+t.y+','+t.z);if(preview){scene.remove(preview.mesh);preview.mesh.geometry.dispose();placementPreviews.delete(t.x+','+t.y+','+t.z);}
   const tile=tiles.items.get(tileKey(t.x,t.y,t.z));
   for(const item of tileDrops(tile))drops.spawn(item.id,t.x+.5,t.y+.6,t.z+.5,item.count,0,item.damage);
   tiles.remove(t.x,t.y,t.z);
@@ -236,7 +263,7 @@ function placeBlock(t){
  if(!world.set(nx,ny,nz,blockId,state))return;
  if(collides(player.x,player.y,player.z)){world.set(nx,ny,nz,prev.id,prev.state);return}
  if(blockId===BLOCK.LEVER||blockId===BLOCK.LAMP)recomputeNearbyLamps(world,nx,ny,nz);
- track('placed');item.count--;if(item.count<=0){item.id=0;item.count=0}audio.beep('place');effects.emit('block',[nx+.5,ny+.5,nz+.5],[.25,.25,.25],.08,6);updateNearBlock(nx,nz);gravityTicks.notifyChange(nx,ny,nz);updateUI();saveTimer=7;
+ showPlacementPreview(nx,ny,nz);track('placed');item.count--;if(item.count<=0){item.id=0;item.count=0}audio.beep('place');effects.emit('block',[nx+.5,ny+.5,nz+.5],[.25,.25,.25],.08,6);updateNearBlock(nx,nz);gravityTicks.notifyChange(nx,ny,nz);updateUI();saveTimer=7;
 }
 function hardness(id){const value=definition(id)?.hardness??1;return value<=0?999:value}
 function useOrPlace(){
@@ -408,7 +435,7 @@ el('jar112Input').addEventListener('change',async event=>{
  }catch(error){status.textContent='사이트 기본 그래픽이 적용되었습니다 · 개인 원본 리소스 자동 복원에는 실패했습니다.';}
  finally{button.disabled=false;}
 })();
-const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=settings.renderDistance;camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
+const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
 installTitleLayout112();
 document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
@@ -485,7 +512,7 @@ function loop(now){requestAnimationFrame(loop);
   }
   else survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
   weatherCycle.update(dt);entityWorld.update(dt,player);drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
-  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;const ratio=Math.min(1,damage/mineSeconds(t.id,inventory[selected]?.id??0));mineProgress(el('miningIndicator'),ratio,BLOCK_NAMES[t.id]??'블록');el('miningIndicator').setAttribute('aria-valuenow',String(Math.round(ratio*100)));if(damage>=mineSeconds(t.id,inventory[selected]?.id??0)){breakBlock(t);damage=0}}else{damage=0;mineProgress(el('miningIndicator'),0);}
+  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;const ratio=Math.min(1,damage/mineSeconds(t.id,inventory[selected]?.id??0));mineProgress(el('miningIndicator'),ratio,BLOCK_NAMES[t.id]??'블록');el('miningIndicator').setAttribute('aria-valuenow',String(Math.round(ratio*100)));if(damage>=mineSeconds(t.id,inventory[selected]?.id??0)){breakBlock(t);damage=0}}else{damage=0;mineProgress(el('miningIndicator'),0);}
  saveTimer-=dt;if(saveTimer<=0){saveTimer=20;try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}}
  }
  loadArea();if(!activeBuild && pending.length){
@@ -495,7 +522,7 @@ function loop(now){requestAnimationFrame(loop);
  }
  if(activeBuild){
   // CPU mesh generation is spread over multiple animation frames.
-  if(progressChunk(activeBuild,4)){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
+  if(progressChunk(activeBuild,touchMode?12:28)){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
  }
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
