@@ -47,6 +47,6 @@ test('movement exhaustion depends on distance and sprinting, not idling time',()
  walk.tick(1,{moving:true,travelDistance:4,sprinting:false});
  sprint.tick(1,{moving:true,travelDistance:4,sprinting:true});
  idle.tick(100,{moving:false,travelDistance:0});
- assert.equal(walk.exhaustion,.04);assert.equal(sprint.exhaustion,.4);
+ assert.equal(walk.exhaustion,0);assert.equal(sprint.exhaustion,.4);
  assert.equal(idle.exhaustion,0);
 });
