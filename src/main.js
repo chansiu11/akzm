@@ -20,8 +20,8 @@ import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockT
 import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js';
-import {WeatherCycle} from './environment.js?v=1.3';
-import {createWorldVisuals} from './world-visuals.js?v=1.3';
+import {WeatherCycle} from './environment.js?v=1.4';
+import {createWorldVisuals} from './world-visuals.js?v=1.4';
 import {createChunkLight} from './voxel-light.js?v=1.2';
 import {waterQuadUV,waterTileRegion} from './water-visuals.js';
 import {SKY_CAMERA_FAR} from './sky-cycle.js';
