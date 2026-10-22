@@ -21,6 +21,11 @@ test('new site visitor receives bundled UI and blocks without uploading a JAR',(
  assert.match(css,/site-default112:not\(\.gui112-assets\)/);
  assert.match(css,/--site112-normal/);
  assert.match(css,/--site112-dirt/);
+ const player=readFileSync(new URL('../src/player-preview112.js',import.meta.url),'utf8');
+ const gui=readFileSync(new URL('../gui112.css',import.meta.url),'utf8');
+ assert.match(player,/siteOwnedSkin112\(\)/);
+ assert.match(player,/setSkin\(null\)\.catch/);
+ assert.match(gui,/html:not\(\.gui112-assets\) body #inventory\[data-container="inventory"\] #ownerPlayerPreview112\.owner-preview-ready/);
  const site=readFileSync(new URL('../src/site-default112.js',import.meta.url),'utf8');
  assert.match(site,/sprites\.dirt=dirt\.toDataURL\('image\/png'\)/);
  assert.match(html,/원본 1\.12\.2\.jar 불러오기 \(선택\)/);
