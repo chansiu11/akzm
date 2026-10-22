@@ -125,3 +125,73 @@ body.menu-open #survivalHud,body.menu-open #miningIndicator{visibility:hidden}
 
 /* 1.12.2 cracking is drawn directly onto the world block, never as an HUD bar. */
 #miningIndicator,#miningIndicator.visible{display:none!important}
+
+/* Java 1.12-style chat strip: no modern command dashboard around the text field. */
+#commandPanel.command-panel{
+ position:fixed!important;left:calc(2px * var(--gui-scale,1))!important;
+ right:calc(2px * var(--gui-scale,1))!important;top:auto!important;
+ bottom:calc(3px * var(--gui-scale,1))!important;width:auto!important;
+ max-width:none!important;max-height:calc(135px * var(--gui-scale,1))!important;
+ z-index:30!important;display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;gap:0!important;
+ padding:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;color:white!important;
+ text-align:left!important;font-family:monospace!important;
+}
+#commandPanel.hidden{display:none!important}
+#commandPanel .command-assist{
+ background:#0007!important;border:0!important;box-shadow:none!important;
+ width:min(450px,100%)!important;max-height:calc(98px * var(--gui-scale,1))!important;
+ overflow:hidden!important;display:block!important;margin:0!important;
+}
+#commandPanel .command-choices{display:block!important;max-height:calc(90px * var(--gui-scale,1));overflow:auto!important}
+#commandPanel .command-choice{
+ background:#0000!important;border:0!important;box-shadow:none!important;
+ color:#ccc!important;padding:calc(1px * var(--gui-scale,1))!important;
+ font:normal calc(8px * var(--gui-scale,1))/1.2 monospace!important;
+ display:block!important;width:100%!important;text-align:left!important;
+ border-radius:0!important
+}
+#commandPanel .command-choice.selected{background:#ffffff2c!important;color:white!important}
+#commandPanel .command-choice small,#commandPanel .command-detail,
+#commandPanel .command-output,#commandPanel .command-key-hint,
+#commandPanel .command-entry-actions,#commandPanel #commandSubmit{display:none!important}
+#commandPanel .command-entry{display:block!important;width:100%!important;margin:0!important;padding:0!important}
+#commandPanel #commandInput{
+ display:block!important;width:100%!important;height:calc(12px * var(--gui-scale,1))!important;
+ max-height:none!important;box-sizing:border-box!important;outline:none!important;
+ background:#0008!important;color:white!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ font:normal calc(9px * var(--gui-scale,1))/1 monospace!important;
+ padding:0 calc(2px * var(--gui-scale,1))!important;letter-spacing:0!important;
+}
+#chatHistory112{
+ position:fixed;z-index:3;bottom:calc(38px * var(--gui-scale,1));
+ left:calc(2px * var(--gui-scale,1));width:min(68vw,calc(350px * var(--gui-scale,1)));
+ max-height:calc(70px * var(--gui-scale,1));overflow:hidden;pointer-events:none;
+ color:white;font:normal calc(8px * var(--gui-scale,1))/1.15 monospace;
+ text-shadow:1px 1px #222
+}
+#chatHistory112 div{background:#0005;padding:calc(1px * var(--gui-scale,1))}
+#hurtFlash112{position:fixed;inset:0;background:#e60000;opacity:var(--hurt-opacity,0);z-index:2;pointer-events:none}
+#deathScreen{
+ position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ gap:calc(7px * var(--gui-scale,1))!important;padding:0!important;margin:0!important;
+ background:#300e17b7!important;backdrop-filter:none!important;z-index:50!important;
+ text-align:center!important
+}
+#deathScreen.hidden{display:none!important}
+#deathScreen h2{color:white!important;font:normal calc(23px * var(--gui-scale,1)) monospace!important;text-shadow:2px 2px #333!important;letter-spacing:0!important;margin:0!important}
+#deathScreen #deathReason112{font:normal calc(9px * var(--gui-scale,1)) monospace!important;color:white!important;margin:0 0 calc(12px * var(--gui-scale,1))!important}
+#deathScreen .death-buttons112{display:flex;flex-direction:column;gap:calc(4px * var(--gui-scale,1));width:calc(200px * var(--gui-scale,1));max-width:90vw}
+#deathScreen .death-buttons112 button{
+ width:100%;height:calc(20px * var(--gui-scale,1));
+ background:linear-gradient(#9a9a9a,#747474);border:2px solid #333;
+ font:normal calc(9px * var(--gui-scale,1)) monospace;color:white;cursor:pointer
+}
+/* Game HUD text labels are debug-only; no floating nonvanilla damage lines. */
+body:not(.debug-overlay) #target,
+body:not(.debug-overlay) #status,
+body:not(.debug-overlay) #gameNotice{display:none!important}
+body.menu-open #chatHistory112{display:none}
