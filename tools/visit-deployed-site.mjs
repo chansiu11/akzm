@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js','src/item-model112.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js','src/item-model112.js','src/site-default112.js'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -35,6 +35,16 @@ async function review(viewport,label,touch=false){
   if(!response?.ok())throw Error('Website HTTP status '+response?.status());
   await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
   await page.locator('#menuSingle').waitFor({state:'visible',timeout:30000});
+  const defaultGraphics=await page.evaluate(()=>{
+   const root=document.documentElement,button=document.getElementById('menuSingle');
+   const s=getComputedStyle(button);
+   return {enabled:root.dataset.defaultVisuals==='bundled'&&root.classList.contains('site-default112'),
+    hasSprite:s.borderImageSource.includes('data:image/png'),owner:root.classList.contains('gui112-assets'),
+    menuLabel:document.getElementById('loadJar112').textContent};
+  });
+  if(!defaultGraphics.enabled||!defaultGraphics.hasSprite||defaultGraphics.owner)
+   throw Error('Public site does not bundle its own menu sprite without a JAR: '+JSON.stringify(defaultGraphics));
+  if(!defaultGraphics.menuLabel.includes('선택'))throw Error('Original resource upload must be optional');
   await page.screenshot({path:'site-review/'+label+'-title.png',fullPage:true});
   if(!await page.title().then(t=>t.includes('Minecraft 1.12.2')))throw Error('Game title mismatch');
   for(const selector of ['#menuSingle','#menuSettings','#menuExit']){
