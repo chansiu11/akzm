@@ -8,7 +8,13 @@ export const ITEM_DEFS=Object.freeze([...entries,Object.freeze({id:100,name:'Coa
  [115,'Apple','apple',34,64,-1],[116,'Bread','bread',35,64,-1],
  [110,'Wooden Pickaxe','wooden_pickaxe',6,1,0],[111,'Stone Pickaxe','stone_pickaxe',8,1,1],
  [112,'Iron Pickaxe','iron_pickaxe',19,1,2],[113,'Golden Pickaxe','golden_pickaxe',20,1,0],
- [114,'Diamond Pickaxe','diamond_pickaxe',21,1,3]
+ [114,'Diamond Pickaxe','diamond_pickaxe',21,1,3],
+ [117,'Wooden Axe','wooden_axe',6,1,-1],[118,'Stone Axe','stone_axe',8,1,-1],
+ [119,'Iron Axe','iron_axe',19,1,-1],[120,'Golden Axe','golden_axe',20,1,-1],
+ [121,'Diamond Axe','diamond_axe',21,1,-1],
+ [122,'Wooden Shovel','wooden_shovel',6,1,-1],[123,'Stone Shovel','stone_shovel',8,1,-1],
+ [124,'Iron Shovel','iron_shovel',19,1,-1],[125,'Golden Shovel','golden_shovel',20,1,-1],
+ [126,'Diamond Shovel','diamond_shovel',21,1,-1]
  ].map(([id,name,asset,iconTile,stackLimit,pickaxeLevel])=>Object.freeze({id,name,key:'minecraft:'+asset,blockId:null,iconTile,stackLimit,pickaxeLevel}))]);
 export const itemDefinition=id=>ITEM_DEFS.find(d=>d.id===id)??null;
 export const placeableItem=id=>itemDefinition(id)?.blockId??null;
