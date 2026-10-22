@@ -54,6 +54,11 @@ export async function readOwner112Jar(file){
  for(const [key,path] of Object.entries(MENU112_FILES)){
   const entry=zip.file(path);if(entry)a[key]='data:image/png;base64,'+await entry.async('base64');
  }
+ a.breakStages=[];
+ for(let stage=0;stage<10;stage++){
+  const source=zip.file('assets/minecraft/textures/blocks/destroy_stage_'+stage+'.png');
+  a.breakStages.push(source?'data:image/png;base64,'+await source.async('base64'):null);
+ }
  a.blockGuiModels=await readOwnerBlockGuiModels(zip,BLOCK_ITEMS);
  a.blockIconModels=await readOwnerBlockIconModels(zip,BLOCK_ITEMS);
  const steve=zip.file('assets/minecraft/textures/entity/steve.png');if(steve)a.playerSkin='data:image/png;base64,'+await steve.async('base64');
