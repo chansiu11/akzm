@@ -69,7 +69,7 @@ async function review(viewport,label,touch=false){
   const twoColumnOptions=await page.locator('#settingsVideo').evaluate(button=>{
    const video=button.getBoundingClientRect(),controls=document.getElementById('settingsControls').getBoundingClientRect();
    const grid=getComputedStyle(button.parentElement);
-   return {twoColumns:grid.gridTemplateColumns.trim().split(/\\s+/).length>=2,videoX:video.x,controlsX:controls.x};
+   return {twoColumns:grid.gridTemplateColumns.trim().split(/\s+/).length>=2,videoX:video.x,controlsX:controls.x};
   });
   if(!twoColumnOptions.twoColumns||!(twoColumnOptions.controlsX>twoColumnOptions.videoX))throw Error('1.12.2 Options two-column grid failed');
   await page.screenshot({path:'site-review/'+label+'-options.png'});
