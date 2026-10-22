@@ -30,7 +30,7 @@ export function listWorlds(){
 export const DEFAULT_SETTINGS=Object.freeze({fov:75,renderDistance:6,sensitivity:0.24,showCoordinates:true});
 export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
  fov:Math.max(60,Math.min(100,Number(s?.fov)||75)),
- renderDistance:Math.max(2,Math.min(10,Math.round(Number(s?.renderDistance)||6))),
+ renderDistance:Math.max(2,Math.min(10,Math.round((s?.renderDistanceV2===true?Number(s?.renderDistance):Math.max(6,Number(s?.renderDistance)||6))||6))),
  sensitivity:Math.max(.08,Math.min(.6,Number(s?.sensitivity)||.24)),
  showCoordinates:s?.showCoordinates!==false
 };}
@@ -66,7 +66,7 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  }
  function showSettings(from){settingsBack=from;const s=state.settings;$('settingFov').value=s.fov;$('settingDistance').value=s.renderDistance;$('settingSensitivity').value=s.sensitivity;$('settingCoords').checked=s.showCoordinates;$('menuLanguageSelect').value=state.language;updateSettingLabels();open('settings');}
  function updateSettingLabels(){$('fovValue').textContent=$('settingFov').value+'°';$('distanceValue').textContent=$('settingDistance').value+'청크';$('sensitivityValue').textContent=(Number($('settingSensitivity').value)*100).toFixed(0)+'%';}
- function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,state.settings);
+ function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});
   state.language=$('menuLanguageSelect').value==='en_us'?'en_us':'ko_kr';try{localStorage.setItem(TITLE_LANGUAGE_KEY,state.language)}catch{}
   localizeTitle();applySettings(state.settings);open(settingsBack);}
  $('menuSingle').addEventListener('click',()=>open('worlds'));
