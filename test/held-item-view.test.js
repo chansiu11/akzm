@@ -59,3 +59,15 @@ test('invalid/unsafe owner display transforms are rejected',()=>{
   rotation:[0,45,0],translation:[0,0,0],scale:[1,1,1]
  });
 });
+
+test('first-person viewport uses locally imported owner model metadata without an oversized held block',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const renderer=readFileSync(new URL('../src/first-person.js',import.meta.url),'utf8');
+ const importer=readFileSync(new URL('../src/gui112-assets.js',import.meta.url),'utf8');
+ assert.match(renderer,/function setOwnerModels\(heldTransforms=\{\},blockModels=\{\}\)/);
+ assert.match(renderer,/ownerBlockQuads112\(elements\)/);
+ assert.match(renderer,/nativeBlock\?\.28:1/);
+ assert.match(renderer,/ownerHeldTransforms\[view\.id\]/);
+ assert.match(renderer,/arm\.rotation\.z=view\.kind==='empty' \? -\.12 : -\.19/);
+ assert.match(importer,/a\.firstPersonModels=await readOwnerFirstPersonModels112\(zip,ITEM_DEFS\)/);
+});
