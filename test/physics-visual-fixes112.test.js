@@ -23,8 +23,12 @@ test('horizontal acceleration and friction gradually approach the desired speed'
  assert.ok(coast.x>0&&coast.x<4.317);
  const flying=horizontalVelocity112(0,0,4.317,0,1/60,{ground:false});
  assert.ok(flying.x<accelerating.x);
- assert.equal(verticalVelocity112(0,.1),-3);
- assert.equal(verticalVelocity112(-38,.1),-38);
+ assert.ok(Math.abs(verticalVelocity112(0,.05)+1.568)<1e-8);
+ assert.ok(Math.abs(verticalVelocity112(-78.4,.1)+78.4)<1e-8);
+ let vy=MOVE_SPEED112.jump,height=0,maximum=0;
+ for(let tick=0;tick<26;tick++){height+=vy/20;maximum=Math.max(maximum,height);vy=verticalVelocity112(vy,.05);}
+ assert.ok(maximum>1.24&&maximum<1.27,'the original 0.42 per tick jump rises around 1.25 blocks');
+ assert.ok(Math.abs(verticalVelocity112(0,.05,{water:true})+.32)<1e-8);
  assert.ok(MOVE_SPEED112.sprint>MOVE_SPEED112.walk);
 });
 test('new desktop distance reaches 10 chunks and fog tracks actual world render distance',()=>{
