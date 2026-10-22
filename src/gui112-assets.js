@@ -1,6 +1,6 @@
 import {MENU112_FILES,pngData} from './menu112-assets.js';
 import {ITEM_DEFS,BLOCK_ITEMS} from './item-registry.js';
-import {readOwnerBlockGuiModels,readOwnerBlockIconModels,readOwnerFirstPersonModels112} from './item-model112.js';
+import {readOwnerBlockGuiModels,readOwnerBlockIconModels,readOwnerFirstPersonModels112} from './item-model112.js?v=1.1';
 // Personal-use importer: all original images are read from a locally chosen JAR.
 // Never include proprietary game files or encoded copies in this public repository.
 export const GUI112_SHA1='0f275bc1547d01fa5f56ba34bdc87d981ee12daf';
