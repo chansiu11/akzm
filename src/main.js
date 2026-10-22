@@ -31,7 +31,8 @@ import {expandInventory,giveItem,moveStack} from './inventory-utils.js';
 import {restoreInventory,replenishOverflow} from './inventory-restore.js';
 import {createEntityWorld} from './entity-renderer.js';
 import {createDrops} from './drops.js';
-import {createAudio} from './audio.js';
+import {createAudio} from './audio.js?v=1.1';
+import {formatOwnerDeath112} from './death-messages112.js';
 import {TileStore,processFurnace,depositOne,withdrawOne,tileDrops,tileKey} from './tile-data.js';
 import {Progression,GOALS} from './progression.js';
 import {blockDrops,mineSeconds,miningProgressPerTick112} from './vanilla-mining.js';
@@ -86,7 +87,7 @@ const commandState=new CommandWorldState(saved?.commandState);
 const spawn=findSafeSpawn(world);
 const restoredPosition=restoreSafePlayerPosition(world,saved?.player,spawn);
 const player={x:restoredPosition.x,y:restoredPosition.y,z:restoredPosition.z,vx:0,vz:0,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
-let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,clickHold=false,damage=0,mineTickRemainder=0,missedMineTime=0,aimKey='',saveTimer=0,noticeTimer=0;
+let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,nightVisionSeconds=Math.max(0,Math.min(1000000,Number(saved?.nightVisionSeconds)||0)),clickHold=false,damage=0,mineTickRemainder=0,missedMineTime=0,aimKey='',saveTimer=0,noticeTimer=0;
 const keys=new Set(),meshes=new Map(),pending=[],queued=new Set(),placementPreviews=new Map();let activeBuild=null;
 const effects=createParticles(scene);
 const survival=new Survival(saved?.survival);
@@ -94,11 +95,14 @@ const weatherCycle=new WeatherCycle(saved?.weather);
 const worldVisuals=createWorldVisuals(scene,renderer,world);
 const audio=createAudio();
 let hurtTime=0,hurtCause='generic',lastDeathCause='generic',hurtSource=null,ownerDeathTexts={};
-function registerHurt(cause='generic',source=null){hurtTime=.55;hurtCause=cause;hurtSource=source;lastDeathCause=cause;}
+function registerHurt(cause='generic',source=null){
+ hurtTime=.55;hurtCause=cause;hurtSource=source;lastDeathCause=cause;
+ audio.beep('hurt');
+}
 const breakOverlay=createBreakOverlay112(scene,world);
 const progression=new Progression(saved?.progression);const tiles=new TileStore(saved?.tiles);let activeTile=null;
 let craftingSize=2;let craftingCells=emptyCraftGrid(2);
-const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){audio.beep('hit');registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
+const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
 const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInteger(damage)?giveDamagedItem(inventory,id,count,damage):giveItem(inventory,id,count);if(left<count){updateUI();saveTimer=0;audio.beep('craft')}return left},saved?.drops);
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
@@ -197,10 +201,15 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  else if(jumpPressed&&player.onGround){player.vy=MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05);}
  const verticalStep=player.vy;player.onGround=false;moveAxis('y',verticalStep*dt);if(!player.onGround)player.vy=verticalVelocity112(player.vy,dt,{water});
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
- if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');registerHurt('fall');}}fallDistance=0;}
- survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:water?Math.hypot(player.x-startX,player.y-initialY,player.z-startZ):Math.hypot(player.x-startX,player.z-startZ),swimming:water});
+ if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){registerHurt('fall');}}fallDistance=0;}
+ const healthBeforeTick=survival.health;
+ survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,
+  travelDistance:water?Math.hypot(player.x-startX,player.y-initialY,player.z-startZ):
+   Math.hypot(player.x-startX,player.z-startZ),swimming:water});
+ if(survival.health<healthBeforeTick)
+  registerHurt(headUnderwater&&survival.air===0?'drown':survival.hunger===0?'starve':'generic');
  if(survival.dead)showDeath();
- if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;survival.damage(4);registerHurt('void');}}else voidDamageTime=0;
+ if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;if(survival.damage(4)>0)registerHurt('void');}}else voidDamageTime=0;
  if(survival.dead)showDeath();
  camera.position.set(player.x,player.y+1.62,player.z);
  const tilt=hurtTime>0?Math.sin((.55-hurtTime)*24)*.05*(hurtTime/.55):0;
@@ -230,7 +239,7 @@ function look(){
  }
  selectOutline.visible=false;el('target').textContent='';return null;
 }
-function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle,survival:survival.serialize(),weather:weatherCycle.serialize(),tiles:tiles.save(),progression:progression.serialize(),commandState:commandState.serialize(),entities:entityWorld.serialize(),drops:drops.serialize()};}
+function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle,nightVisionSeconds,survival:survival.serialize(),weather:weatherCycle.serialize(),tiles:tiles.save(),progression:progression.serialize(),commandState:commandState.serialize(),entities:entityWorld.serialize(),drops:drops.serialize()};}
 function save(){
  if(!listWorlds().some(w=>w.id===runtimeWorldId112))return;
  try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()));notify('월드 저장 완료')}
@@ -244,11 +253,9 @@ function chatReply112(text){
  while(area.childElementCount>7)area.firstChild.remove();
 }
 function ownerDeathReason112(cause='generic'){
- const key=({fall:'death.attack.fall',drown:'death.attack.drown',starve:'death.attack.starve',
-  void:'death.attack.outOfWorld',mob:'death.attack.generic',generic:'death.attack.generic'})[cause]??'death.attack.generic';
- const message=ownerDeathTexts[key];
- if(typeof message!=='string')return '';
- return message.replace(/%1\$s|%s/g,'Player').replace(/%2\$s/g,()=>String(hurtSource??'Player'));
+ // The synthetic entities do not have verified vanilla Minecraft mob names.
+ const attacker=cause==='mob'?null:null;
+ return formatOwnerDeath112(ownerDeathTexts,cause,{name:'Player',attacker});
 }
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
 let ownerItemIcons={},blockItemIcons={},ownerBlockGuiModels={},ownerBlockIconModels={};
@@ -363,6 +370,7 @@ const commandUI=setupCommandUI({
   getRule:name=>name==='doDaylightCycle'?daylightCycle:commandState.getRule(name),
   setRule:(name,value)=>{if(name==='doDaylightCycle')daylightCycle=value;commandState.setRule(name,value);saveTimer=0;},
   setDifficulty:value=>{survival.difficulty=value;saveTimer=0;},
+  setNightVision:seconds=>{nightVisionSeconds=Math.max(0,Number(seconds)||0);saveTimer=0;},
   setWeather:(kind,seconds)=>{weatherCycle.set(kind,seconds);saveTimer=0;},
   getWeather:()=>weatherCycle.kind,
   giveItem:(id,count)=>{const left=giveItem(inventory,id,count);updateUI();saveTimer=0;return left;},
@@ -598,12 +606,16 @@ function loop(now){requestAnimationFrame(loop);
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
   for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);
   if(running){const lastX=player.x,lastZ=player.z,healthBefore=survival.health;stepPhysics(dt);
-   if(survival.health<healthBefore&&hurtTime<=0){const cause=survival.air===0?'drown':survival.hunger===0?'starve':'generic';registerHurt(cause);audio.beep('hit');}track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
+   if(survival.health<healthBefore&&hurtTime<=0)registerHurt('generic');track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
    if(usingFood){foodHold+=dt;const food=foodFor(inventory[selected]?.id);if(!food||survival.dead)cancelUsing();else if(foodHold>=food.seconds){if(eatHeld(inventory,selected,survival)){audio.beep('craft');updateUI();notify('음식을 먹었습니다.');saveTimer=0;}cancelUsing();}}
   }
   else survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
   weatherCycle.update(dt);entityWorld.update(dt,player);drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
-  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){
+  if(daylightCycle)day=(day+dt/1200)%1;
+  nightVisionSeconds=Math.max(0,nightVisionSeconds-dt);effects.update(dt);
+  const angle=day*Math.PI*2;
+  sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);
+  worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius,{nightVision:nightVisionSeconds>0});waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){
     const id=`${t.x},${t.y},${t.z}`;
     if(id!==aimKey){aimKey=id;damage=0;mineTickRemainder=0;}
     missedMineTime=0;
@@ -638,7 +650,7 @@ function loop(now){requestAnimationFrame(loop);
   // CPU mesh generation is spread over multiple animation frames.
   if(progressChunkWithinBudget(activeBuild,{budgetMs:touchMode?3:6,maxColumns:touchMode?12:32})){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
  }
- if(hurtTime>0){hurtTime=Math.max(0,hurtTime-dt);el('hurtFlash112')?.style.setProperty('--hurt-opacity',String(.17*hurtTime/.55));}
+ if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
 updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}});
