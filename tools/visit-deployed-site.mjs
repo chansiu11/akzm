@@ -103,17 +103,19 @@ async function review(viewport,label,touch=false){
     await worldPage.screenshot({path:'site-review/world-create-form.png'});
     await worldPage.locator('#createConfirm').click();
     console.log('Clicked #createConfirm; verifying newly loaded world before screenshot.');
+    await worldPage.waitForLoadState('domcontentloaded',{timeout:60000});
+    await worldPage.screenshot({path:'site-review/world-click03-after-create-action.png'});
     await worldPage.waitForFunction(()=>{
      try{
       const a=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
       return a.some(w=>w.name==='자동 검사 새 세계');
      }catch{return false;}
-    },{timeout:20000});
+    },null,{timeout:90000});
     const newId=await worldPage.evaluate(()=>{
      const worlds=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1'));
      return worlds.find(w=>w.name==='자동 검사 새 세계').id;
     });
-    await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),null,{timeout:65000});
+    await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),null,{timeout:90000});
     await worldPage.screenshot({path:'site-review/world-click03-created-gameplay.png'});
     await worldPage.screenshot({path:'site-review/world-created-gameplay.png'});
     await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
