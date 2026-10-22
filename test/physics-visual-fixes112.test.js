@@ -67,7 +67,7 @@ test('physics and terrain refresh code wire into the real game frame',()=>{
  assert.match(main,/verticalVelocity112\(player\.vy,dt,\{water\}\)/);
  assert.match(main,/player\.vx=player\.vz=player\.vy=0/);
  assert.match(main,/showPlacementPreview\(nx,ny,nz\)/);
- assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius\)/);
+ assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius,\{nightVision:nightVisionSeconds>0\}\)/);
  assert.match(main,/activeBuild\?\.cx===cx\+dx/);
 });
 
