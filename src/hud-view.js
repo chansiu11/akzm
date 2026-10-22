@@ -1,4 +1,5 @@
 // Fresh, independently designed pixel HUD. Not based on any proprietary sprite sheet.
+import {installHudFallback112} from './hud-fallback112.js';
 const clamp=(value,max)=>Math.max(0,Math.min(max,Number(value)||0));
 export function vitalsModel(health,hunger,air=300){
  const healthValue=clamp(health,20),foodValue=clamp(hunger,20);
@@ -11,6 +12,7 @@ function icon(type,fill){
  s.style.setProperty('--fill',`${fill*100}%`);s.dataset.fill=String(fill);s.setAttribute('aria-hidden','true');return s;
 }
 export function createHud(element){
+ installHudFallback112();
  if(!element)return {update(){}};
  const healthRow=document.createElement('div'),foodRow=document.createElement('div'),airRow=document.createElement('div');
  healthRow.className='vital-hearts';foodRow.className='vital-food';airRow.className='vital-air';
