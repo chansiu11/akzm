@@ -13,6 +13,26 @@ export function playerPreviewModelUV(part,skinHeight=64){
  const shapes={head:HEAD,body:BODY,rightArm:RIGHT_ARM_UV_RECTS,leftArm:skinHeight===64?LEFT_ARM:RIGHT_ARM_UV_RECTS,rightLeg:LEG,leftLeg:skinHeight===64?LEFT_LEG:LEG};
  return shapes[part]?.map(rect=>skinRectUV(rect,64,skinHeight))??null;
 }
+// Independently drawn fallback character, used only when no owner skin is
+// present. The original game's player skin is not shipped in this project.
+function siteOwnedSkin112(){
+ if(typeof document==='undefined')return null;
+ const c=document.createElement('canvas');c.width=c.height=64;
+ const context=c.getContext('2d');if(!context)return null;
+ context.fillStyle='#be9674';context.fillRect(0,0,64,64);
+ const draw=(color,x,y,w,h)=>{context.fillStyle=color;context.fillRect(x,y,w,h);};
+ // Shirt front and side faces, sleeve trim, simple pants and shoes.
+ draw('#4a8c92',16,20,24,12);draw('#35737c',16,25,24,2);
+ draw('#396e79',40,20,16,12);draw('#56969b',20,20,8,11);
+ draw('#394b64',0,20,16,12);draw('#415772',16,52,16,12);
+ draw('#202d3b',0,30,16,2);draw('#202d3b',16,62,16,2);
+ // Non-copyrighted block-head hair and small facial details.
+ draw('#403126',0,0,32,8);draw('#403126',0,8,32,2);
+ draw('#4d3927',8,8,8,3);draw('#523e2b',16,8,8,3);
+ draw('#27303b',10,12,2,1);draw('#27303b',15,12,2,1);
+ draw('#986f58',12,14,2,1);
+ return c.toDataURL('image/png');
+}
 export function createPlayerPreview112(panel){
  const canvas=panel?.querySelector('#ownerPlayerPreview112');
  if(!canvas)return {setSkin:async()=>false,draw:()=>{},dispose:()=>{}};
@@ -36,8 +56,9 @@ export function createPlayerPreview112(panel){
  }
  async function setSkin(uri){
   const token=++generation;
-  if(!pngData(uri)){clearModel();canvas.classList.remove('owner-preview-ready');return false;}
-  const loaded=await new THREE.TextureLoader().loadAsync(uri);
+  const source=pngData(uri)?uri:siteOwnedSkin112();
+  if(!source){clearModel();canvas.classList.remove('owner-preview-ready');return false;}
+  const loaded=await new THREE.TextureLoader().loadAsync(source);
   if(token!==generation){loaded.dispose();return false;}
   const {width,height}=loaded.image;
   if(width!==64||![32,64].includes(height)){loaded.dispose();throw Error('Invalid owner player skin');}
@@ -58,5 +79,6 @@ export function createPlayerPreview112(panel){
   makePart('leftLeg',4,12,4,2,6,0,height);
   canvas.classList.add('owner-preview-ready');draw();return true;
  }
+ setSkin(null).catch(error=>console.warn('Default player preview:',error));
  return {setSkin,draw,dispose(){++generation;clearModel();renderer?.dispose();canvas.classList.remove('owner-preview-ready');}};
 }
