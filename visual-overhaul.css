@@ -282,3 +282,11 @@ html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.food[dat
 html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble{background-image:var(--fallback112-bubble-full)!important}
 html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble[data-fill="0.5"]{background-image:var(--fallback112-bubble-half)!important}
 html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital.bubble[data-fill="0"]{background-image:var(--fallback112-bubble-empty)!important}
+
+/* Java 1.12.2 uses Tab completion but does not show the later Brigadier-style
+   automatically expanded /command suggestion dashboard. */
+#commandPanel .command-assist,
+#commandPanel #commandChoices,
+#commandPanel .command-choices{display:none!important}
+body.inventory-open #chatHistory112,
+body:has(#deathScreen:not(.hidden)) #chatHistory112{display:none!important}
