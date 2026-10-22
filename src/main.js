@@ -17,7 +17,7 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings} from './menu.js';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js';
 import {setupCommandUI} from './command-ui.js';
 import {createParticles} from './particles.js';
 import {WeatherCycle} from './environment.js?v=1.2';
@@ -77,6 +77,7 @@ const solidMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,side
 const leafMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,side:THREE.DoubleSide,alphaTest:.45});
 const glassMat=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,transparent:true,opacity:1,depthWrite:false,side:THREE.DoubleSide});
 const waterMat=new THREE.MeshLambertMaterial({map:waterTexture,vertexColors:true,transparent:true,opacity:.67,depthWrite:false,side:THREE.DoubleSide});
+const runtimeWorldId112=activeWorldId();
 const firstPerson=createFirstPerson(renderer,texture);const saved=readSave(),gameMode=activeWorldMode(),cheatsAllowed=activeWorldCheats(),world=new World(saved?.world,{seed:activeWorldSeed()});
 const inventoryRestore=restoreInventory(Array.isArray(saved?.inventory)?saved.inventory:gameMode==='survival'?[]:cleanInventory(null),saved?.inventoryOverflow);
 const inventory=inventoryRestore.slots,inventoryOverflow=inventoryRestore.overflow;
@@ -223,8 +224,12 @@ function look(){
  selectOutline.visible=false;el('target').textContent='';return null;
 }
 function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle,survival:survival.serialize(),weather:weatherCycle.serialize(),tiles:tiles.save(),progression:progression.serialize(),commandState:commandState.serialize(),entities:entityWorld.serialize(),drops:drops.serialize()};}
-function save(){try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()));notify('월드 저장 완료')}catch{notify('저장할 수 없습니다: 브라우저 저장공간을 확인하세요')}}
-function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey())||'null')}catch{return null}}
+function save(){
+ if(!listWorlds().some(w=>w.id===runtimeWorldId112))return;
+ try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()));notify('월드 저장 완료')}
+ catch{notify('저장할 수 없습니다: 브라우저 저장공간을 확인하세요')}
+}
+function readSave(){try{return JSON.parse(localStorage.getItem(worldSaveKey(runtimeWorldId112))||'null')}catch{return null}}
 function notify(s){el('gameNotice').textContent=s;noticeTimer=3}
 function chatReply112(text){
  const area=el('chatHistory112');if(!area)return;
@@ -593,7 +598,7 @@ function loop(now){requestAnimationFrame(loop);
     damage=0;mineTickRemainder=0;missedMineTime=0;aimKey='';
     breakOverlay.clear();mineProgress(el('miningIndicator'),0);
    }
- saveTimer-=dt;if(saveTimer<=0){saveTimer=20;try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}}
+ saveTimer-=dt;if(saveTimer<=0){saveTimer=20;if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}}
  }
  loadArea();if(!activeBuild && pending.length){
   const [cx,cz]=pending.shift();queued.delete(chunkId(cx,cz));
@@ -607,4 +612,4 @@ function loop(now){requestAnimationFrame(loop);
  if(hurtTime>0){hurtTime=Math.max(0,hurtTime-dt);el('hurtFlash112')?.style.setProperty('--hurt-opacity',String(.17*hurtTime/.55));}
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
-updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}});
+updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}});
