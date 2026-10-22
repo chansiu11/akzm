@@ -59,7 +59,7 @@ export function createWorldVisuals(scene,renderer,world=null){
     light.visible=!!source;
     if(!source)continue;
     light.position.set(source.x,source.y,source.z);
-    light.intensity=nightVision?.9:2.2;
+    light.intensity=nightVision ? 0.9 : 2.2;
    }
   }
   cloudRoot.position.set(player.x+clock*.35,player.y-118,player.z);
