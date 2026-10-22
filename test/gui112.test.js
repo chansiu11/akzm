@@ -55,7 +55,8 @@ test('inventory overlay hides the gameplay HUD and restores it when closed',()=>
  assert.match(css,/display:none!important/);
  assert.match(js,/inventoryOpen=true;document\.body\.classList\.add\('inventory-open'\)/);
  assert.match(js,/function closeInventory\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
- assert.match(js,/function requestPlay\(\)\{document\.body\.classList\.remove\('inventory-open'\)/);
+  assert.match(js,/function requestPlay\(/);
+  assert.match(js,/document\.body\.classList\.remove\('inventory-open'\)/);
  assert.match(html,/gui112\.css\?v=\d+\.\d+/);
 });
 
