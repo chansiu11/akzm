@@ -16,3 +16,9 @@ test('the in-world pause screen resembles the 1.12.2 200px GUI, not the title pa
  assert.match(audit,/clickAndCapture\(page,'#pauseSettings'/);
  assert.match(audit,/clickAndCapture\(page,'#pauseResume'/);
 });
+
+test('1.12.2 pause options button is left of open-to-LAN on the same row',()=>{
+ const row=html.match(/<div class="pause-pair112">\s*<button[^>]*id="pauseSettings"[^>]*>[\s\S]*?<button[^>]*id="pauseOpenLan"[^>]*>/);
+ assert.ok(row,'Options must appear before Open to LAN');
+ assert.match(audit,/optionsBeforeLan/);
+});

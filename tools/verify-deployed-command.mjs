@@ -97,10 +97,13 @@ try{
  await page.locator('#menu-pause').waitFor({state:'visible',timeout:15000});
  const pauseCheck=await page.evaluate(()=>{
   const pause=document.getElementById('menu-pause');
+  const options=document.getElementById('pauseSettings').getBoundingClientRect();
+  const lan=document.getElementById('pauseOpenLan').getBoundingClientRect();
   return {shown:getComputedStyle(pause).display!=='none',buttons:pause.querySelectorAll('.pause-buttons112 button.stone-button').length,
+    correctRowOrder:options.x+options.width<=lan.x+1&&Math.abs(options.y-lan.y)<1,
     worldCovered:document.getElementById('overlay').classList.contains('show')};
  });
- if(!pauseCheck.shown||pauseCheck.buttons!==6||!pauseCheck.worldCovered)
+ if(!pauseCheck.shown||pauseCheck.buttons!==6||!pauseCheck.correctRowOrder||!pauseCheck.worldCovered)
   throw Error('Pause menu malformed: '+JSON.stringify(pauseCheck));
  await page.screenshot({path:'command-review/'+label+'-07-pause-open.png'});
  await page.locator('#pauseSettings').click();
