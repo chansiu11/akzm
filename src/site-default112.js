@@ -46,7 +46,56 @@ export function drawBundledMenu112(documentRef=document){
  sprites.language=globe.toDataURL('image/png');
  return sprites;
 }
+
+// Independent pixel-block logo used only on public devices without a private
+// source JAR. The actual owner's logo.png is drawn by applyMenu112 instead.
+const TITLE_FONT112=Object.freeze({
+ M:['#...#','##.##','#.#.#','#.#.#','#...#','#...#','#...#'],
+ I:['.###.','..#..','..#..','..#..','..#..','..#..','.###.'],
+ N:['#...#','##..#','#.#.#','#..##','#...#','#...#','#...#'],
+ E:['#####','#....','#....','####.','#....','#....','#####'],
+ C:['.####','#....','#....','#....','#....','#....','.####'],
+ R:['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
+ A:['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
+ F:['#####','#....','#....','####.','#....','#....','#....'],
+ T:['#####','..#..','..#..','..#..','..#..','..#..','..#..']
+});
+export function drawBundledTitle112(documentRef){
+ const canvas=documentRef?.getElementById?.('originalTitle112');
+ const ctx=canvas?.getContext?.('2d',{willReadFrequently:true});
+ if(!ctx)return false;
+ canvas.width=274;canvas.height=44;
+ ctx.clearRect(0,0,274,44);
+ const text='MINECRAFT',size=5,startX=3,startY=1;
+ // Eight-pixel silhouette depth underneath the face.
+ for(let z=9;z>=1;z--){
+  ctx.fillStyle=z>5?'#181a1c':'#393d41';
+  for(let i=0;i<text.length;i++){
+   const matrix=TITLE_FONT112[text[i]];
+   for(let y=0;y<matrix.length;y++)for(let x=0;x<5;x++)if(matrix[y][x]==='#'){
+    ctx.fillRect(startX+(i*6+x)*size,startY+y*size+z,size,size);
+   }
+  }
+ }
+ for(let i=0;i<text.length;i++){
+  const matrix=TITLE_FONT112[text[i]];
+  for(let y=0;y<matrix.length;y++)for(let x=0;x<5;x++)if(matrix[y][x]==='#'){
+   const px=startX+(i*6+x)*size,py=startY+y*size;
+   ctx.fillStyle='#282d32';ctx.fillRect(px-1,py-1,size+2,size+2);
+   const grain=rand(i*5+x,y,113);
+   ctx.fillStyle=grain>.78?'#f3f3ef':grain<.18?'#adb2b6':'#d4d5d3';
+   ctx.fillRect(px,py,size,size);
+   ctx.fillStyle='#eef0ef';ctx.fillRect(px,py,size,1);
+   if(grain<.13){ctx.fillStyle='#81868a';ctx.fillRect(px+2,py+1,1,3);}
+  }
+ }
+ const splash=documentRef.getElementById('menuSplash');
+ if(splash&&!splash.textContent.trim())splash.textContent='Explore!';
+ return true;
+}
+
 export function installBundledSiteTheme112(root=document.documentElement,documentRef=document){
+ drawBundledTitle112(documentRef);
  const textures=drawBundledMenu112(documentRef);
  if(!textures)return false;
  for(const [name,uri] of Object.entries(textures))
