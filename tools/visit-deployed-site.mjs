@@ -266,6 +266,53 @@ async function review(viewport,label,touch=false){
   await page.locator('#worldPlay').click({timeout:30000});
   await page.waitForTimeout(7000);
   await page.screenshot({path:'site-review/'+label+'-gameplay.png'});
+  // Phase 5: actual site slash/touch command UI, Enter/Escape, mobile actions.
+  if(touch)await page.locator('#touchCommand').click();
+  else await page.keyboard.press('Slash');
+  await page.locator('#commandPanel').waitFor({state:'visible'});
+  const commandBounds=await page.locator('#commandInput').boundingBox();
+  if(!commandBounds||commandBounds.x<0||commandBounds.y<0||
+    commandBounds.x+commandBounds.width>viewport.width+2||
+    commandBounds.y+commandBounds.height>viewport.height+2)
+   throw Error('Command bar clipped: '+JSON.stringify(commandBounds));
+  if(await page.locator('#commandInput').inputValue()!=='/')
+   throw Error('Opening command chat must prefill a slash');
+  await page.screenshot({path:'site-review/'+label+'-command-chat.png'});
+  await page.locator('#commandInput').press('Escape');
+  await page.locator('#commandPanel').waitFor({state:'hidden'});
+  if(touch)await page.locator('#touchCommand').click();
+  else await page.keyboard.press('Slash');
+  await page.locator('#commandPanel').waitFor({state:'visible'});
+  await page.locator('#commandInput').fill('/help');
+  await page.locator('#commandInput').press('Enter');
+  await page.locator('#commandPanel').waitFor({state:'hidden'});
+  if(!(await page.locator('#chatHistory112').textContent())?.length)
+   throw Error('Command output did not appear in chat history');
+  if(touch){
+   const ids=['touchUp','touchLeft','touchDown','touchRight','touchJump','touchSneak','touchBag','touchPause','touchCommand'];
+   for(const id of ids){
+    const rect=await page.locator('#'+id).boundingBox();
+    if(!rect||rect.x<0||rect.y<0||rect.x+rect.width>viewport.width+2||rect.y+rect.height>viewport.height+2)
+     throw Error('Touch button clipped: '+id);
+   }
+   const session=await context.newCDPSession(page);
+   for(const id of ['touchUp','touchJump']){
+    const rect=await page.locator('#'+id).boundingBox();
+    const point={x:Math.round(rect.x+rect.width/2),y:Math.round(rect.y+rect.height/2)};
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+    if(!await page.locator('#'+id).evaluate(el=>el.classList.contains('pressed')&&el.getAttribute('aria-pressed')==='true'))
+     throw Error('Touch hold failed: '+id);
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    if(await page.locator('#'+id).evaluate(el=>el.classList.contains('pressed')))
+     throw Error('Touch release stuck: '+id);
+   }
+   await page.locator('#touchSneak').click();
+   if(await page.locator('#touchSneak').getAttribute('aria-pressed')!=='true')throw Error('Sneak toggle did not turn on');
+   await page.locator('#touchSneak').click();
+   if(await page.locator('#touchSneak').getAttribute('aria-pressed')!=='false')throw Error('Sneak toggle did not turn off');
+   await page.screenshot({path:'site-review/'+label+'-touch-controls.png'});
+  }
+
   // Opening inventory also checks the interactive JavaScript hooks for the 1.12.2 GUI.
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
   await page.locator('#inventory').waitFor({state:'visible',timeout:12000});
