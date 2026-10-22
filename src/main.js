@@ -254,8 +254,7 @@ function chatReply112(text){
 }
 function ownerDeathReason112(cause='generic'){
  // The synthetic entities do not have verified vanilla Minecraft mob names.
- const attacker=cause==='mob'?null:null;
- return formatOwnerDeath112(ownerDeathTexts,cause,{name:'Player',attacker});
+ return formatOwnerDeath112(ownerDeathTexts,cause,{name:'Player'});
 }
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
 let ownerItemIcons={},blockItemIcons={},ownerBlockGuiModels={},ownerBlockIconModels={};
