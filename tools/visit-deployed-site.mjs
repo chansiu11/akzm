@@ -47,6 +47,33 @@ async function review(viewport,label,touch=false){
   if(!defaultGraphics.menuLabel.includes('선택'))throw Error('Original resource upload must be optional');
   await page.screenshot({path:'site-review/'+label+'-title.png',fullPage:true});
   if(label==='desktop'){
+   // The real deployed WebGL code must draw visibly different crack stages.
+   const breakFixtureChanged=await page.evaluate(async()=>{
+    const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
+    const {createBreakOverlay112}=await import('./src/break-overlay112.js');
+    const canvas=document.createElement('canvas');
+    canvas.id='break-stage-visual-check';canvas.width=canvas.height=176;
+    canvas.style.cssText='position:fixed;top:2px;left:2px;width:176px;height:176px;z-index:9999';
+    document.body.append(canvas);
+    const renderer=new THREE.WebGLRenderer({canvas,antialias:false,preserveDrawingBuffer:true});
+    renderer.setSize(176,176,false);
+    const scene=new THREE.Scene();scene.background=new THREE.Color('#868686');
+    const base=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({color:'#a5a5a5'}));
+    base.position.set(.5,.5,.5);scene.add(base);
+    const camera=new THREE.PerspectiveCamera(55,1,.01,30);
+    camera.position.set(2,2.1,3.5);camera.lookAt(.5,.5,.5);
+    const world={getBlock:(x,y,z)=>({id:x===0&&y===0&&z===0?3:0,state:{}})};
+    const cracks=createBreakOverlay112(scene,world);
+    cracks.setTarget({x:0,y:0,z:0},.1);renderer.render(scene,camera);
+    const first=canvas.toDataURL();
+    cracks.setTarget({x:0,y:0,z:0},.9);renderer.render(scene,camera);
+    const last=canvas.toDataURL();
+    cracks.dispose();renderer.dispose();base.geometry.dispose();base.material.dispose();
+    return first!==last;
+   });
+   if(!breakFixtureChanged)throw Error('The ten 1.12.2 break texture stages render identically in deployed WebGL');
+   await page.locator('#break-stage-visual-check').screenshot({path:'site-review/desktop-crack-overlay-stage9.png'});
+   await page.evaluate(()=>document.getElementById('break-stage-visual-check')?.remove());
    // Separate browser profile validates persisted world creation and deletion.
    const worldContext=await browser.newContext({viewport,deviceScaleFactor:1,permissions:[]});
    const worldPage=await worldContext.newPage();
