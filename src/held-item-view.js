@@ -6,7 +6,7 @@ export const BOX_FACE_NORMALS=Object.freeze([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[
 export function heldItemView(id){
  const item=itemDefinition(id);
  if(!item)return {id:0,kind:'empty',tiles:[]};
- if(id>=110&&id<=114)return {id,kind:'tool',tiles:[]};
+ if((id>=110&&id<=114)||(id>=117&&id<=126))return {id,kind:'tool',tiles:[]};
  const block=item.blockId!==null;
  return {id,kind:block?'block':'item',tiles:BOX_FACE_NORMALS.map(n=>block?tileForBlock(item.blockId,n):item.iconTile)};
 }
