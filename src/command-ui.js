@@ -6,6 +6,14 @@ export function setupCommandUI({onOpen,onClose,onResult,context}){
  const $=id=>document.getElementById(id);
  const panel=$('commandPanel'), input=$('commandInput'), choices=$('commandChoices'), detail=$('commandDetail'), output=$('commandOutput');
  let open=false,selection=0,matching=[],history=[],historyIndex=-1,tabCycle=null;
+ const viewport=window.visualViewport;
+ function keyboardInset(){
+  if(!open)return;
+  const bottom=viewport?Math.max(0,Math.round(window.innerHeight-viewport.height-viewport.offsetTop)):0;
+  document.documentElement.style.setProperty('--command-keyboard-inset112',bottom+'px');
+ }
+ viewport?.addEventListener('resize',keyboardInset);
+ viewport?.addEventListener('scroll',keyboardInset);
  function isOpen(){return open}
  function render(){
   if(!open)return;matching=suggestions(input.value,context());selection=Math.min(selection,Math.max(0,matching.length-1));choices.replaceChildren();
@@ -28,8 +36,8 @@ export function setupCommandUI({onOpen,onClose,onResult,context}){
   const candidate=tabCycle.options[tabCycle.index];input.value=candidate.insert;tabCycle.lastValue=input.value;input.focus();
   input.setSelectionRange(input.value.length,input.value.length);render();
  }
- function show(){if(open)return;open=true;selection=0;historyIndex=-1;tabCycle=null;panel.classList.remove('hidden');input.value='/';output.textContent='';onOpen();render();input.focus();input.setSelectionRange(input.value.length,input.value.length)}
- function hide(resume=true){if(!open)return;open=false;panel.classList.add('hidden');input.blur();if(resume)onClose()}
+ function show(){if(open)return;open=true;selection=0;historyIndex=-1;tabCycle=null;panel.classList.remove('hidden');input.value='/';output.textContent='';onOpen();render();keyboardInset();input.focus({preventScroll:true});input.setSelectionRange(input.value.length,input.value.length)}
+ function hide(resume=true){if(!open)return;open=false;panel.classList.add('hidden');document.documentElement.style.removeProperty('--command-keyboard-inset112');input.blur();if(resume)onClose()}
  function submit(){
   const line=input.value.trim();
   if(!line||line==='/'){hide(true);return null;}
@@ -45,7 +53,7 @@ export function setupCommandUI({onOpen,onClose,onResult,context}){
   if(e.key==='Tab'){e.preventDefault();completeTab(e.shiftKey);return}
   if(e.key==='ArrowDown'){e.preventDefault();if(matching.length)selection=(selection+1)%Math.min(8,matching.length);render();return}
   if(e.key==='ArrowUp'){e.preventDefault();if(matching.length)selection=(selection-1+Math.min(8,matching.length))%Math.min(8,matching.length);render();return}
-  if(e.key==='Enter'){e.preventDefault();submit();return}
+  if(e.key==='Enter'){if(e.isComposing||e.keyCode===229)return;e.preventDefault();e.stopPropagation();submit();return}
   e.stopPropagation();
  });
  $('commandSubmit').addEventListener('click',submit);
