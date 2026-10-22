@@ -236,7 +236,7 @@ function ownerDeathReason112(cause='generic'){
   void:'death.attack.outOfWorld',mob:'death.attack.generic',generic:'death.attack.generic'})[cause]??'death.attack.generic';
  const message=ownerDeathTexts[key];
  if(typeof message!=='string')return '';
- return message.replace(/%1\\\$s|%s/g,'Player').replace(/%2\\\$s/g,'Player');
+ return message.replace(/%1\$s|%s/g,'Player').replace(/%2\$s/g,()=>String(hurtSource??'Player'));
 }
 function track(stat,amount=1){for(const g of progression.add(stat,amount))notify('목표 달성: '+g.label);}
 let ownerItemIcons={},blockItemIcons={},ownerBlockGuiModels={},ownerBlockIconModels={};
