@@ -16,7 +16,7 @@ export const GUI112_FILES=Object.freeze({
 });
 // 1.12.2 item model IDs and PNG basenames can differ (e.g. wooden -> wood).
 // Prefer the layer0 path declared by the owner's local model JSON. Do not publish it.
-const ITEM112_ALIASES=Object.freeze({wooden_pickaxe:'wood_pickaxe',golden_pickaxe:'gold_pickaxe',redstone:'redstone_dust',dye:'dye_powder_blue'});
+const ITEM112_ALIASES=Object.freeze({wooden_pickaxe:'wood_pickaxe',golden_pickaxe:'gold_pickaxe',wooden_axe:'wood_axe',golden_axe:'gold_axe',wooden_shovel:'wood_shovel',golden_shovel:'gold_shovel',redstone:'redstone_dust',dye:'dye_powder_blue'});
 export function ownerItemTexturePath(item,model=null){
  const name=String(item?.key??'').split(':').pop();
  if(!/^[a-z0-9_]+$/.test(name))return null;
