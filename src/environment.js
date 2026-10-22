@@ -1,10 +1,18 @@
 // Standalone day/night + weather model; not the vanilla 1.8.9 renderer.
 export const WEATHER = Object.freeze(['clear','rain','thunder']);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const smoothstep=(a,b,v)=>{
+ const t=clamp((v-a)/(b-a),0,1);
+ return t*t*(3-2*t);
+};
 export function daylight(ticks){
  const t=((ticks%24000)+24000)%24000;
- const phase=Math.cos((t-6000)/12000*Math.PI);
- return clamp(.13+(phase+1)*.435,.13,1);
+ // Java 1.12.2 transitions rapidly near 12000 (sunset) and 23000 (dawn).
+ // The previous 12,000-tick cosine left a bright blue sky long into night.
+ if(t<=11500)return .85+.15*Math.sin(t/11500*Math.PI);
+ if(t<13300)return .13+.72*(1-smoothstep(11500,13300,t));
+ if(t<22500)return .13;
+ return .13+.72*smoothstep(22500,24000,t);
 }
 export function skyColor(ticks,weather='clear'){
  const light=daylight(ticks),d=weather==='clear'?1:weather==='rain'?.68:.45;
