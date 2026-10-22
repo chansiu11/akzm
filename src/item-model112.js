@@ -190,8 +190,12 @@ export function firstPersonPose112(transform,{item=false}={}){
  if(!transform)return {rotation:item?[0,-.65,-.15]:[.2,.78,.10],offset:[0,0,0],scale:[1,1,1]};
  const sign=Math.PI/180;
  return {
-  rotation:transform.rotation.map(v=>v*sign),
+  // Sprite geometry already faces the camera; a literal -90-degree Java
+  // handed item rotation would turn its pixels edge-on in Three.js.
+  rotation:item?
+   [.06+transform.rotation[0]*sign,-.4+(transform.rotation[1]+90)*sign*.55,-.1+(transform.rotation[2]-25)*sign*.55]:
+   transform.rotation.map(v=>v*sign),
   offset:transform.translation.map(v=>v/16),
-  scale:transform.scale.map(v=>v/.68)
+  scale:transform.scale.map(v=>v/(item?.68:.4))
  };
 }
