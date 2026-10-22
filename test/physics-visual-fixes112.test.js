@@ -45,7 +45,7 @@ test('new placements show a mesh immediately and reprioritize dirty chunks',()=>
  assert.match(main,/enqueue\(cx,cz,urgent=false\)/);
  assert.match(main,/pending\.unshift\(\[cx,cz\]\)/);
  assert.match(main,/clearPlacementPreviews\(cx,cz\)/);
- assert.match(main,/progressChunk\(activeBuild,touchMode\?12:28\)/);
+ assert.match(main,/progressChunkWithinBudget\(activeBuild,\{budgetMs:touchMode\?3:6/);
 });
 
 test('daytime is materially brighter with a less aggressive face-shadow multiplier',()=>{
@@ -65,4 +65,16 @@ test('physics and terrain refresh code wire into the real game frame',()=>{
  assert.match(main,/showPlacementPreview\(nx,ny,nz\)/);
  assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius\)/);
  assert.match(main,/activeBuild\?\.cx===cx\+dx/);
+});
+
+import {beginChunk,progressChunkWithinBudget} from '../src/chunk-builder.js';
+test('chunk work respects a maximum per frame while still yielding immediate updates',()=>{
+ const world={columnTop:()=>0,get:()=>0,getBlock:()=>({id:0}),};
+ const t=beginChunk(world,0,0);
+ const over=progressChunkWithinBudget(t,{budgetMs:0,maxColumns:28,batchColumns:4,clock:()=>1});
+ assert.equal(over,false);
+ assert.equal(t.index,4);
+ const next=progressChunkWithinBudget(t,{budgetMs:10,maxColumns:28,batchColumns:4,clock:()=>1});
+ assert.equal(next,false);
+ assert.equal(t.index,32);
 });
