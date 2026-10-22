@@ -289,7 +289,22 @@ function cancelUsing(){usingFood=false;foodHold=0;}
 
 function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));playerPreview112.draw()}
 function closeInventory(){document.body.classList.remove('inventory-open');recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
-function requestPlay(){document.body.classList.remove('inventory-open');enteredWorld=true;worldPaused=false;menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;if(touchMode){running=true;return}{const lock=canvas.requestPointerLock?.();lock?.catch(()=>menus.showPause())}}
+function requestPlay({autoResume=false}={}){
+ document.body.classList.remove('inventory-open');enteredWorld=true;worldPaused=false;
+ menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;
+ running=true;
+ if(autoResume){
+  // Reloaded new worlds load directly into gameplay. Browsers prohibit
+  // automatic pointer lock/fullscreen without a fresh user gesture.
+  return;
+ }
+ const fullscreen=document.documentElement.requestFullscreen?.();
+ fullscreen?.catch?.(()=>{/* Browser refused fullscreen; windowed play is supported. */});
+ if(!touchMode){
+  const lock=canvas.requestPointerLock?.();
+  lock?.catch?.(()=>{/* Click the canvas again to enable mouse capture. */});
+ }
+}
 function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
 // Initial command subset; commands never bypass the same World.set limits as normal placing.
 const commandUI=setupCommandUI({
@@ -334,7 +349,18 @@ const commandUI=setupCommandUI({
  })
 });
 let discardLockMovement=true;
-const onPointer=()=>{discardLockMovement=true;if(touchMode)return;running=document.pointerLockElement===canvas&&!inventoryOpen;if(!running)cancelUsing();if(!survival.dead&&!running&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();clickHold=false;damage=0};document.addEventListener('pointerlockchange',onPointer);
+let everPointerLocked=false;
+const onPointer=()=>{
+ discardLockMovement=true;if(touchMode)return;
+ const locked=document.pointerLockElement===canvas;
+ if(locked)everPointerLocked=true;
+ // A world restored after creation stays playable even before the first
+ // pointer-lock gesture. Only an actual lost lock pauses the game.
+ if(!locked&&!everPointerLocked)return;
+ if(locked){running=!inventoryOpen;return;}
+ running=false;cancelUsing();clickHold=false;damage=0;
+ if(!survival.dead&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();
+};document.addEventListener('pointerlockchange',onPointer);
 document.addEventListener('mousemove',e=>{if(!running||touchMode||document.pointerLockElement!==canvas)return;if(discardLockMovement){discardLockMovement=false;return;}Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100))});
 // Minecraft-style touch: drag to look, tap to use/place, hold a block to mine.
 // Pointer-captured viewport gestures do not interfere with the independent D-pad.
@@ -365,7 +391,7 @@ canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
 window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&cheatsAllowed&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
-canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
 const heldDirections=new Set();
