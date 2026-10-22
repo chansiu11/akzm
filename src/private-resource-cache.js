@@ -1,5 +1,5 @@
 // This database stays in this browser origin. No JAR or extracted bytes are sent.
-export const PRIVATE_RESOURCE_VERSION='112-menu-font-atlas6-v8';
+export const PRIVATE_RESOURCE_VERSION='112-menu-font-atlas6-v9';
 function database(){return new Promise((resolve,reject)=>{
  const request=indexedDB.open('akzm-owner-resources',1);
  request.onupgradeneeded=()=>request.result.createObjectStore('resources');
