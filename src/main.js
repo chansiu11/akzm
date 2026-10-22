@@ -172,11 +172,17 @@ function moveAxis(axis,delta){
   player[axis]=nv;
  }
 }
-function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !sneaking;let speed=sneaking?2:sprinting?5.7:4.4;if(usingFood)speed*=.2;if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;moveAxis('x',(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*dt*speed);moveAxis('z',(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*dt*speed)}
+function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !sneaking;let speed=sneaking?MOVE_SPEED112.sneak:sprinting?MOVE_SPEED112.sprint:MOVE_SPEED112.walk;if(usingFood)speed*=.2;
+  if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;}
+  const targetX=(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*speed;
+  const targetZ=(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*speed;
+  const next=horizontalVelocity112(player.vx,player.vz,targetX,targetZ,dt,{ground:player.onGround});
+  player.vx=next.x;player.vz=next.z;
+  moveAxis('x',player.vx*dt);moveAxis('z',player.vz*dt);
  const water=world.get(Math.floor(player.x),Math.floor(player.y+.7),Math.floor(player.z))===BLOCK.WATER;
  const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER;
- if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:8.2;player.onGround=false;survival.exert(sprinting?.8:.2)}
- player.vy=Math.max(-24,player.vy-(water?6:22)*dt);player.onGround=false;moveAxis('y',player.vy*dt);
+ if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.8:.2)}
+ player.vy=verticalVelocity112(player.vy,dt,{water});player.onGround=false;moveAxis('y',player.vy*dt);
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
  if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');notify(`낙하 피해 -${amount}`)}}fallDistance=0;}
  survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:Math.hypot(player.x-startX,player.z-startZ)});
@@ -311,7 +317,7 @@ const commandUI=setupCommandUI({
   setSpawnpoint:coords=>{commandState.personalSpawn=coords;saveTimer=0;},
   spawnEntity:(name,coords)=>{if(!['grazer','wanderer','shooter'].includes(name))throw Error('이 세계에 해당 바닐라 엔티티 모델·AI가 없습니다: '+name);entityWorld.add(name,...coords);saveTimer=0;},
   announce:message=>notify(message),
-  teleport:(x,y,z)=>{player.x=x;player.y=y;player.z=z;player.vy=0;lastChunk='';return true},
+  teleport:(x,y,z)=>{player.x=x;player.y=y;player.z=z;player.vx=player.vz=player.vy=0;lastChunk='';return true},
   getTime:()=>((day%1+1)%1)*24000,
   setTime:t=>{day=((t%24000)+24000)%24000/24000;saveTimer=0},
   getDaylightCycle:()=>daylightCycle,
@@ -481,7 +487,7 @@ el('craftOutput').addEventListener('click',()=>{const product=craftGridOnce(craf
  if(product){audio.beep('craft');track('crafted');if(product.id===BLOCK.CRAFTING_TABLE)track('craftedTable');if(product.id>=110&&product.id<=114)track('craftedPickaxe');updateUI();renderCrafting();notify(`아이템 ×${product.count} 제작 완료`);saveTimer=0;}
 });
 el('weatherToggle').addEventListener('click',()=>{weatherCycle.set(weatherCycle.kind==='clear'?'rain':weatherCycle.kind==='rain'?'thunder':'clear');el('weatherToggle').textContent='날씨 미리보기: '+weatherCycle.kind;notify('날씨: '+weatherCycle.kind)});
-el('respawnButton').addEventListener('click',()=>{survival.respawn();const requestedSpawn=commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z];const safeRespawn=restoreSafePlayerPosition(world,{x:requestedSpawn[0],y:requestedSpawn[1],z:requestedSpawn[2]},spawn);player.x=safeRespawn.x;player.y=safeRespawn.y;player.z=safeRespawn.z;player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');requestPlay();saveTimer=0});
+el('respawnButton').addEventListener('click',()=>{survival.respawn();const requestedSpawn=commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z];const safeRespawn=restoreSafePlayerPosition(world,{x:requestedSpawn[0],y:requestedSpawn[1],z:requestedSpawn[2]},spawn);player.x=safeRespawn.x;player.y=safeRespawn.y;player.z=safeRespawn.z;player.vx=player.vz=player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');requestPlay();saveTimer=0});
 function showDeath(){if(!survival.dead||!el('deathScreen').classList.contains('hidden'))return;
  cancelUsing();running=false;document.exitPointerLock?.();
  if(gameMode==='survival'&&!commandState.rules.keepInventory){for(const item of dropInventoryOnDeath(inventory,inventoryOverflow)){
