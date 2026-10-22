@@ -18,3 +18,16 @@ export const boxGeometryUV=corners=>[corners[3],corners[2],corners[0],corners[1]
 export function firstPersonFov(aspect){
  return 2*Math.atan(Math.tan(35*Math.PI/180)*Math.max(1,1.4/Math.max(.1,aspect)))*180/Math.PI;
 }
+
+export function toolFamily112(id){
+ if(id>=110&&id<=114)return 'pickaxe';
+ if(id>=117&&id<=121)return 'axe';
+ if(id>=122&&id<=126)return 'shovel';
+ return null;
+}
+export function toolMaterialTier112(id){
+ if(id>=110&&id<=114)return id-110;
+ if(id>=117&&id<=121)return id-117;
+ if(id>=122&&id<=126)return id-122;
+ return -1;
+}
