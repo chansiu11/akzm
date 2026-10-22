@@ -44,6 +44,22 @@ export function drawBundledMenu112(documentRef=document){
   pixel(x,y,dist>34?'#d0d5d9':stripe?'#6c9b79':'#4b7e9b');
  }
  sprites.language=globe.toDataURL('image/png');
+ // Original artwork is not redistributed. This is a deterministic 32x32
+ // pixel texture inspired by the low-contrast Java menu background.
+ const dirt=documentRef.createElement('canvas');dirt.width=dirt.height=32;
+ const dc=dirt.getContext('2d',{willReadFrequently:true});
+ if(dc){
+  const pixels=dc.createImageData(32,32);
+  for(let y=0;y<32;y++)for(let x=0;x<32;x++){
+   const rough=rand(x,y,191),patch=rand(Math.floor(x/4),Math.floor(y/4),27);
+   const light=Math.round((rough-.5)*25+(patch-.5)*20);
+   const index=(y*32+x)*4;
+   const base=rough>.90?[83,72,60]:rough<.12?[45,41,37]:[65,57,48];
+   pixels.data.set([...base.map(c=>clamp(c+light,0,255)),255],index);
+  }
+  dc.putImageData(pixels,0,0);
+  sprites.dirt=dirt.toDataURL('image/png');
+ }
  return sprites;
 }
 
