@@ -10,16 +10,33 @@ const MIN_PICK_LEVEL=new Map([
 ]);
 export function pickaxeLevel(itemId){return itemDefinition(itemId)?.pickaxeLevel??-1;}
 export function canHarvest(blockId,toolId){if(!MIN_PICK_LEVEL.has(blockId))return true;return pickaxeLevel(toolId)>=MIN_PICK_LEVEL.get(blockId);}
-const MINE_TOOL_SPEED=Object.freeze({110:2,111:4,112:6,113:12,114:8});
-const PICK_EFFECTIVE=new Set([BLOCK.STONE,BLOCK.COBBLE,BLOCK.COAL,BLOCK.IRON_ORE,BLOCK.GOLD_ORE,BLOCK.DIAMOND,BLOCK.LAPIS_ORE,BLOCK.REDSTONE_ORE,BLOCK.EMERALD_ORE,BLOCK.FURNACE]);
+// Independent Java Edition 1.12.2-style block/tool selection.
+export const TOOL_SPEED112=Object.freeze({
+ 110:2,111:4,112:6,113:12,114:8,
+ 117:2,118:4,119:6,120:12,121:8,
+ 122:2,123:4,124:6,125:12,126:8
+});
+const PICK_EFFECTIVE=new Set([
+ BLOCK.STONE,BLOCK.COBBLE,BLOCK.COAL,BLOCK.IRON_ORE,BLOCK.GOLD_ORE,
+ BLOCK.DIAMOND,BLOCK.LAPIS_ORE,BLOCK.REDSTONE_ORE,BLOCK.EMERALD_ORE,
+ BLOCK.FURNACE,BLOCK.SANDSTONE,BLOCK.BRICK,BLOCK.LAMP
+]);
+const AXE_EFFECTIVE=new Set([BLOCK.LOG,BLOCK.SPRUCE_LOG,BLOCK.PLANKS,BLOCK.SLAB,BLOCK.STAIRS,BLOCK.CRAFTING_TABLE,BLOCK.CHEST]);
+const SHOVEL_EFFECTIVE=new Set([BLOCK.GRASS,BLOCK.DIRT,BLOCK.SAND,BLOCK.GRAVEL,BLOCK.CLAY,BLOCK.SNOW]);
+export function effectiveMiningTool112(blockId,itemId){
+ if(itemId>=110&&itemId<=114)return PICK_EFFECTIVE.has(blockId);
+ if(itemId>=117&&itemId<=121)return AXE_EFFECTIVE.has(blockId);
+ if(itemId>=122&&itemId<=126)return SHOVEL_EFFECTIVE.has(blockId);
+ return false;
+}
 export function mineSeconds(blockId,toolOrSlot=0,options={}){
  const def=definition(blockId);
  if(!def||def.hardness<0)return Infinity;
  if(def.hardness===0)return 0;
  const slot=typeof toolOrSlot==='object'&&toolOrSlot!==null?toolOrSlot:{id:toolOrSlot};
- const id=slot.id??0,helpful=PICK_EFFECTIVE.has(blockId)&&pickaxeLevel(id)>=0;
+ const id=slot.id??0,helpful=effectiveMiningTool112(blockId,id);
  const canCollect=canHarvest(blockId,id);
- let speed=helpful?MINE_TOOL_SPEED[id]:1;
+ let speed=helpful?TOOL_SPEED112[id]:1;
  // Efficiency is applied only when the equipped tool is effective on this block.
  const enchant=slot.enchantments??slot.enchants??{};
  const efficiency=Math.max(0,Math.min(5,Math.floor(Number(enchant.efficiency??enchant.Efficiency??0)||0)));
