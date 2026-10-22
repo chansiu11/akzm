@@ -340,7 +340,7 @@ async function review(viewport,label,touch=false){
   // Synthetic pixels exercise the same WebGL hand/item renderer without publishing owner art.
   await page.evaluate(async()=>{
    const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
-   const {createFirstPerson}=await import('./src/first-person.js?v=1.7');
+   const {createFirstPerson}=await import('./src/first-person.js?v=1.9');
    const renderer=new THREE.WebGLRenderer({alpha:false,preserveDrawingBuffer:true});renderer.setSize(320,240);renderer.setClearColor('#9cc6df');
    renderer.domElement.id='modelFixture';Object.assign(renderer.domElement.style,{position:'fixed',top:'0',left:'0',zIndex:'9999'});document.body.append(renderer.domElement);
    const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');ctx.fillStyle='#88552a';ctx.fillRect(7,4,2,11);ctx.fillStyle='#35c8cf';ctx.fillRect(2,2,12,3);
@@ -359,6 +359,25 @@ async function review(viewport,label,touch=false){
    if(stairsTriangles<=cubeTriangles)throw Error('Held stair still renders as a cube: '+JSON.stringify({stairsTriangles,cubeTriangles}));
   });
   await page.locator('#modelFixture').screenshot({path:'site-review/'+label+'-synthetic-held-stairs.png'});
+  const heldShapes=await page.evaluate(()=>{
+   const {model,renderer}=window.fixtureModel;
+   model.setItem(110);renderer.clear();model.render(320,240);const pickaxe=renderer.domElement.toDataURL();
+   model.setItem(117);renderer.clear();model.render(320,240);const axe=renderer.domElement.toDataURL();
+   model.setItem(122);renderer.clear();model.render(320,240);const shovel=renderer.domElement.toDataURL();
+   model.setOwnerModels({16:{rotation:[0,45,0],translation:[0,0,0],scale:[.4,.4,.4]}},{
+    16:[{from:[0,0,0],to:[16,8,16],faces:{
+     north:{tile:6,uv:[0,8,16,16],rotation:0},
+     up:{tile:6,uv:[0,0,16,16],rotation:0}
+    }}]
+   });
+   model.setItem(16);renderer.clear();model.render(320,240);
+   return {differ:pickaxe!==axe&&axe!==shovel&&shovel!==pickaxe,
+    nativeBlockVisible:renderer.info.render.triangles>12};
+  });
+  if(!heldShapes.differ||!heldShapes.nativeBlockVisible)
+   throw Error('Held tools or owner block model failed visual rendering: '+JSON.stringify(heldShapes));
+  await page.locator('#modelFixture').screenshot({path:'site-review/'+label+'-synthetic-owner-held-block.png'});
+
   await page.evaluate(async()=>{
    const {model,renderer,c}=window.fixtureModel;c.width=c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='#d6a177';ctx.fillRect(40,16,16,16);ctx.fillStyle='#26859a';ctx.fillRect(40,16,16,8);
    await model.setOwnerSkin(c.toDataURL());model.setItem(0);renderer.clear();model.render(320,240);
