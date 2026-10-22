@@ -195,3 +195,14 @@ body:not(.debug-overlay) #target,
 body:not(.debug-overlay) #status,
 body:not(.debug-overlay) #gameNotice{display:none!important}
 body.menu-open #chatHistory112{display:none}
+
+/* Stage 5: touch controls remain in game, not on top of command entry. */
+body.command-open112 #touchControls{visibility:hidden!important;pointer-events:none!important}
+#commandPanel.command-panel{
+ bottom:calc(3px * var(--gui-scale,1) + var(--command-keyboard-inset112,0px))!important
+}
+#commandPanel #commandInput{border-radius:0!important;appearance:none!important;-webkit-appearance:none!important}
+body.touch-ui #commandPanel.command-panel{max-height:min(44dvh,calc(135px * var(--gui-scale,1)))!important}
+body.touch-ui #touchDpad button.pressed,body.touch-ui #touchJump.pressed{
+ background:#c5cdcb!important;border-color:#fff!important;box-shadow:inset 0 0 calc(3px * var(--gui-scale,1)) #252525a6!important
+}
