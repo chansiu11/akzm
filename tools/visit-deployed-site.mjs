@@ -53,6 +53,10 @@ async function review(viewport,label,touch=false){
    try{
     await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
     await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
+    // Keep this browser smoke focused on creation/deletion rather than
+    // rendering 6+ background chunks while testing storage navigation.
+    await worldPage.evaluate(()=>localStorage.setItem('voxel-frontier-settings-v1',
+      JSON.stringify({fov:75,renderDistance:2,renderDistanceV2:true,sensitivity:.24,showCoordinates:true})));
     await worldPage.locator('#menuSingle').click();
     await worldPage.locator('#worldCreate').click();
     await worldPage.locator('#menu-create').waitFor({state:'visible'});
@@ -69,7 +73,7 @@ async function review(viewport,label,touch=false){
      const worlds=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1'));
      return worlds.find(w=>w.name==='자동 검사 새 세계').id;
     });
-    await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),{timeout:30000});
+    await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),null,{timeout:65000});
     await worldPage.screenshot({path:'site-review/world-created-gameplay.png'});
     await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
     await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
@@ -86,6 +90,14 @@ async function review(viewport,label,touch=false){
     },newId);
     if(!deleted)throw Error('World deletion did not persist in browser storage');
     if(await worldPage.locator('#menu-title').isVisible())throw Error('Deleting a world incorrectly returned to title');
+    // Beforeunload must not resurrect a just-deleted active world's save.
+    await worldPage.reload({waitUntil:'domcontentloaded',timeout:60000});
+    await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
+    const survivedReload=await worldPage.evaluate(id=>{
+     const worlds=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
+     return !worlds.some(w=>w.id===id)&&!localStorage.getItem('voxel-frontier-save-v1-'+id);
+    },newId);
+    if(!survivedReload)throw Error('Deleted world was resurrected by unload autosave');
     await worldPage.screenshot({path:'site-review/world-after-delete.png'});
    }finally{await worldContext.close();}
   }
