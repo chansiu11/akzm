@@ -29,7 +29,22 @@ export function ownerItemTexturePath(item,model=null){
  return 'assets/minecraft/textures/items/'+(ITEM112_ALIASES[name]??name)+'.png';
 }
 export function validGui112Assets(a){return ['widgets','icons','inventory','crafting'].every(k=>typeof a?.[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));}
-export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))if(typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
+// Render only on the user's device. No original widgets.png bytes are
+// included in the published repo or persisted in CI artifacts.
+function applyOwnerDeathButtons112(root,uri){
+ const image=new Image();
+ image.onload=()=>{
+  const canvas=document.createElement('canvas');canvas.width=200;canvas.height=20;
+  const ctx=canvas.getContext('2d');
+  for(const [name,y] of [['normal',66],['hover',86],['disabled',46]]){
+   ctx.clearRect(0,0,200,20);ctx.drawImage(image,0,y,200,20,0,0,200,20);
+   root.style.setProperty('--owner-death-button-'+name,'url("'+canvas.toDataURL('image/png')+'")');
+  }
+ };
+ image.onerror=()=>{};
+ image.src=uri;
+}
+export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))if(typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');applyOwnerDeathButtons112(root,a.widgets);for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
 export function restoreGui112(root){try{const a=JSON.parse(localStorage.getItem(GUI112_KEY)||'null');return applyGui112(root,a)?a:null;}catch{return null;}}
 export function storeGui112(a){if(!validGui112Assets(a))return false;try{localStorage.setItem(GUI112_KEY,JSON.stringify(a));return true;}catch{return false;}}
 export async function readOwner112Jar(file){
