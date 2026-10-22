@@ -272,3 +272,41 @@ html.menu112-assets #overlay .menu-page.menu-vanilla112{
 /* The official world/options dialogs don't carry the title-screen legal footer;
    keep our notice on the title but prevent it from covering the bottom controls. */
 body:has(.menu-page.menu-vanilla112:not(.hidden)) #overlay .menu-footer{display:none!important}
+
+/* Dedicated 1.12.2-style Create/Delete World screens, not generic forms. */
+#overlay .menu-vanilla112 .world-create-fields112{
+ position:absolute;left:50%;top:calc(38px * var(--menu-scale,1));
+ transform:translateX(-50%);width:calc(260px * var(--menu-scale,1));
+ max-width:calc(100% - 16px * var(--menu-scale,1));
+ display:flex;flex-direction:column;align-items:stretch;
+ gap:calc(3px * var(--menu-scale,1));text-align:left;
+ font:normal calc(9px * var(--menu-scale,1)) monospace;color:#ddd;
+}
+#overlay .menu-vanilla112 .world-create-fields112 .world-input{
+ margin:0 0 calc(4px * var(--menu-scale,1))!important;width:100%!important;
+ height:calc(20px * var(--menu-scale,1))!important;min-height:0!important;
+ border:calc(2px * var(--menu-scale,1)) solid #a0a0a0!important;
+ background:#080808!important;color:#fff!important;
+ padding:0 calc(5px * var(--menu-scale,1))!important;
+ font:normal calc(9px * var(--menu-scale,1)) monospace!important;
+ box-sizing:border-box;outline:none
+}
+#overlay .menu-vanilla112 .world-create-fields112 .world-input:focus{border-color:#fff!important}
+#overlay .menu-vanilla112 .world-create-fields112 .option-check112{
+ width:100%;font-size:calc(9px * var(--menu-scale,1))!important
+}
+#overlay .menu-vanilla112 .world-create-fields112 #worldError{
+ font-size:calc(8px * var(--menu-scale,1));color:#f7aaaa;
+ min-height:calc(12px * var(--menu-scale,1))
+}
+#overlay .menu-vanilla112 .world-delete-question112{
+ position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);
+ width:calc(310px * var(--menu-scale,1));
+ max-width:calc(100% - 16px * var(--menu-scale,1));
+ font:normal calc(10px * var(--menu-scale,1))/1.7 monospace!important;
+ text-align:center!important;color:#f0f0f0;
+ text-shadow:calc(1px * var(--menu-scale,1)) calc(1px * var(--menu-scale,1)) #151515;
+}
+#overlay .menu-vanilla112 .world-delete-question112 p{font:inherit!important;margin:calc(5px * var(--menu-scale,1)) 0!important;color:inherit}
+#overlay .menu-vanilla112 .world-delete-question112 strong{color:#fff;font-weight:bold}
+#overlay .menu-vanilla112 .world-delete-question112 #deleteError{color:#e99}
