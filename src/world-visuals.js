@@ -1,6 +1,7 @@
 // Procedural cloud/sky-weather visuals; uses no commercial art.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {lightingInfo} from './environment.js';
+import {fogDistances112} from './player-motion112.js';
 import {precipitationType} from './precipitation.js';
 import {celestialPositions,CELESTIAL_DISTANCE} from './sky-cycle.js';
 export function createWorldVisuals(scene,renderer,world=null){
@@ -35,8 +36,8 @@ export function createWorldVisuals(scene,renderer,world=null){
  const rain=new THREE.LineSegments(rainGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.35,depthWrite:false}));rain.frustumCulled=false;scene.add(rain);
  const offsets=Array.from({length:count},(_,i)=>[(i*31.37%41)-20,(i*13.17%18),(i*71.61%41)-20]);
  let clock=0;
- function update(dt,ticks,weather,player,sun,ambient){
-  clock+=dt;const l=lightingInfo(ticks,weather);const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255));scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);scene.fog.near=l.fogNear;scene.fog.far=l.fogFar}
+ function update(dt,ticks,weather,player,sun,ambient,renderRadius=6){
+  clock+=dt;const l=lightingInfo(ticks,weather);const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255));scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);const range=fogDistances112(renderRadius,weather);scene.fog.near=range.near;scene.fog.far=range.far}
   sun.intensity=l.sunIntensity;ambient.intensity=l.ambientIntensity;
   cloudRoot.position.set(player.x+clock*.35,player.y-118,player.z);
   stars.position.set(player.x,player.y,player.z);
