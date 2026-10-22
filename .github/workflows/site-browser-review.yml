@@ -18,6 +18,12 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile, mobile-landscape]
+    env:
+      REVIEW_VIEWPORT: ${{ matrix.viewport }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,7 +39,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: akzm-site-screenshots
+          name: akzm-site-screenshots-${{ matrix.viewport }}
           path: site-review/
           if-no-files-found: warn
           retention-days: 7

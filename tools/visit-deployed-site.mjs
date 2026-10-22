@@ -116,6 +116,11 @@ async function review(viewport,label,touch=false){
      return worlds.find(w=>w.name==='자동 검사 새 세계').id;
     });
     await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),null,{timeout:90000});
+    // Wait for a committed terrain mesh before recording completed gameplay.
+    await worldPage.waitForFunction(()=>{
+     const match=document.querySelector('#status')?.textContent?.match(/청크\\s+(\\d+)/);
+     return match&&Number(match[1])>0;
+    },null,{timeout:90000});
     await worldPage.screenshot({path:'site-review/world-click03-created-gameplay.png'});
     await worldPage.screenshot({path:'site-review/world-created-gameplay.png'});
     await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
@@ -556,8 +561,16 @@ async function review(viewport,label,touch=false){
  }catch(e){failures.push(label+': '+e.message);await page.screenshot({path:'site-review/'+label+'-failure.png'}).catch(()=>{});}
  finally{await context.close();}
 }
-await review({width:1440,height:900},'desktop');
-await review({width:390,height:844},'mobile',true);
-await review({width:844,height:390},'mobile-landscape',true);
+const targets=[
+ {viewport:{width:1440,height:900},label:'desktop',touch:false},
+ {viewport:{width:390,height:844},label:'mobile',touch:true},
+ {viewport:{width:844,height:390},label:'mobile-landscape',touch:true}
+];
+const chosen=process.env.REVIEW_VIEWPORT;
+if(chosen&&!targets.some(t=>t.label===chosen))throw Error('Unknown viewport '+chosen);
+for(const view of targets){
+ if(chosen&&chosen!==view.label)continue;
+ await review(view.viewport,view.label,view.touch);
+}
 await browser.close();
 if(failures.length){for(const f of failures)console.error(f);process.exitCode=1;}
