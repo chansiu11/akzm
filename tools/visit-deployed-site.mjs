@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js','src/item-model112.js','src/site-default112.js','src/player-motion112.js','src/chunk-builder.js','src/voxel-light.js','src/environment.js','src/world-visuals.js','src/bitmap-font112.js','src/vanilla-mining.js','src/break-overlay112.js','src/command-ui.js','visual-overhaul.css'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js','src/item-model112.js','src/site-default112.js','src/player-motion112.js','src/chunk-builder.js','src/voxel-light.js','src/environment.js','src/world-visuals.js','src/bitmap-font112.js','src/vanilla-mining.js','src/break-overlay112.js','src/command-ui.js','src/command-extras.js','src/death-messages112.js','src/audio.js','visual-overhaul.css'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -288,6 +288,49 @@ async function review(viewport,label,touch=false){
   await page.locator('#commandPanel').waitFor({state:'hidden'});
   if(!(await page.locator('#chatHistory112').textContent())?.length)
    throw Error('Command output did not appear in chat history');
+  // Stage 6: exercise time and night vision inside the actually deployed
+  // WebGL game (not only a standalone lighting helper).
+  if(label==='desktop'){
+   const command=async text=>{
+    await page.keyboard.press('Slash');
+    await page.locator('#commandPanel').waitFor({state:'visible'});
+    await page.locator('#commandInput').fill(text);
+    await page.locator('#commandInput').press('Enter');
+    await page.locator('#commandPanel').waitFor({state:'hidden'});
+   };
+   await command('/time set night');
+   await page.waitForTimeout(350);
+   await page.screenshot({path:'site-review/desktop-stage6-night.png'});
+   await command('/effect @p minecraft:night_vision 30');
+   const reply=(await page.locator('#chatHistory112').textContent())||'';
+   if(!reply.includes('Night vision'))throw Error('Night-vision command not applied in actual gameplay: '+reply.slice(-160));
+   await page.waitForTimeout(350);
+   await page.screenshot({path:'site-review/desktop-stage6-night-vision.png'});
+   await command('/effect @p clear');
+   await command('/time set day');
+   await page.waitForTimeout(350);
+   await page.screenshot({path:'site-review/desktop-stage6-day.png'});
+   // Stage 7: the death UI uses the real site's 200px-wide controls and
+   // must not render a webpage card, clipped dialog or full-screen red flash.
+   const deathPreview=await page.evaluate(()=>{
+    const panel=document.getElementById('deathScreen');
+    panel.classList.remove('hidden');
+    document.getElementById('deathReason112').textContent='';
+    const buttons=panel.querySelectorAll('.death-buttons112 button');
+    const bounds=[...buttons].map(b=>b.getBoundingClientRect());
+    const result={visible:getComputedStyle(panel).display!=='none',
+      twoButtons:bounds.length===2,
+      matchingWidth:bounds.length===2&&Math.abs(bounds[0].width-bounds[1].width)<1,
+      flashHidden:getComputedStyle(document.getElementById('hurtFlash112')).display==='none',
+      sprite:getComputedStyle(buttons[0]).borderImageSource};
+    return result;
+   });
+   if(!deathPreview.visible||!deathPreview.twoButtons||!deathPreview.matchingWidth||
+      !deathPreview.flashHidden||deathPreview.sprite==='none')
+    throw Error('Vanilla-style death screen validation failed: '+JSON.stringify(deathPreview));
+   await page.screenshot({path:'site-review/desktop-stage7-death-screen.png'});
+   await page.evaluate(()=>document.getElementById('deathScreen').classList.add('hidden'));
+  }
   if(touch){
    const ids=['touchUp','touchLeft','touchDown','touchRight','touchJump','touchSneak','touchBag','touchPause','touchCommand'];
    for(const id of ids){
