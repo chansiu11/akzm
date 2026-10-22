@@ -19,3 +19,25 @@ test('settings are sanitized before use',()=>{
  assert.equal(loadSettings().renderDistance,2,'a new deliberate 2-chunk setting must persist');
 
 });
+
+test('explicitly deleting the last world does not restore a phantom default entry',()=>{
+ mockStorage();
+ localStorage.setItem(WORLDS_KEY,JSON.stringify([{id:'w1',name:'To delete',created:1}]));
+ localStorage.setItem(ACTIVE_WORLD_KEY,'w1');
+ assert.equal(listWorlds().length,1);
+ localStorage.setItem(WORLDS_KEY,JSON.stringify([]));
+ localStorage.removeItem(ACTIVE_WORLD_KEY);
+ assert.deepEqual(listWorlds(),[]);
+ assert.equal(worldSaveKey('w1'),'voxel-frontier-save-v1-w1');
+});
+test('loaded world ID is pinned during saves, and autosave skips erased worlds',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const game=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const menu=readFileSync(new URL('../src/menu.js',import.meta.url),'utf8');
+ assert.match(game,/const runtimeWorldId112=activeWorldId\(\)/);
+ assert.match(game,/worldSaveKey\(runtimeWorldId112\)/);
+ assert.match(game,/listWorlds\(\)\.some\(w=>w\.id===runtimeWorldId112\)/);
+ assert.match(menu,/sessionStorage\.setItem\(AUTO_PLAY_WORLD_KEY,id\)/);
+ assert.match(menu,/queueMicrotask\(\(\)=>play\(\{autoResume:true\}\)\)/);
+ assert.match(menu,/function confirmDeleteWorld\(\)/);
+});
