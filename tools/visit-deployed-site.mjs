@@ -60,10 +60,29 @@ async function review(viewport,label,touch=false){
   // Newly installed sites expose a higher user-configurable view distance.
   const viewRange=await page.locator('#settingDistance').evaluate(input=>({min:input.min,max:input.max}));
   if(Number(viewRange.min)>2||Number(viewRange.max)<10)throw Error('Extended render-distance settings unavailable');
+  // The 1.12.2-inspired Options menu uses dedicated language/resource/video screens.
   await page.locator('#menuLanguage').click();
   await page.locator('#menuLanguageSelect').waitFor({state:'visible'});
+  await page.screenshot({path:'site-review/'+label+'-language.png'});
+  await page.locator('#languageDone').click();
+  await page.locator('#menu-settings').waitFor({state:'visible'});
+  const twoColumnOptions=await page.locator('#settingsVideo').evaluate(button=>{
+   const video=button.getBoundingClientRect(),controls=document.getElementById('settingsControls').getBoundingClientRect();
+   const grid=getComputedStyle(button.parentElement);
+   return {twoColumns:grid.gridTemplateColumns.trim().split(/\\s+/).length>=2,videoX:video.x,controlsX:controls.x};
+  });
+  if(!twoColumnOptions.twoColumns||!(twoColumnOptions.controlsX>twoColumnOptions.videoX))throw Error('1.12.2 Options two-column grid failed');
+  await page.screenshot({path:'site-review/'+label+'-options.png'});
+  await page.locator('#settingsVideo').click();
+  await page.locator('#menu-video').waitFor({state:'visible'});
+  await page.locator('#settingDistance').waitFor({state:'visible'});
+  await page.screenshot({path:'site-review/'+label+'-video-options.png'});
+  await page.locator('#videoDone').click();
+  await page.locator('#settingsResources').click();
   await page.locator('#loadJar112').waitFor({state:'visible'});
-  await page.locator('#settingsBack').click();
+  await page.screenshot({path:'site-review/'+label+'-resource-options.png'});
+  await page.locator('#resourcesDone').click();
+  await page.locator('#settingsSave').click();
   // An original transparent texel must replace, not overlay, generated fallback art.
   await page.evaluate(async()=>{
    const {loadLocalResourcePack}=await import('./src/resource-pack.js?v=1.2');
@@ -127,7 +146,27 @@ async function review(viewport,label,touch=false){
   await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
   await page.locator('#menuSingle').click({timeout:30000});
   await page.locator('#menu-worlds').waitFor({state:'visible',timeout:30000});
+  for(const id of ['worldPlay','worldCreate','worldEdit','worldDelete','worldRecreate','worldBack'])
+   await page.locator('#'+id).waitFor({state:'visible'});
+  const footer=await page.evaluate(()=>{
+   const play=document.getElementById('worldPlay').getBoundingClientRect();
+   const create=document.getElementById('worldCreate').getBoundingClientRect();
+   const edit=document.getElementById('worldEdit').getBoundingClientRect();
+   const cancel=document.getElementById('worldBack').getBoundingClientRect();
+   const list=document.getElementById('worldList').getBoundingClientRect();
+   return {aligned:Math.abs(play.y-create.y)<1&&Math.abs(edit.y-cancel.y)<1,
+    secondBelow:edit.y>play.y,listAbove:list.bottom<=play.top+1};
+  });
+  if(!footer.aligned||!footer.secondBelow||!footer.listAbove)throw Error('1.12.2 six-button world selection layout failed: '+JSON.stringify(footer));
   await page.screenshot({path:'site-review/'+label+'-worlds.png'});
+  await page.locator('#worldEdit').click();
+  await page.locator('#menu-edit').waitFor({state:'visible'});
+  await page.locator('#worldEditName').waitFor({state:'visible'});
+  await page.screenshot({path:'site-review/'+label+'-world-edit.png'});
+  await page.locator('#worldEditBack').click();
+  await page.locator('#worldRecreate').click();
+  await page.locator('#menu-create').waitFor({state:'visible'});
+  await page.locator('#createBack').click();
   // Regression test: the site's real CSS must react to the class on <html>.
   const result=await page.evaluate(()=>{
    const root=document.documentElement,bar=document.getElementById('hotbar'),cross=document.getElementById('crosshair');
@@ -219,6 +258,16 @@ async function review(viewport,label,touch=false){
   await page.waitForFunction(()=>document.getElementById('packStatus')?.textContent.includes('자동 불러오기 완료'));
   await page.waitForFunction(()=>document.documentElement.classList.contains('menu112-assets')&&document.documentElement.classList.contains('gui112-assets'));
   await page.locator('#menu-title .menu-stack > button:nth-child(3) canvas.bitmap-text').waitFor({state:'attached'});
+  await page.locator('#menuSingle').click();
+  await page.locator('#menu-worlds').waitFor({state:'visible'});
+  const originalWorldDirt=await page.locator('#menu-worlds').evaluate(page=>getComputedStyle(page).backgroundImage);
+  if(!originalWorldDirt.includes('data:image/png'))throw Error('Owner JAR menu dirt texture missing on world select');
+  await page.screenshot({path:'site-review/'+label+'-synthetic-owner-worlds.png'});
+  await page.locator('#worldBack').click();
+  await page.locator('#menuSettings').click();
+  await page.locator('#menu-settings').waitFor({state:'visible'});
+  await page.screenshot({path:'site-review/'+label+'-synthetic-owner-options.png'});
+  await page.locator('#settingsSave').click();
   const korean=await page.locator('#menuSingle').evaluate(button=>({
    value:button.textContent.trim(),
    hidden:button.classList.contains('bitmap-label'),
