@@ -1,11 +1,11 @@
 import {extrudeItemPixels,RIGHT_ARM_UV_RECTS,skinRectUV} from './item-extrusion.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {definition} from './block-registry.js';
-import {ownerBlockQuads112,firstPersonPose112} from './item-model112.js';
+import {ownerBlockQuads112,firstPersonPose112} from './item-model112.js?v=1.1';
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {uvFor} from './atlas.js?v=1.7';
-import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov,toolFamily112,toolMaterialTier112} from './held-item-view.js?v=1.2';
+import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov,toolFamily112,toolMaterialTier112} from './held-item-view.js?v=1.3';
 const skin=new THREE.MeshLambertMaterial({color:'#d9ab86'});
 const sleeve=new THREE.MeshLambertMaterial({color:'#477c92'});
 function cube(w,h,d,material){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material)}
