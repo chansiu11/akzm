@@ -58,7 +58,13 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
    const info=document.createElement('small');info.textContent=(w.mode==='survival'?'생존 모드':'건설 모드')+
     (w.allowCheats?' · 치트 허용':'')+' · 버전: 1.12.2 웹';
    detail.append(label,meta,info);row.append(icon,detail);
-   row.addEventListener('click',()=>{state.selection=w.id;refreshWorlds();});
+   row.addEventListener('click',()=>{
+    state.selection=w.id;
+    for(const entry of box.querySelectorAll('.world-row')){
+     const selected=entry.dataset.worldId===w.id;
+     entry.classList.toggle('selected',selected);entry.setAttribute('aria-selected',String(selected));
+    }
+   });
    row.addEventListener('dblclick',continueWorld);
    box.append(row);
   }
