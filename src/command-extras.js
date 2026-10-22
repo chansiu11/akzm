@@ -4,7 +4,7 @@ import {ITEM_DEFS} from './item-registry.js';
 import {COMMANDS,ALIASES,commandByName,isServerOnly} from './command-catalog.js';
 import {position,coordinate,executeCommand} from './commands.js';
 
-const ERROR_UNAVAILABLE='이 명령어의 1.8.9 동작에 필요한 게임/서버 시스템이 아직 구현되지 않았습니다. 등록된 문법·Tab 안내만 이용할 수 있습니다.';
+const ERROR_UNAVAILABLE='이 명령어의 1.12.2 동작에 필요한 게임/서버 시스템이 아직 구현되지 않았습니다. 등록된 문법·Tab 안내만 이용할 수 있습니다.';
 const ok=(message,extra={})=>({ok:true,message,...extra});
 const fail=(message)=>({ok:false,message});
 const requireContext=(ctx,key)=>{if(typeof ctx[key]!=='function')throw Error(`현재 게임에서 지원하지 않는 동작: ${key}`);return ctx[key]};
@@ -39,6 +39,24 @@ export function executeExtended(input,ctx={}){
   const c=commandByName(a[0]);if(!c)throw Error('지원하지 않는 명령어: '+a[0]);return ok(`${c.syntax} — ${c.description}${c.serverOnly?' (서버 전용)':''}`);
  }
  case 'seed':if(a.length)throw Error(meta.syntax);return ok('Seed: '+(ctx.getSeed?.()??18909));
+ case 'effect':{
+  if(a.length<2||a.length>5)throw Error(meta.syntax);
+  target(a[0],ctx);
+  if(a[1]==='clear'){
+   if(a.length!==2)throw Error(meta.syntax);
+   requireContext(ctx,'setNightVision')(0);
+   return ok('Applied potion effects cleared');
+  }
+  const name=a[1].toLowerCase();
+  if(!['16','night_vision','minecraft:night_vision'].includes(name))
+   throw Error('Only Minecraft Java 1.12.2 night_vision is supported in this web client.');
+  const seconds=a[2]===undefined?30:integer(a[2],0,1000000,'seconds');
+  const amplifier=a[3]===undefined?0:integer(a[3],0,255,'amplifier');
+  if(amplifier!==0)throw Error('Night vision supports amplifier 0 only.');
+  if(a[4]!==undefined&&!['true','false'].includes(a[4]))throw Error(meta.syntax);
+  requireContext(ctx,'setNightVision')(seconds);
+  return ok(seconds===0?'Night vision removed':'Night vision: '+seconds+'s');
+ }
  case 'difficulty':{
   if(a.length!==1||!Object.hasOwn(difficultyValue,a[0]))throw Error(meta.syntax);
   requireContext(ctx,'setDifficulty')(difficultyValue[a[0]]);return ok('난이도: '+difficultyValue[a[0]]);
