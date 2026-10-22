@@ -16,5 +16,6 @@ export function takeItem(slots,id,count=1){if(!Number.isInteger(count)||count<=0
 export function moveStack(slots,from,to,amount=Infinity){if(from===to||!slots[from]||!slots[to])return false;const a=slots[from],b=slots[to];if(!a.id||!a.count)return false;if(b.id!==0&&b.id!==a.id){[slots[from],slots[to]]=[b,a];return true;}
  const stackLimit=itemDefinition(a.id)?.stackLimit??64;const moved=Math.min(a.count,amount,stackLimit-b.count);if(moved<=0)return false;
  if(b.id===0&&stackLimit===1&&Number.isInteger(a.damage))b.damage=a.damage;
+ if(b.id===0&&stackLimit===1&&a.enchantments?.efficiency>0)b.enchantments={efficiency:a.enchantments.efficiency};
  b.id=a.id;b.count+=moved;a.count-=moved;if(a.count===0){a.id=0;delete a.damage;}return true;
 }
