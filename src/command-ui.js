@@ -30,10 +30,14 @@ export function setupCommandUI({onOpen,onClose,onResult,context}){
  }
  function show(){if(open)return;open=true;selection=0;historyIndex=-1;tabCycle=null;panel.classList.remove('hidden');input.value='/';output.textContent='';onOpen();render();input.focus();input.setSelectionRange(input.value.length,input.value.length)}
  function hide(resume=true){if(!open)return;open=false;panel.classList.add('hidden');input.blur();if(resume)onClose()}
- function submit(){const line=input.value.trim();if(!line)return;const result=executeCommand(line,context());
-  output.textContent=(result.ok?'✓ ':'⚠ ')+result.message;output.className=result.ok?'command-output success':'command-output error';
-  if(result.ok){onResult?.(result);history.unshift(line);history=history.slice(0,30);hide(true);return result}
-  render();return result;
+ function submit(){
+  const line=input.value.trim();
+  if(!line||line==='/'){hide(true);return null;}
+  const result=executeCommand(line,context());
+  history.unshift(line);history=history.slice(0,30);
+  onResult?.(result);
+  // 1.12.2 Enter closes chat even if the submitted command is invalid.
+  hide(true);return result;
  }
  input.addEventListener('input',()=>{selection=0;tabCycle=null;render()});
  input.addEventListener('keydown',e=>{
