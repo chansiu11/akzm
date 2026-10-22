@@ -77,3 +77,37 @@ html.gui112-assets #overlay #menu-title #menuLanguage:focus-visible{
 html.gui112-assets #overlay #menu-title #menuLanguage span{display:none}
 #overlay #menu-settings .menu-language-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#e8e8e8}
 #overlay #menu-settings #menuLanguageSelect{max-width:60%;height:28px;background:#292929;color:white;border:1px solid #ababab;font:inherit}
+
+/* Default site-owned menu artwork; renders even on a new device without a JAR.
+   All three button images are drawn by src/site-default112.js, not Minecraft. */
+html.site-default112:not(.gui112-assets) #overlay button.stone-button{
+ border:calc(3px * var(--menu-scale,1)) solid transparent!important;
+ border-image-source:var(--site112-normal)!important;
+ border-image-slice:3 fill!important;
+ border-image-width:calc(3px * var(--menu-scale,1))!important;
+ border-image-outset:0!important;border-image-repeat:stretch!important;
+ background:none!important;box-shadow:none!important;
+ border-radius:0!important;color:#f4f4f4!important;
+ text-shadow:calc(1px * var(--menu-scale,1)) calc(1px * var(--menu-scale,1)) #26262b!important;
+ font-family:monospace;font-weight:bold;image-rendering:pixelated;
+}
+html.site-default112:not(.gui112-assets) #overlay button.stone-button:hover:not(:disabled){
+ border-image-source:var(--site112-hover)!important;color:#fff7bf!important
+}
+html.site-default112:not(.gui112-assets) #overlay button.stone-button:disabled{
+ border-image-source:var(--site112-disabled)!important;color:#a9a9a9!important
+}
+html.site-default112:not(.gui112-assets) #overlay #menu-title #menuLanguage{
+ background:var(--site112-language) center/100% 100% no-repeat!important;
+ image-rendering:pixelated
+}
+html.site-default112:not(.gui112-assets) #overlay #menu-title #menuLanguage span{display:none}
+html.site-default112:not(.menu112-assets) #overlay #menu-title .brand-shadow h1{
+ color:#e7e8e8;
+ font-family:Impact,'Arial Black',system-ui,sans-serif;
+ font-weight:900;letter-spacing:calc(-1.8px * var(--menu-scale,1));
+ -webkit-text-stroke:calc(1px * var(--menu-scale,1)) #272a2c;
+ text-shadow:0 calc(3px * var(--menu-scale,1)) #797c7d,
+ 0 calc(6px * var(--menu-scale,1)) #383b3d,
+ calc(2px * var(--menu-scale,1)) calc(8px * var(--menu-scale,1)) #171a1b;
+}
