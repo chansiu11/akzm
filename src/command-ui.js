@@ -36,7 +36,21 @@ export function setupCommandUI({onOpen,onClose,onResult,context}){
   const candidate=tabCycle.options[tabCycle.index];input.value=candidate.insert;tabCycle.lastValue=input.value;input.focus();
   input.setSelectionRange(input.value.length,input.value.length);render();
  }
- function show(){if(open)return;open=true;selection=0;historyIndex=-1;tabCycle=null;panel.classList.remove('hidden');input.value='/';output.textContent='';onOpen();render();keyboardInset();input.focus({preventScroll:true});input.setSelectionRange(input.value.length,input.value.length)}
+ function show(){
+  if(open)return;
+  open=true;selection=0;historyIndex=-1;tabCycle=null;
+  panel.classList.remove('hidden');
+  // Older styling centered this dialog with translateX(-50%). The
+  // 1.12.2 bottom chat spans the viewport and must never inherit it.
+  panel.style.setProperty('transform','none','important');
+  panel.style.setProperty('translate','none','important');
+  panel.style.setProperty('left','max(2px, env(safe-area-inset-left))','important');
+  panel.style.setProperty('right','max(2px, env(safe-area-inset-right))','important');
+  panel.style.setProperty('width','auto','important');
+  input.value='/';output.textContent='';
+  onOpen();render();keyboardInset();input.focus({preventScroll:true});
+  input.setSelectionRange(input.value.length,input.value.length);
+}
  function hide(resume=true){if(!open)return;open=false;panel.classList.add('hidden');document.documentElement.style.removeProperty('--command-keyboard-inset112');input.blur();if(resume)onClose()}
  function submit(){
   const line=input.value.trim();
