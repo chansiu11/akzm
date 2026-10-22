@@ -69,7 +69,7 @@ test('owner model JSON inherits GUI pose through block parents without publishin
 });
 test('restoring cached owner JAR recomputes local GUI models',async()=>{
  const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
- assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v8');
+ assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-v9');
 });
 
 import {panoramaAngles112} from '../src/menu112-assets.js';
