@@ -1,6 +1,6 @@
 // Procedural cloud/sky-weather visuals; uses no commercial art.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-import {lightingInfo} from './environment.js?v=1.3';
+import {lightingInfo} from './environment.js?v=1.4';
 import {activeLampsNear} from './voxel-light.js';
 import {fogDistances112} from './player-motion112.js';
 import {precipitationType} from './precipitation.js';
