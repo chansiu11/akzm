@@ -1,5 +1,7 @@
 name: Deployed akzm browser screenshots
 on:
+  push:
+    branches: [main]
   workflow_run:
     workflows: ['pages build and deployment']
     types: [completed]
@@ -13,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   visit-site:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
