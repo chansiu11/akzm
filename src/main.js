@@ -35,6 +35,7 @@ import {createAudio} from './audio.js';
 import {TileStore,processFurnace,depositOne,withdrawOne,tileDrops,tileKey} from './tile-data.js';
 import {Progression,GOALS} from './progression.js';
 import {blockDrops,mineSeconds} from './vanilla-mining.js';
+import {createBreakOverlay112} from './break-overlay112.js';
 import {recomputeNearbyLamps} from './redstone-lite.js';
 import {usePickaxe} from './tool-durability.js';
 import {eatHeld,foodFor} from './food.js';
@@ -91,6 +92,7 @@ const survival=new Survival(saved?.survival);
 const weatherCycle=new WeatherCycle(saved?.weather);
 const worldVisuals=createWorldVisuals(scene,renderer,world);
 const audio=createAudio();
+const breakOverlay=createBreakOverlay112(scene,world);
 const progression=new Progression(saved?.progression);const tiles=new TileStore(saved?.tiles);let activeTile=null;
 let craftingSize=2;let craftingCells=emptyCraftGrid(2);
 const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){audio.beep('hit');notify(`${e.kind}에게 피해를 받았습니다 (-${amount})`)}if(survival.dead)showDeath()},saved?.entities);
@@ -249,7 +251,7 @@ function breakBlock(t){
   }
   track('mined');if(t.id===BLOCK.LOG||t.id===BLOCK.SPRUCE_LOG)track('woodMined');survival.exert(.025);
   const wear=usePickaxe(inventory[selected]);if(wear.broken)notify('곡괭이가 부서졌습니다.');
-  firstPerson.swing();effects.emit('block',[t.x+.5,t.y+.5,t.z+.5],[.35,.35,.35],.2,12);audio.beep('break');updateUI();saveTimer=7;
+  firstPerson.swing();effects.emit('block',[t.x+.5,t.y+.5,t.z+.5],[.35,.35,.35],.2,12);audio.beep('break');breakOverlay.clear();updateUI();saveTimer=7;
  }
 }
 function placementState(blockId,target){
@@ -395,7 +397,7 @@ el('touchPause').addEventListener('click',()=>{if(running)pauseGame()});
 // On a public GitHub Pages deployment the extracted original images are intentionally absent.
 showAtlas(texture.image);
 const storedGui112=restoreGui112(document.documentElement);
-function applyOwnerAppearance(assets){playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
+function applyOwnerAppearance(assets){breakOverlay.setOwnerStages(assets?.breakStages).catch(error=>console.warn('Crack textures:',error));playerPreview112.setSkin(assets?.playerSkin).catch(error=>console.warn('Owner inventory preview:',error));firstPerson.setOwnerSkin(assets?.playerSkin).catch(error=>console.warn('Owner player skin:',error));applyBitmapFont112(assets).catch(error=>console.warn('Bitmap font:',error));ownerItemIcons=assets?.itemIcons??{};ownerBlockGuiModels=assets?.blockGuiModels??{};ownerBlockIconModels=assets?.blockIconModels??{};firstPerson.setOwnerItems(ownerItemIcons).catch(error=>console.warn('Owner item models:',error));applyMenu112(assets).catch(error=>console.warn('Menu assets:',error));updateUI();}
 if(storedGui112)applyOwnerAppearance(storedGui112);
 async function importOwnerJar(jar){
  const {assets,JSZip}=await readOwner112Jar(jar);
@@ -518,7 +520,16 @@ function loop(now){requestAnimationFrame(loop);
   }
   else survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
   weatherCycle.update(dt);entityWorld.update(dt,player);drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
-  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;const ratio=Math.min(1,damage/mineSeconds(t.id,inventory[selected]?.id??0));mineProgress(el('miningIndicator'),ratio,BLOCK_NAMES[t.id]??'블록');el('miningIndicator').setAttribute('aria-valuenow',String(Math.round(ratio*100)));if(damage>=mineSeconds(t.id,inventory[selected]?.id??0)){breakBlock(t);damage=0}}else{damage=0;mineProgress(el('miningIndicator'),0);}
+  if(daylightCycle)day=(day+dt/1200)%1;effects.update(dt);const angle=day*Math.PI*2,light=Math.max(.12,Math.sin(angle)*.9+.32);sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);sunlight.intensity=light*1.5;ambient.intensity=.35+light*.9;worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius);waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){const id=`${t.x},${t.y},${t.z}`;if(id!==aimKey){aimKey=id;damage=0}damage+=dt;
+    const equipped=inventory[selected]??{id:0},duration=mineSeconds(t.id,equipped,{
+     underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER,
+     onGround:player.onGround,haste:player.hasteLevel??0,miningFatigue:player.fatigueLevel??0,
+     aquaAffinity:!!player.aquaAffinity
+    });
+    const ratio=duration<=0?1:Math.min(1,damage/duration);
+    breakOverlay.setTarget(t,ratio);mineProgress(el('miningIndicator'),0);
+    if(damage>=duration){breakBlock(t);damage=0;breakOverlay.clear();}
+   }else{damage=0;breakOverlay.clear();mineProgress(el('miningIndicator'),0);}
  saveTimer-=dt;if(saveTimer<=0){saveTimer=20;try{localStorage.setItem(worldSaveKey(),JSON.stringify(snapshot()))}catch{}}
  }
  loadArea();if(!activeBuild && pending.length){
