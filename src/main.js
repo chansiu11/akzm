@@ -18,7 +18,7 @@ import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
 import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js';
-import {setupCommandUI} from './command-ui.js?v=1.1';
+import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js';
 import {WeatherCycle} from './environment.js?v=1.3';
 import {createWorldVisuals} from './world-visuals.js?v=1.3';
