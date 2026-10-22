@@ -5,7 +5,7 @@ import {ownerBlockQuads112,firstPersonPose112} from './item-model112.js';
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {uvFor} from './atlas.js?v=1.7';
-import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov} from './held-item-view.js?v=1.1';
+import {heldItemView,BOX_FACE_NORMALS,boxGeometryUV,firstPersonFov} from './held-item-view.js?v=1.2';
 const skin=new THREE.MeshLambertMaterial({color:'#d9ab86'});
 const sleeve=new THREE.MeshLambertMaterial({color:'#477c92'});
 function cube(w,h,d,material){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material)}
