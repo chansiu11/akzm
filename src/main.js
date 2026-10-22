@@ -5,7 +5,7 @@ import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,deco
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.2';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import {installBundledSiteTheme112} from './site-default112.js';
-import {MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112} from './player-motion112.js';
+import {MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
 import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
@@ -171,27 +171,34 @@ function moveAxis(axis,delta){
    if(axis!=='y' && player.onGround && !collides(tx,player.y+.6,tz)){
     player.y+=.6;player[axis]=nv;player.onGround=false;continue;
    }
-   if(axis!=='y'&&(keys.has('Space')||mobileJump)&&world.get(Math.floor(player.x),Math.floor(player.y+.1),Math.floor(player.z))===BLOCK.WATER)player.vy=Math.max(player.vy,5.2);
+   if(axis!=='y'&&(keys.has('Space')||mobileJump)&&waterContact112(world,player,BLOCK.WATER))player.vy=waterExitLift112(player.vy,{jump:true,inWater:true,blockedByShore:true});
    if(axis==='y'){if(d<0)player.onGround=true;player.vy=0}
    return;
   }
   player[axis]=nv;
  }
 }
-function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !sneaking;let speed=sneaking?MOVE_SPEED112.sneak:sprinting?MOVE_SPEED112.sprint:MOVE_SPEED112.walk;if(usingFood)speed*=.2;
+function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;
+ const immersed=waterContact112(world,player,BLOCK.WATER);
+ const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !sneaking && !immersed;
+ let speed=sneaking?MOVE_SPEED112.sneak:sprinting?MOVE_SPEED112.sprint:MOVE_SPEED112.walk;
+ if(immersed)speed*=.5;
+ if(usingFood)speed*=.2;
   if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;}
   const targetX=(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*speed;
   const targetZ=(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*speed;
-  const next=horizontalVelocity112(player.vx,player.vz,targetX,targetZ,dt,{ground:player.onGround});
+  const next=horizontalVelocity112(player.vx,player.vz,targetX,targetZ,dt,{ground:player.onGround,water:immersed});
   player.vx=next.x;player.vz=next.z;
   moveAxis('x',player.vx*dt);moveAxis('z',player.vz*dt);
- const water=world.get(Math.floor(player.x),Math.floor(player.y+.7),Math.floor(player.z))===BLOCK.WATER;
+ const water=waterContact112(world,player,BLOCK.WATER);
  const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER;
- if((keys.has('Space')||mobileJump)&&(player.onGround||water)){player.vy=water?4:MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05)}
+ const jumpPressed=keys.has('Space')||mobileJump;
+ if(jumpPressed&&water)player.vy=waterExitLift112(player.vy,{jump:true,inWater:true});
+ else if(jumpPressed&&player.onGround){player.vy=MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05);}
  player.vy=verticalVelocity112(player.vy,dt,{water});player.onGround=false;moveAxis('y',player.vy*dt);
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
  if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){audio.beep('hit');registerHurt('fall');}}fallDistance=0;}
- survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:Math.hypot(player.x-startX,player.z-startZ),swimming:water});
+ survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,travelDistance:water?Math.hypot(player.x-startX,player.y-initialY,player.z-startZ):Math.hypot(player.x-startX,player.z-startZ),swimming:water});
  if(survival.dead)showDeath();
  if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;survival.damage(4);registerHurt('void');}}else voidDamageTime=0;
  if(survival.dead)showDeath();
@@ -413,7 +420,7 @@ canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
 window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}if(e.code==='Escape'&&running&&touchMode){pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
-canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.3);}clickHold=true;damage=0;mineTickRemainder=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.1);}clickHold=true;damage=0;mineTickRemainder=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
 const heldDirections=new Set();
