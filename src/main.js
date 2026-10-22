@@ -346,8 +346,8 @@ function requestPlay({autoResume=false}={}){
 function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();menus.showPause()}
 // Initial command subset; commands never bypass the same World.set limits as normal placing.
 const commandUI=setupCommandUI({
- onOpen:()=>{running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.()},
- onClose:()=>{if(!survival.dead)requestPlay();},
+ onOpen:()=>{document.body.classList.add('command-open112');running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;document.exitPointerLock?.()},
+ onClose:()=>{document.body.classList.remove('command-open112');if(!survival.dead)requestPlay();},
  onResult:result=>chatReply112(result.message),
  context:()=>({
   position:()=>[player.x,player.y,player.z],
@@ -439,9 +439,21 @@ function syncDpad(){
 }
 function holdAction(id,onStart,onEnd){
  const b=el(id);let heldPointer=null;
- b.addEventListener('pointerdown',e=>{if(!running||heldPointer!==null)return;e.preventDefault();heldPointer=e.pointerId;b.setPointerCapture?.(e.pointerId);onStart();});
+ b.addEventListener('pointerdown',e=>{
+  if(!running||heldPointer!==null)return;
+  e.preventDefault();heldPointer=e.pointerId;
+  b.classList.add('pressed');b.setAttribute('aria-pressed','true');
+  b.setPointerCapture?.(e.pointerId);onStart();
+ });
  for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,e=>{
-  if(e.pointerId===heldPointer){heldPointer=null;onEnd?.();}
+  if(e.pointerId!==heldPointer)return;
+  heldPointer=null;b.classList.remove('pressed');b.setAttribute('aria-pressed','false');
+  onEnd?.();
+ });
+ window.addEventListener('blur',()=>{
+  if(heldPointer===null)return;
+  heldPointer=null;b.classList.remove('pressed');b.setAttribute('aria-pressed','false');
+  onEnd?.();
  });
 }
 for(const [direction,id] of [['up','touchUp'],['down','touchDown'],['left','touchLeft'],['right','touchRight']]){
