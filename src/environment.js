@@ -12,7 +12,7 @@ export function skyColor(ticks,weather='clear'){
 }
 export function lightingInfo(ticks,weather='clear'){
  const level=daylight(ticks),dim=weather==='clear'?1:weather==='rain'?.72:.45;
- return {sky:skyColor(ticks,weather),sunIntensity:(.1+level*1.25)*dim,ambientIntensity:.2+level*.85*dim,stars:clamp((.5-level)*2.6,0,1),fogNear:weather==='clear'?32:18,fogFar:weather==='clear'?110:weather==='rain'?70:45};
+ return {sky:skyColor(ticks,weather),sunIntensity:(.24+level*1.58)*dim,ambientIntensity:.45+level*.85*dim,stars:clamp((.5-level)*2.6,0,1),fogNear:weather==='clear'?32:18,fogFar:weather==='clear'?110:weather==='rain'?70:45};
 }
 export class WeatherCycle {
  constructor(saved={}){this.kind=WEATHER.includes(saved.kind)?saved.kind:'clear';this.remaining=Number.isFinite(saved.remaining)&&saved.remaining>0?saved.remaining:600;this.locked=!!saved.locked;}
