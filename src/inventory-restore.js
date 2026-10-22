@@ -7,6 +7,13 @@ function valid(raw){
  if(!def||!Number.isInteger(count)||count<1||count>1000000)return null;
  const result={id,count};
  if(def.stackLimit===1&&Number.isInteger(raw.damage)&&raw.damage>=0)result.damage=raw.damage;
+ if(def.stackLimit===1){
+  const input=raw.enchantments??raw.enchants;
+  if(input&&typeof input==='object'&&!Array.isArray(input)){
+   const efficiency=Math.min(5,Math.max(0,Math.floor(Number(input.efficiency??input.Efficiency)||0)));
+   if(efficiency>0)result.enchantments={efficiency};
+  }
+ }
  return result;
 }
 export function replenishOverflow(slots,backlog){
@@ -17,7 +24,7 @@ export function replenishOverflow(slots,backlog){
   if(!item){backlog.splice(i,1);continue;}
   let remaining=item.count;
   if(itemDefinition(item.id).stackLimit===1){
-   for(let n=0;n<slots.length&&remaining>0;n++)if(!slots[n]?.id){slots[n]={id:item.id,count:1,...(item.damage!==undefined?{damage:item.damage}:{})};remaining--;}
+   for(let n=0;n<slots.length&&remaining>0;n++)if(!slots[n]?.id){slots[n]={id:item.id,count:1,...(item.damage!==undefined?{damage:item.damage}:{}),...(item.enchantments?{enchantments:item.enchantments}:{})};remaining--;}
   }else remaining=giveItem(slots,item.id,remaining);
   placed+=item.count-remaining;
   if(remaining<=0)backlog.splice(i,1);
