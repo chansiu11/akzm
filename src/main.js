@@ -20,8 +20,8 @@ import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockT
 import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js';
 import {setupCommandUI} from './command-ui.js?v=1.1';
 import {createParticles} from './particles.js';
-import {WeatherCycle} from './environment.js?v=1.2';
-import {createWorldVisuals} from './world-visuals.js?v=1.2';
+import {WeatherCycle} from './environment.js?v=1.3';
+import {createWorldVisuals} from './world-visuals.js?v=1.3';
 import {createChunkLight} from './voxel-light.js?v=1.2';
 import {waterQuadUV,waterTileRegion} from './water-visuals.js';
 import {SKY_CAMERA_FAR} from './sky-cycle.js';
@@ -52,7 +52,7 @@ import {createFirstPerson} from './first-person.js?v=1.9';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.0';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.1';
 
 const el=id=>document.getElementById(id);
 installBundledSiteTheme112();
