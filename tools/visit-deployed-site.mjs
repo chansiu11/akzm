@@ -8,7 +8,7 @@ const site='https://chansiu11.github.io/akzm/';
 await mkdir('site-review',{recursive:true});
 // A push may start before Pages finishes. Never call old deployed files a test
 // of the new commit: wait for the entry point and changed visual modules.
-const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js','src/item-model112.js','src/site-default112.js','src/player-motion112.js','src/chunk-builder.js','src/voxel-light.js','src/environment.js','src/world-visuals.js','src/bitmap-font112.js'];
+const sources=['index.html','gui112.css','src/main.js','src/first-person.js','src/held-item-view.js','src/gui112-layout.js','menu112.css','src/menu112-assets.js','src/gui112-assets.js','src/menu-panorama.js','src/resource-pack.js','src/atlas.js','src/block-registry.js','src/bitmap-font112.js','src/private-resource-cache.js','src/title-layout112.js','src/menu.js','src/item-extrusion.js','src/block-item-icons.js','src/player-preview112.js','src/item-model112.js','src/site-default112.js','src/player-motion112.js','src/chunk-builder.js','src/voxel-light.js','src/environment.js','src/world-visuals.js','src/bitmap-font112.js','src/vanilla-mining.js','src/break-overlay112.js','visual-overhaul.css'];
 const digest=data=>createHash('sha256').update(data).digest('hex');
 const expected=Object.fromEntries(await Promise.all(sources.map(async file=>[file,digest(await readFile(file))])));
 let pending=sources.slice();
@@ -46,6 +46,50 @@ async function review(viewport,label,touch=false){
    throw Error('Public site does not bundle its own menu sprite without a JAR: '+JSON.stringify(defaultGraphics));
   if(!defaultGraphics.menuLabel.includes('선택'))throw Error('Original resource upload must be optional');
   await page.screenshot({path:'site-review/'+label+'-title.png',fullPage:true});
+  if(label==='desktop'){
+   // Separate browser profile validates persisted world creation and deletion.
+   const worldContext=await browser.newContext({viewport,deviceScaleFactor:1,permissions:[]});
+   const worldPage=await worldContext.newPage();
+   try{
+    await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
+    await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
+    await worldPage.locator('#menuSingle').click();
+    await worldPage.locator('#worldCreate').click();
+    await worldPage.locator('#menu-create').waitFor({state:'visible'});
+    await worldPage.locator('#worldName').fill('자동 검사 새 세계');
+    await worldPage.screenshot({path:'site-review/world-create-form.png'});
+    await worldPage.locator('#createConfirm').click();
+    await worldPage.waitForFunction(()=>{
+     try{
+      const a=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
+      return a.some(w=>w.name==='자동 검사 새 세계');
+     }catch{return false;}
+    },{timeout:20000});
+    const newId=await worldPage.evaluate(()=>{
+     const worlds=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1'));
+     return worlds.find(w=>w.name==='자동 검사 새 세계').id;
+    });
+    await worldPage.waitForFunction(()=>document.querySelector('#overlay:not(.show)'),{timeout:30000});
+    await worldPage.screenshot({path:'site-review/world-created-gameplay.png'});
+    await worldPage.goto(site,{waitUntil:'domcontentloaded',timeout:60000});
+    await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
+    await worldPage.locator('#menuSingle').click();
+    await worldPage.locator('[data-world-id="'+newId+'"]').click();
+    await worldPage.locator('#worldDelete').click();
+    await worldPage.locator('#menu-delete').waitFor({state:'visible'});
+    await worldPage.screenshot({path:'site-review/world-delete-confirmation.png'});
+    await worldPage.locator('#deleteConfirm').click();
+    await worldPage.locator('#menu-worlds').waitFor({state:'visible'});
+    const deleted=await worldPage.evaluate(id=>{
+     const worlds=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
+     return !worlds.some(w=>w.id===id)&&!localStorage.getItem('voxel-frontier-save-v1-'+id);
+    },newId);
+    if(!deleted)throw Error('World deletion did not persist in browser storage');
+    if(await worldPage.locator('#menu-title').isVisible())throw Error('Deleting a world incorrectly returned to title');
+    await worldPage.screenshot({path:'site-review/world-after-delete.png'});
+   }finally{await worldContext.close();}
+  }
+
   if(!await page.title().then(t=>t.includes('Minecraft 1.12.2')))throw Error('Game title mismatch');
   for(const selector of ['#menuSingle','#menuSettings','#menuExit']){
    const box=await page.locator(selector).boundingBox();
