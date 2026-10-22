@@ -137,3 +137,61 @@ export function ownerBlockQuads112(elements){
  }
  return out;
 }
+
+/**
+ * Owner-local ItemModel display.firstperson_righthand; Java 1.12.2 resolves
+ * missing child display transforms from the first parent defining them.
+ * Save only validated numeric transforms, never JAR model source/assets.
+ */
+export function cleanHeldTransform112(transform){
+ if(!transform||typeof transform!=='object')return null;
+ const pick=(key,defaultValue,limit,positive=false)=>{
+  const data=transform[key]??defaultValue;
+  if(!Array.isArray(data)||data.length!==3||
+    !data.every(v=>typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=limit&&(!positive||v>0)))return null;
+  return data.slice();
+ };
+ const rotation=pick('rotation',[0,0,0],360);
+ const translation=pick('translation',[0,0,0],80);
+ const scale=pick('scale',[1,1,1],4,true);
+ return rotation&&translation&&scale?{rotation,translation,scale}:null;
+}
+export async function readOwnerFirstPersonModels112(zip,items){
+ const result={};
+ const cache=new Map();
+ async function parsed(path){
+  if(cache.has(path))return cache.get(path);
+  const entry=zip.file(path);
+  let value=null;
+  if(entry)try{value=JSON.parse(await entry.async('string'));}catch{}
+  cache.set(path,value);return value;
+ }
+ for(const item of items){
+  const name=item?.blockId!==null&&item?.blockId!==undefined?
+   ownerBlockItemModelName(item):String(item?.key??'').split(':')[1];
+  if(!name||!SAFE_NAME.test(name))continue;
+  let path='assets/minecraft/models/item/'+name+'.json';
+  const visited=new Set();
+  for(let depth=0;depth<16&&!visited.has(path);depth++){
+   visited.add(path);
+   const model=await parsed(path);if(!model)break;
+   const transform=cleanHeldTransform112(model.display?.firstperson_righthand);
+   if(transform){result[item.id]=transform;break;}
+   const parent=String(model.parent??'').replace(/^minecraft:/,'');
+   if(!SAFE_PARENT.test(parent)||parent.includes('..'))break;
+   path='assets/minecraft/models/'+parent+'.json';
+  }
+ }
+ return result;
+}
+export function firstPersonPose112(transform,{item=false}={}){
+ // The world-view equip position remains the anchor. All model display
+ // attributes retain their relative rotations (including negative Y).
+ if(!transform)return {rotation:item?[0,-.65,-.15]:[.2,.78,.10],offset:[0,0,0],scale:[1,1,1]};
+ const sign=Math.PI/180;
+ return {
+  rotation:transform.rotation.map(v=>v*sign),
+  offset:transform.translation.map(v=>v/16),
+  scale:transform.scale.map(v=>v/.68)
+ };
+}
