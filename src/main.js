@@ -1,5 +1,5 @@
 import {renderBlockItemIcons} from './block-item-icons.js';
-import {createPlayerPreview112} from './player-preview112.js';
+import {createPlayerPreview112} from './player-preview112.js?v=1.1';
 import {installTitleLayout112} from './title-layout112.js';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.2';
