@@ -381,3 +381,12 @@ html.site-default112:not(.menu112-assets) #overlay .menu-page.menu-vanilla112{
  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 #overlay #menu-pause #weatherToggle{display:none!important}
+
+/* Verified on the deployed 844x390 pause screenshot: the title panorama and
+   title copyright footer must not replace the actual in-game scene. */
+body.menu-open:has(#menu-pause:not(.hidden)) #menuPanorama{
+ display:none!important;visibility:hidden!important
+}
+body:has(#menu-pause:not(.hidden)) #overlay .menu-footer{
+ display:none!important
+}

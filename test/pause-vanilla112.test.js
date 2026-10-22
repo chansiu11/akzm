@@ -10,7 +10,9 @@ test('the in-world pause screen resembles the 1.12.2 200px GUI, not the title pa
  assert.match(html,/id="weatherToggle"[^>]*hidden/);
  assert.match(css,/#overlay #menu-pause \.pause-buttons112/);
  assert.match(css,/#overlay:has\(#menu-pause:not\(\.hidden\)\)/);
- assert.match(css,/#overlay #menu-pause #weatherToggle\{display:none!important\}/);
+ assert.match(css,/#overlay #menu-pause #weatherToggle\\{display:none!important\\}/);
+ assert.match(css,/body\\.menu-open:has\\(#menu-pause:not\\(\\.hidden\\)\\) #menuPanorama/);
+ assert.match(audit,/pauseUI\\.panorama!=='none'/);
  assert.match(audit,/clickAndCapture\(page,'#pauseSettings'/);
  assert.match(audit,/clickAndCapture\(page,'#pauseResume'/);
 });

@@ -397,11 +397,13 @@ async function review(viewport,label,touch=false){
    const pause=document.getElementById('menu-pause'),a=document.getElementById('pauseResume').getBoundingClientRect();
    const b=document.getElementById('pauseTitle').getBoundingClientRect();
    const bg=getComputedStyle(pause).backgroundImage;
+   const panorama=getComputedStyle(document.getElementById('menuPanorama')).display;
+   const footer=getComputedStyle(document.querySelector('#overlay .menu-footer')).display;
    return {buttons:pause.querySelectorAll('.pause-buttons112 button.stone-button').length,
      aligned:Math.abs(a.x-b.x)<1&&Math.abs(a.width-b.width)<1,
-     titleBelow:b.y>a.y,background:bg};
+     titleBelow:b.y>a.y,background:bg,panorama,footer};
   });
-  if(pauseUI.buttons!==6||!pauseUI.aligned||!pauseUI.titleBelow||pauseUI.background!=='none')
+  if(pauseUI.buttons!==6||!pauseUI.aligned||!pauseUI.titleBelow||pauseUI.background!=='none'||pauseUI.panorama!=='none'||pauseUI.footer!=='none')
    throw Error('Stage pause screen differs from Java GUI: '+JSON.stringify(pauseUI));
   await clickAndCapture(page,'#pauseSettings',label+'-click-pause-options','#menu-settings');
   await clickAndCapture(page,'#settingsSave',label+'-click-return-pause','#menu-pause');
