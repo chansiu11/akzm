@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {daylight,lightingInfo} from '../src/environment.js';
+import {daylight,lightingInfo,skyColor} from '../src/environment.js';
 import {BLOCK} from '../src/block-registry.js';
 import {activeLampsNear,createChunkLight} from '../src/voxel-light.js';
 import {deathMessageKey112,formatOwnerDeath112} from '../src/death-messages112.js';
@@ -14,6 +14,10 @@ test('sunset and midnight remain darker than actual Java-style daytime',()=>{
  assert.ok(noon.ambientIntensity>evening.ambientIntensity);
  assert.ok(evening.ambientIntensity>midnight.ambientIntensity);
  assert.ok(noon.sunIntensity>midnight.sunIntensity*2);
+ assert.ok(skyColor(13000)[2]<100,'night should not still be bright blue at tick 13000');
+ assert.ok(skyColor(6000)[2]>skyColor(13000)[2]*2);
+ const visual=readFileSync(new URL('../src/world-visuals.js',import.meta.url),'utf8');
+ assert.match(visual,/new THREE.Color\(\)\.setRGB\(\.\.\.l\.sky\.map\(v=>v\/255\),THREE\.SRGBColorSpace\)/);
  assert.ok(midnight.stars>.9);
 });
 test('temporary night-vision brightens nighttime world, without moving the sun or stars',()=>{
