@@ -57,6 +57,9 @@ async function review(viewport,label,touch=false){
   const titleGeometry=await page.locator('#menuSingle').boundingBox();
   const expectedScale=Math.max(1,Math.min(Math.floor(viewport.width/320),Math.floor(viewport.height/240)));
   if(Math.abs(titleGeometry.width-200*expectedScale)>.5||Math.abs(titleGeometry.height-20*expectedScale)>.5)throw Error('Title button dimensions differ from logical 200x20');
+  // Newly installed sites expose a higher user-configurable view distance.
+  const viewRange=await page.locator('#settingDistance').evaluate(input=>({min:input.min,max:input.max}));
+  if(Number(viewRange.min)>2||Number(viewRange.max)<10)throw Error('Extended render-distance settings unavailable');
   await page.locator('#menuLanguage').click();
   await page.locator('#menuLanguageSelect').waitFor({state:'visible'});
   await page.locator('#loadJar112').waitFor({state:'visible'});
@@ -216,6 +219,16 @@ async function review(viewport,label,touch=false){
   await page.waitForFunction(()=>document.getElementById('packStatus')?.textContent.includes('자동 불러오기 완료'));
   await page.waitForFunction(()=>document.documentElement.classList.contains('menu112-assets')&&document.documentElement.classList.contains('gui112-assets'));
   await page.locator('#menu-title .menu-stack > button:nth-child(3) canvas.bitmap-text').waitFor({state:'attached'});
+  const korean=await page.locator('#menuSingle').evaluate(button=>({
+   value:button.textContent.trim(),
+   hidden:button.classList.contains('bitmap-label'),
+   stale:!!button.querySelector('canvas.bitmap-text'),
+   css:getComputedStyle(button).color
+  }));
+  if(korean.value!=='싱글플레이'||korean.hidden||korean.stale||korean.css==='rgba(0, 0, 0, 0)')
+   throw Error('Korean label corrupted after original bitmap font load: '+JSON.stringify(korean));
+  const ownerButtonBg=await page.locator('#menuSingle').evaluate(button=>getComputedStyle(button,'::before').backgroundImage);
+  if(!ownerButtonBg.includes('data:image/png'))throw Error('Owner JAR button texture not applied');
   await page.locator('#menuSingle').click();
   await page.locator('#worldPlay').click();
   await page.waitForTimeout(1000);
