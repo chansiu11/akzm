@@ -310,3 +310,15 @@ body:has(.menu-page.menu-vanilla112:not(.hidden)) #overlay .menu-footer{display:
 #overlay .menu-vanilla112 .world-delete-question112 p{font:inherit!important;margin:calc(5px * var(--menu-scale,1)) 0!important;color:inherit}
 #overlay .menu-vanilla112 .world-delete-question112 strong{color:#fff;font-weight:bold}
 #overlay .menu-vanilla112 .world-delete-question112 #deleteError{color:#e99}
+
+/* Create/Delete buttons are anchored to the viewport, never under the title. */
+#overlay #menu-create .world-actions112,#overlay #menu-delete .world-actions112{
+ position:absolute!important;left:50%!important;
+ bottom:calc(8px * var(--menu-scale,1))!important;top:auto!important;
+ transform:translateX(-50%)!important;
+ width:calc(310px * var(--menu-scale,1))!important;
+ max-width:calc(100% - 12px * var(--menu-scale,1))!important;
+ display:flex!important;flex-direction:column!important;
+ gap:calc(4px * var(--menu-scale,1))!important;z-index:4!important
+}
+#overlay .menu-page.menu-vanilla112 > h2{pointer-events:none!important}
