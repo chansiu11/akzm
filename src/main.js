@@ -318,15 +318,24 @@ function cancelUsing(){usingFood=false;foodHold=0;}
 
 function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));playerPreview112.draw()}
 function closeInventory(){document.body.classList.remove('inventory-open');recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
+let pendingFullscreenAfterWorldCreation112=false;
+document.addEventListener('pointerdown',()=>{
+ if(!pendingFullscreenAfterWorldCreation112||!enteredWorld)return;
+ pendingFullscreenAfterWorldCreation112=false;
+ const req=document.documentElement.requestFullscreen?.();
+ req?.catch?.(()=>{/* User-gesture fullscreen may be restricted by this browser. */});
+},{capture:true});
 function requestPlay({autoResume=false}={}){
  document.body.classList.remove('inventory-open');enteredWorld=true;worldPaused=false;
  menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;
  running=true;
  if(autoResume){
-  // Reloaded new worlds load directly into gameplay. Browsers prohibit
-  // automatic pointer lock/fullscreen without a fresh user gesture.
+  // On newly created worlds the page has reloaded, so the browser won't
+  // permit fullscreen until the player's next real pointer gesture.
+  pendingFullscreenAfterWorldCreation112=true;
   return;
  }
+ pendingFullscreenAfterWorldCreation112=false;
  const fullscreen=document.documentElement.requestFullscreen?.();
  fullscreen?.catch?.(()=>{/* Browser refused fullscreen; windowed play is supported. */});
  if(!touchMode){
