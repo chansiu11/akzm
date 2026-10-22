@@ -29,10 +29,10 @@ export function effectiveMiningTool112(blockId,itemId){
  if(itemId>=122&&itemId<=126)return SHOVEL_EFFECTIVE.has(blockId);
  return false;
 }
-export function mineSeconds(blockId,toolOrSlot=0,options={}){
+export function miningProgressPerTick112(blockId,toolOrSlot=0,options={}){
  const def=definition(blockId);
- if(!def||def.hardness<0)return Infinity;
- if(def.hardness===0)return 0;
+ if(!def||def.hardness<0)return 0;
+ if(def.hardness===0)return 1;
  const slot=typeof toolOrSlot==='object'&&toolOrSlot!==null?toolOrSlot:{id:toolOrSlot};
  const id=slot.id??0,helpful=effectiveMiningTool112(blockId,id);
  const canCollect=canHarvest(blockId,id);
@@ -48,8 +48,16 @@ export function mineSeconds(blockId,toolOrSlot=0,options={}){
  if(options.underwater&&!options.aquaAffinity)speed/=5;
  if(options.onGround===false)speed/=5;
  const damage=speed/def.hardness/(canCollect?30:100);
- if(damage>=1)return 0;
- return Math.ceil(1/damage)/20;
+ return Math.max(0,damage);
+}
+export function mineSeconds(blockId,toolOrSlot=0,options={}){
+ const def=definition(blockId);
+ if(!def||def.hardness<0)return Infinity;
+ if(def.hardness===0)return 0;
+ const progress=miningProgressPerTick112(blockId,toolOrSlot,options);
+ if(progress>=1)return 0;
+ if(progress<=0)return Infinity;
+ return Math.ceil(1/progress)/20;
 }
 export function mineStage112(seconds,requiredSeconds){
  if(!Number.isFinite(requiredSeconds))return -1;
