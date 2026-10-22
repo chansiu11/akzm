@@ -26,6 +26,18 @@ if(pending.length)throw Error('Pages does not match checkout: '+pending.join(', 
 await writeFile('site-review/deployment.json',JSON.stringify({commit:process.env.GITHUB_SHA??null,site,sha256:expected},null,2));
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
 const failures=[];
+async function clickAndCapture(page,selector,label,nextScreen=null){
+ await page.locator(selector).click({timeout:30000});
+ if(nextScreen)await page.locator(nextScreen).waitFor({state:'visible',timeout:30000});
+ await page.screenshot({path:'site-review/'+label+'.png',fullPage:false});
+ console.log('Clicked and captured '+selector+' => '+label);
+}
+async function pressAndCapture(page,key,label,nextScreen=null){
+ await page.keyboard.press(key);
+ if(nextScreen)await page.locator(nextScreen).waitFor({state:'visible',timeout:30000});
+ await page.screenshot({path:'site-review/'+label+'.png',fullPage:false});
+ console.log('Pressed and captured '+key+' => '+label);
+}
 async function review(viewport,label,touch=false){
  const context=await browser.newContext({viewport,deviceScaleFactor:1,isMobile:touch,hasTouch:touch});
  const page=await context.newPage();
@@ -84,12 +96,12 @@ async function review(viewport,label,touch=false){
     // rendering 6+ background chunks while testing storage navigation.
     await worldPage.evaluate(()=>localStorage.setItem('voxel-frontier-settings-v1',
       JSON.stringify({fov:75,renderDistance:2,renderDistanceV2:true,sensitivity:.24,showCoordinates:true})));
-    await worldPage.locator('#menuSingle').click();
-    await worldPage.locator('#worldCreate').click();
+    await clickAndCapture(worldPage,'#menuSingle','world-click01-single','#menu-worlds');
+    await clickAndCapture(worldPage,'#worldCreate','world-click02-create','#menu-create');
     await worldPage.locator('#menu-create').waitFor({state:'visible'});
     await worldPage.locator('#worldName').fill('자동 검사 새 세계');
     await worldPage.screenshot({path:'site-review/world-create-form.png'});
-    await worldPage.locator('#createConfirm').click();
+    await clickAndCapture(worldPage,'#createConfirm','world-click03-create-confirm');
     await worldPage.waitForFunction(()=>{
      try{
       const a=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
@@ -106,10 +118,10 @@ async function review(viewport,label,touch=false){
     await worldPage.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
     await worldPage.locator('#menuSingle').click();
     await worldPage.locator('[data-world-id="'+newId+'"]').click();
-    await worldPage.locator('#worldDelete').click();
+    await clickAndCapture(worldPage,'#worldDelete','world-click05-delete','#menu-delete');
     await worldPage.locator('#menu-delete').waitFor({state:'visible'});
     await worldPage.screenshot({path:'site-review/world-delete-confirmation.png'});
-    await worldPage.locator('#deleteConfirm').click();
+    await clickAndCapture(worldPage,'#deleteConfirm','world-click06-delete-confirm','#menu-worlds');
     await worldPage.locator('#menu-worlds').waitFor({state:'visible'});
     const deleted=await worldPage.evaluate(id=>{
      const worlds=JSON.parse(localStorage.getItem('voxel-frontier-worlds-v1')||'[]');
@@ -144,10 +156,10 @@ async function review(viewport,label,touch=false){
   const viewRange=await page.locator('#settingDistance').evaluate(input=>({min:input.min,max:input.max}));
   if(Number(viewRange.min)>2||Number(viewRange.max)<10)throw Error('Extended render-distance settings unavailable');
   // The 1.12.2-inspired Options menu uses dedicated language/resource/video screens.
-  await page.locator('#menuLanguage').click();
+  await clickAndCapture(page,'#menuLanguage',label+'-click01-language','#menu-language');
   await page.locator('#menuLanguageSelect').waitFor({state:'visible'});
   await page.screenshot({path:'site-review/'+label+'-language.png'});
-  await page.locator('#languageDone').click();
+  await clickAndCapture(page,'#languageDone',label+'-click02-language-done','#menu-settings');
   await page.locator('#menu-settings').waitFor({state:'visible'});
   const twoColumnOptions=await page.locator('#settingsVideo').evaluate(button=>{
    const video=button.getBoundingClientRect(),controls=document.getElementById('settingsControls').getBoundingClientRect();
@@ -156,16 +168,19 @@ async function review(viewport,label,touch=false){
   });
   if(!twoColumnOptions.twoColumns||!(twoColumnOptions.controlsX>twoColumnOptions.videoX))throw Error('1.12.2 Options two-column grid failed');
   await page.screenshot({path:'site-review/'+label+'-options.png'});
-  await page.locator('#settingsVideo').click();
+  await clickAndCapture(page,'#settingsVideo',label+'-click03-video','#menu-video');
   await page.locator('#menu-video').waitFor({state:'visible'});
   await page.locator('#settingDistance').waitFor({state:'visible'});
   await page.screenshot({path:'site-review/'+label+'-video-options.png'});
-  await page.locator('#videoDone').click();
-  await page.locator('#settingsResources').click();
+  await clickAndCapture(page,'#videoDone',label+'-click04-video-done','#menu-settings');
+  await clickAndCapture(page,'#settingsResources',label+'-click05-resources','#menu-resources');
   await page.locator('#loadJar112').waitFor({state:'visible'});
   await page.screenshot({path:'site-review/'+label+'-resource-options.png'});
-  await page.locator('#resourcesDone').click();
-  await page.locator('#settingsSave').click();
+  await clickAndCapture(page,'#resourcesDone',label+'-click06-resources-done','#menu-settings');
+  await clickAndCapture(page,'#settingsSave',label+'-click07-settings-done','#menu-title');
+   await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+   await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
+   await page.screenshot({path:'site-review/'+label+'-after-settings-reload.png'});
   // An original transparent texel must replace, not overlay, generated fallback art.
   await page.evaluate(async()=>{
    const {loadLocalResourcePack}=await import('./src/resource-pack.js?v=1.2');
@@ -227,7 +242,7 @@ async function review(viewport,label,touch=false){
   await page.evaluate(()=>document.getElementById('ownerBlockModelFixture')?.remove());
   // The menu navigation is installed by main.js, so this tests code executed, not only static HTML.
   await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true');
-  await page.locator('#menuSingle').click({timeout:30000});
+  await clickAndCapture(page,'#menuSingle',label+'-click08-singleplayer','#menu-worlds');
   await page.locator('#menu-worlds').waitFor({state:'visible',timeout:30000});
   for(const id of ['worldPlay','worldCreate','worldEdit','worldDelete','worldRecreate','worldBack'])
    await page.locator('#'+id).waitFor({state:'visible'});
@@ -242,14 +257,14 @@ async function review(viewport,label,touch=false){
   });
   if(!footer.aligned||!footer.secondBelow||!footer.listAbove)throw Error('1.12.2 six-button world selection layout failed: '+JSON.stringify(footer));
   await page.screenshot({path:'site-review/'+label+'-worlds.png'});
-  await page.locator('#worldEdit').click();
+  await clickAndCapture(page,'#worldEdit',label+'-click09-edit','#menu-edit');
   await page.locator('#menu-edit').waitFor({state:'visible'});
   await page.locator('#worldEditName').waitFor({state:'visible'});
   await page.screenshot({path:'site-review/'+label+'-world-edit.png'});
-  await page.locator('#worldEditBack').click();
-  await page.locator('#worldRecreate').click();
+  await clickAndCapture(page,'#worldEditBack',label+'-click10-edit-back','#menu-worlds');
+  await clickAndCapture(page,'#worldRecreate',label+'-click11-recreate','#menu-create');
   await page.locator('#menu-create').waitFor({state:'visible'});
-  await page.locator('#createBack').click();
+  await clickAndCapture(page,'#createBack',label+'-click12-create-back','#menu-worlds');
   // Regression test: the site's real CSS must react to the class on <html>.
   const result=await page.evaluate(()=>{
    const root=document.documentElement,bar=document.getElementById('hotbar'),cross=document.getElementById('crosshair');
@@ -263,7 +278,7 @@ async function review(viewport,label,touch=false){
    return {spriteApplied:bg.includes('data:image/png'),crossWidth:width};
   });
   if(!result.spriteApplied)throw Error('Imported GUI sprite CSS did not activate on <html>.');
-  await page.locator('#worldPlay').click({timeout:30000});
+  await clickAndCapture(page,'#worldPlay',label+'-click13-play');
   await page.waitForTimeout(7000);
   await page.screenshot({path:'site-review/'+label+'-gameplay.png'});
   // Phase 5: actual site slash/touch command UI, Enter/Escape, mobile actions.
@@ -375,7 +390,7 @@ async function review(viewport,label,touch=false){
   const iconApplied=await page.locator('#invItems .tileIcon').first().evaluate(el=>el.classList.contains('owner-item-icon')&&el.style.backgroundImage.includes('data:image/png'));
   if(!iconApplied)throw Error('Block inventory icon was not rendered from the model');
 
-  await page.locator('#closeInventory').click();
+  await clickAndCapture(page,'#closeInventory',label+'-click16-inventory-close');
   await page.locator('#inventory').waitFor({state:'hidden'});
   await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',bubbles:true})));
   await page.locator('#inventory').waitFor({state:'visible'});
