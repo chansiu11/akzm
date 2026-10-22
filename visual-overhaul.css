@@ -206,3 +206,33 @@ body.touch-ui #commandPanel.command-panel{max-height:min(44dvh,calc(135px * var(
 body.touch-ui #touchDpad button.pressed,body.touch-ui #touchJump.pressed{
  background:#c5cdcb!important;border-color:#fff!important;box-shadow:inset 0 0 calc(3px * var(--gui-scale,1)) #252525a6!important
 }
+
+/* Stage 6: Java 1.12.2 injury is shown by first-person camera roll and sound,
+   not a full-screen, web-app red overlay. */
+#hurtFlash112{display:none!important}
+body:not(.debug-overlay) #target,body:not(.debug-overlay) #status,
+body:not(.debug-overlay) #gameNotice{display:none!important}
+/* Stage 7: vanilla fixed logical 200x20 pixel buttons on the death screen.
+   If the owner privately imports widgets.png, its exact 1.12.2 slices are used. */
+#deathScreen .death-buttons112 button{
+ min-height:0!important;border:calc(3px * var(--gui-scale,1)) solid transparent!important;
+ border-image-source:var(--site112-normal)!important;border-image-slice:3 fill!important;
+ border-image-width:calc(3px * var(--gui-scale,1))!important;
+ border-image-repeat:stretch!important;box-shadow:none!important;
+ border-radius:0!important;background:none!important;padding:0!important;
+ image-rendering:pixelated;color:#fff!important;
+ text-shadow:calc(1px * var(--gui-scale,1)) calc(1px * var(--gui-scale,1)) #202020;
+}
+#deathScreen .death-buttons112 button:hover{
+ border-image-source:var(--site112-hover)!important;color:#ffffa0!important
+}
+html.gui112-assets #deathScreen .death-buttons112 button{
+ border-image-source:var(--owner-death-button-normal,var(--site112-normal))!important
+}
+html.gui112-assets #deathScreen .death-buttons112 button:hover{
+ border-image-source:var(--owner-death-button-hover,var(--site112-hover))!important
+}
+html.gui112-assets #deathScreen .death-buttons112 button:disabled{
+ border-image-source:var(--owner-death-button-disabled,var(--site112-disabled))!important
+}
+#deathScreen #deathReason112:empty{display:none!important}
