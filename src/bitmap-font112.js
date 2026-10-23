@@ -166,6 +166,7 @@ function paintField(input){
  if(!shouldPaint){if(canvas)canvas.style.display='none';input.classList.remove('bitmap-input112');return;}
  if(!canvas){
   canvas=document.createElement('canvas');canvas.className='bitmap-field-layer112';
+  canvas.dataset.bitmapFor=input.id||'unnamed';
   canvas.setAttribute('aria-hidden','true');document.body.append(canvas);fieldCanvases.set(input,canvas);
  }
  const rect=input.getBoundingClientRect(),style=getComputedStyle(input);

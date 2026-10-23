@@ -246,14 +246,14 @@ try{
   bitmap:input.classList.contains('bitmap-input112'),
   pixelsVisible:getComputedStyle(input).color==='rgba(0, 0, 0, 0)' ||
     getComputedStyle(input).color==='transparent',
-  overlay:document.querySelector('canvas.bitmap-field-layer112')?.style.display
+  overlay:document.querySelector('canvas.bitmap-field-layer112[data-bitmap-for="worldEditName"]')?.style.display
  }));
  if(composingState.bitmap||composingState.pixelsVisible||composingState.overlay!=='none')
   throw Error('Korean composing text hidden beneath canvas: '+JSON.stringify(composingState));
  await edit.evaluate(input=>input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'수정'})));
  const afterCompose=await edit.evaluate(input=>({
   bitmap:input.classList.contains('bitmap-input112'),
-  overlay:document.querySelector('canvas.bitmap-field-layer112')?.style.display,
+  overlay:document.querySelector('canvas.bitmap-field-layer112[data-bitmap-for="worldEditName"]')?.style.display,
   value:input.value
  }));
  if(!afterCompose.bitmap||afterCompose.overlay==='none'||afterCompose.value!=='수정')
