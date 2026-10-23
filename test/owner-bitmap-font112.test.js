@@ -34,5 +34,9 @@ test('original glyph files and Korean pages are imported locally and drawn to ca
  assert.match(font,/paintField/);
  assert.match(css,/canvas\.bitmap-text\.bitmap-left112/);
  assert.match(css,/canvas\.bitmap-field-layer112/);
+ assert.match(font,/composingInputs\.has\(input\)/);
+ assert.match(font,/composingInputs\.add\(e\.target\)/);
+ assert.match(font,/composingInputs\.delete\(e\.target\)/);
+ assert.match(file,/0x2e/);
  assert.doesNotMatch(font,/@font-face|Google Fonts/);
 });

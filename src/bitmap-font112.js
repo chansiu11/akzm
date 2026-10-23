@@ -56,7 +56,7 @@ const leftSelector=[
  '#commandPanel .command-output','#status','#chatHistory112','#packStatus'
 ].join(',');
 let font=null,observer=null,queued=false;
-const labelCache=new WeakMap(),fieldCanvases=new Map();
+const labelCache=new WeakMap(),fieldCanvases=new Map(),composingInputs=new WeakSet();
 const img=uri=>new Promise((resolve,reject)=>{
  const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=uri;
 });
@@ -158,6 +158,8 @@ function clearLabel(node){
 }
 function paintField(input){
  if(!font)return;
+ // Native IME composition must stay visible and editable until committed.
+ if(composingInputs.has(input))return;
  const text=input.value||input.placeholder||'',lines=glyphLines(text);
  const shouldPaint=visible(input)&&!!text&&!!lines&&!input.matches('[type="password"],[type="number"]');
  let canvas=fieldCanvases.get(input);
@@ -224,8 +226,8 @@ export async function applyBitmapFont112(assets){
   document.addEventListener('change',schedule,true);
   document.addEventListener('pointerover',e=>{const b=e.target.closest?.('button');if(b)paintLabel(b)},true);
   document.addEventListener('pointerout',e=>{const b=e.target.closest?.('button');if(b)paintLabel(b)},true);
-  document.addEventListener('compositionstart',e=>{if(e.target.matches?.(fieldSelector)){e.target.classList.remove('bitmap-input112');const c=fieldCanvases.get(e.target);if(c)c.style.display='none';}},true);
-  document.addEventListener('compositionend',e=>{if(e.target.matches?.(fieldSelector))paintField(e.target)},true);
+  document.addEventListener('compositionstart',e=>{if(e.target.matches?.(fieldSelector)){composingInputs.add(e.target);e.target.classList.remove('bitmap-input112');const c=fieldCanvases.get(e.target);if(c)c.style.display='none';}},true);
+  document.addEventListener('compositionend',e=>{if(e.target.matches?.(fieldSelector)){composingInputs.delete(e.target);paintField(e.target)}},true);
   document.addEventListener('scroll',schedule,true);
   window.addEventListener('resize',schedule);
  }

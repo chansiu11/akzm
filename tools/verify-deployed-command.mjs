@@ -235,6 +235,34 @@ try{
  if(!details.world)throw Error('Saved world name did not use image-font: '+JSON.stringify(details));
  console.log('OWNER_KOREAN_BITMAP_FONT_PASS '+JSON.stringify({label,...bitmapProof,...details}));
  await page.screenshot({path:'command-review/'+label+'-11-korean-image-font.png'});
+ await page.locator('#worldEdit').click();
+ await page.locator('#menu-edit').waitFor({state:'visible'});
+ const edit=page.locator('#worldEditName');
+ await edit.fill('수정');
+ await page.waitForFunction(()=>document.getElementById('worldEditName')?.classList.contains('bitmap-input112'),null,{timeout:10000});
+ await edit.evaluate(input=>input.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true,data:'수'})));
+ await edit.evaluate(input=>{input.value='수정';input.dispatchEvent(new InputEvent('input',{bubbles:true,data:'정',isComposing:true}));});
+ const composingState=await edit.evaluate(input=>({
+  bitmap:input.classList.contains('bitmap-input112'),
+  pixelsVisible:getComputedStyle(input).color==='rgba(0, 0, 0, 0)' ||
+    getComputedStyle(input).color==='transparent',
+  overlay:document.querySelector('canvas.bitmap-field-layer112')?.style.display
+ }));
+ if(composingState.bitmap||composingState.pixelsVisible||composingState.overlay!=='none')
+  throw Error('Korean composing text hidden beneath canvas: '+JSON.stringify(composingState));
+ await edit.evaluate(input=>input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'수정'})));
+ const afterCompose=await edit.evaluate(input=>({
+  bitmap:input.classList.contains('bitmap-input112'),
+  overlay:document.querySelector('canvas.bitmap-field-layer112')?.style.display,
+  value:input.value
+ }));
+ if(!afterCompose.bitmap||afterCompose.overlay==='none'||afterCompose.value!=='수정')
+  throw Error('Image font did not resume after IME input: '+JSON.stringify(afterCompose));
+ console.log('OWNER_KOREAN_IME_PASS '+JSON.stringify({label,composingState,afterCompose}));
+ await page.screenshot({path:'command-review/'+label+'-12-korean-ime.png'});
+ await page.locator('#worldEditBack').click();
+ await page.locator('#menu-worlds').waitFor({state:'visible'});
+
 
 } catch(error){
  console.error('COMMAND_CHAT_FAIL '+label+': '+error?.stack);

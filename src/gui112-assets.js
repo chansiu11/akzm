@@ -116,7 +116,7 @@ export async function readOwner112Jar(file){
   if(entry)a.itemIcons[item.id]='data:image/png;base64,'+await entry.async('base64');
  }
  a.bitmapFont={ascii:'data:image/png;base64,'+await zip.file('assets/minecraft/textures/font/ascii.png').async('base64'),sizes:await zip.file('assets/minecraft/font/glyph_sizes.bin').async('base64'),pages:{}};
- const pages=new Set([0,0x02,0x03,0x20,0x21,0x22,0x25,0x26,0x27,0x30,0x31,0x32,0x33,...Array.from({length:44},(_,i)=>0xac+i)]);
+ const pages=new Set([...Array.from({length:5},(_,i)=>i),...Array.from({length:8},(_,i)=>0x20+i),0x2e,...Array.from({length:4},(_,i)=>0x30+i),...Array.from({length:44},(_,i)=>0xac+i)]);
  for(const page of pages){const f=zip.file('assets/minecraft/textures/font/unicode_page_'+page.toString(16).padStart(2,'0')+'.png');if(f)a.bitmapFont.pages[page]='data:image/png;base64,'+await f.async('base64');}
  return {assets:a,JSZip};
 }
