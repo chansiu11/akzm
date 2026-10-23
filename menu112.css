@@ -525,3 +525,7 @@ body.touch-ui #touchActions #touchJump{width:clamp(44px,9vh,75px);height:clamp(4
  body.touch-ui #touchActions{flex-direction:row;align-items:center;right:max(6px,env(safe-area-inset-right));bottom:max(48px,env(safe-area-inset-bottom))}
  body.touch-ui #touchDpad{bottom:max(52px,env(safe-area-inset-bottom))}
 }
+
+/* Keep the full 12-chunk render queue visible without blocking input. */
+#chunkStream112{position:fixed;left:50%;top:clamp(8px,2vh,22px);transform:translateX(-50%);z-index:18;pointer-events:none;padding:5px 10px;color:#f0f0f0;background:#0009;border:1px solid #7778;border-radius:2px;text-shadow:1px 1px #000;font:12px/1.25 monospace;white-space:nowrap;max-width:96vw;text-align:center}
+#chunkStream112.hidden{display:none!important}

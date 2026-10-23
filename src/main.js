@@ -108,7 +108,7 @@ let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches && !window.matchMedia('(hover:hover) and (pointer:fine)').matches;
 if(touchMode)document.body.classList.add('touch-ui');
 applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
-const mobileMove={forward:0,strafe:0};const heldControls112=new Map();let mobileJump=false,mobileSneak=false;let activeLook=null;let loadingWorld=false,loadingResumeAuto=false,lastLoadingPercent=-1;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
+const mobileMove={forward:0,strafe:0};const heldControls112=new Map();let mobileJump=false,mobileSneak=false;let activeLook=null;let loadingWorld=false,loadingResumeAuto=false,lastLoadingPercent=-1,lastStreamUpdateAt=0;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
@@ -161,8 +161,8 @@ function loadArea(){if(!enteredWorld)return;const cx=Math.floor(player.x/size),c
  for(let i=pending.length-1;i>=0;i--){const [x,z]=pending[i];if(Math.max(Math.abs(x-cx),Math.abs(z-cz))>renderRadius){queued.delete(chunkId(x,z));pending.splice(i,1);}}
  for(let r=0;r<=renderRadius;r++)for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=cx+dx,z=cz+dz;if(!meshes.has(chunkId(x,z)))enqueue(x,z)}
  for(const [id,list] of [...meshes]){const [a,b]=id.split(',').map(Number);if(Math.abs(a-cx)>renderRadius+1||Math.abs(b-cz)>renderRadius+1){for(const m of list){scene.remove(m);m.geometry.dispose()}meshes.delete(id);clearPlacementPreviews(a,b)}}}
-function readyChunkProgress(){
- const cx=Math.floor(player.x/size),cz=Math.floor(player.z/size),radius=12;
+function readyChunkProgress(radius=12){
+ const cx=Math.floor(player.x/size),cz=Math.floor(player.z/size);
  const total=(radius*2+1)**2;let count=0;
  for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))count++;
  return {count,total};
@@ -352,7 +352,8 @@ function requestPlay({autoResume=false}={}){
  document.body.classList.remove('inventory-open');enteredWorld=true;
  menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;
  loadArea();
- const progress=readyChunkProgress();loadingWorld=progress.count<progress.total;
+ // Stream all 625 requested chunks, but make the 5x5 core playable first.
+ const progress=readyChunkProgress(2);loadingWorld=progress.count<progress.total;
  loadingResumeAuto=autoResume;lastLoadingPercent=-1;
  worldPaused=loadingWorld;running=!loadingWorld;
  el('worldLoading').classList.toggle('hidden',!loadingWorld);
@@ -694,15 +695,23 @@ function loop(now){requestAnimationFrame(loop);
   }else break;
  }while(performance.now()-startBuild<chunkBudget);
  if(loadingWorld){
-  const progress=readyChunkProgress(),pct=Math.floor(progress.count*100/progress.total);
+  const progress=readyChunkProgress(2),pct=Math.floor(progress.count*100/progress.total);
   if(lastLoadingPercent!==pct){
    lastLoadingPercent=pct;el('loadingFill112').style.width=pct+'%';
-   el('loadingText112').textContent=progress.count+' / '+progress.total+' 청크 · '+pct+'%';
+   el('loadingText112').textContent='플레이 가능 지역 '+progress.count+' / '+progress.total+' 청크 · '+pct+'%';
   }
   if(progress.count===progress.total){
    loadingWorld=false;worldPaused=false;running=true;el('worldLoading').classList.add('hidden');
    pendingFullscreenAfterWorldCreation112=loadingResumeAuto;
   }
+ }
+ // Keep visible and honest background progress for the full 12-chunk radius.
+ if(performance.now()>=lastStreamUpdateAt){
+  lastStreamUpdateAt=performance.now()+750;
+  const progress=readyChunkProgress(12),stream=el('chunkStream112');
+  const show=enteredWorld&&!loadingWorld&&!document.body.classList.contains('menu-open')&&progress.count<progress.total;
+  stream.classList.toggle('hidden',!show);
+  if(show)stream.textContent='주변 12청크 생성 중 · '+progress.count+' / '+progress.total;
  }
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
