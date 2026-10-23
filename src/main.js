@@ -452,15 +452,31 @@ canvas.addEventListener('pointermove',e=>{
  if(!running||!activeLook||activeLook.id!==e.pointerId)return;
  e.preventDefault();const g=activeLook,dx=e.clientX-g.x,dy=e.clientY-g.y;
  g.x=e.clientX;g.y=e.clientY;g.distance+=Math.hypot(dx,dy);
- if(g.distance>10){g.moved=true;/* Mining continues when looking around the same target. */}
+ if(g.distance>10){g.moved=true;/* Swipes only turn the camera; existing holds continue mining. */}
  if(g.moved)Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100*1.46));
 });
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
 window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
- if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
-canvas.addEventListener('mousedown',e=>{if(!running){requestPlay();return}if(!touchMode&&document.pointerLockElement!==canvas){canvas.requestPointerLock?.()?.catch?.(()=>{});}if(e.button===0){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(victim){firstPerson.swing();effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.1);}clickHold=true;damage=0;mineTickRemainder=0;aimKey=''}if(e.button===2)useOrPlace()});window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+ if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();clickHold=false;damage=0;breakOverlay.clear()});
+function beginMiningInput(){
+ clickHold=true;damage=0;mineTickRemainder=0;aimKey='';
+ if(gameMode!=='survival'){const block=look();if(block)breakBlock(block);}
+}
+canvas.addEventListener('mousedown',e=>{
+ if(!running){if(enteredWorld&&!loadingWorld)requestPlay();return;}
+ if(touchMode)return;
+ if(document.pointerLockElement!==canvas)canvas.requestPointerLock?.()?.catch?.(()=>{});
+ if(e.button===0){
+  firstPerson.swing();
+  const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));
+  if(victim){effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.1);}
+  else beginMiningInput();
+ }
+ if(e.button===2)useOrPlace();
+});
+window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
 const heldDirections=new Set();
@@ -491,6 +507,7 @@ for(const [direction,id] of [['up','touchUp'],['down','touchDown'],['left','touc
  holdAction(id,()=>{heldDirections.add(direction);syncDpad()},()=>{heldDirections.delete(direction);syncDpad()});
 }
 holdAction('touchJump',()=>{mobileJump=true},()=>{mobileJump=false});
+holdAction('touchMine',()=>{firstPerson.swing();beginMiningInput()},()=>{clickHold=false;damage=0;aimKey='';breakOverlay.clear()});
 el('touchSneak').addEventListener('click',()=>{
  if(!running)return;mobileSneak=!mobileSneak;
  el('touchSneak').classList.toggle('pressed',mobileSneak);
@@ -624,7 +641,7 @@ el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');i
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});playerPreview112.draw();});
 function loop(now){requestAnimationFrame(loop);
- if(touchMode&&running&&activeLook&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;clickHold=true;damage=0;aimKey='';}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
+ if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;beginMiningInput();}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
   for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);
   if(running){const lastX=player.x,lastZ=player.z,healthBefore=survival.health;stepPhysics(dt);
@@ -654,7 +671,7 @@ function loop(now){requestAnimationFrame(loop);
     }
     const ratio=Math.min(1,damage);
     breakOverlay.setTarget(t,ratio);mineProgress(el('miningIndicator'),0);
-    if(damage>=1){breakBlock(t);damage=0;mineTickRemainder=0;breakOverlay.clear();}
+    if(gameMode!=='survival'||damage>=1){breakBlock(t);damage=0;mineTickRemainder=0;breakOverlay.clear();}
    }else if(clickHold&&aimKey&&!t&&missedMineTime<.12){
     missedMineTime+=dt;
    }else{
@@ -663,14 +680,29 @@ function loop(now){requestAnimationFrame(loop);
    }
  saveTimer-=dt;if(saveTimer<=0){saveTimer=20;if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}}
  }
- loadArea();if(!activeBuild && pending.length){
-  const [cx,cz]=pending.shift();queued.delete(chunkId(cx,cz));
-  const pcx=Math.floor(player.x/size),pcz=Math.floor(player.z/size);
-  if(Math.abs(cx-pcx)<=renderRadius&&Math.abs(cz-pcz)<=renderRadius)activeBuild=beginChunk(world,cx,cz);
- }
- if(activeBuild){
-  // CPU mesh generation is spread over multiple animation frames.
-  if(progressChunkWithinBudget(activeBuild,{budgetMs:touchMode?3:6,maxColumns:touchMode?12:32})){const finished=activeBuild;activeBuild=null;commitChunk(finished);}
+ loadArea();
+ const chunkBudget=loadingWorld?14:touchMode?3:6,startBuild=performance.now();
+ do{
+  if(!activeBuild&&pending.length){
+   const [cx,cz]=pending.shift();queued.delete(chunkId(cx,cz));
+   const pcx=Math.floor(player.x/size),pcz=Math.floor(player.z/size);
+   if(Math.abs(cx-pcx)<=renderRadius&&Math.abs(cz-pcz)<=renderRadius)activeBuild=beginChunk(world,cx,cz);
+  }
+  if(!activeBuild)break;
+  if(progressChunkWithinBudget(activeBuild,{budgetMs:Math.max(1,chunkBudget-(performance.now()-startBuild)),maxColumns:loadingWorld?256:touchMode?12:48})){
+   const finished=activeBuild;activeBuild=null;commitChunk(finished);
+  }else break;
+ }while(performance.now()-startBuild<chunkBudget);
+ if(loadingWorld){
+  const progress=readyChunkProgress(),pct=Math.floor(progress.count*100/progress.total);
+  if(lastLoadingPercent!==pct){
+   lastLoadingPercent=pct;el('loadingFill112').style.width=pct+'%';
+   el('loadingText112').textContent=progress.count+' / '+progress.total+' 청크 · '+pct+'%';
+  }
+  if(progress.count===progress.total){
+   loadingWorld=false;worldPaused=false;running=true;el('worldLoading').classList.add('hidden');
+   pendingFullscreenAfterWorldCreation112=loadingResumeAuto;
+  }
  }
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
