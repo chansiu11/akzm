@@ -12,7 +12,7 @@ import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
 import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-registry.js';
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
-import {beginChunk,progressChunkWithinBudget} from './chunk-builder.js?v=1.2';
+import {beginChunk,progressChunk,progressChunkWithinBudget} from './chunk-builder.js?v=1.2';
 import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.2';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
@@ -105,10 +105,10 @@ let craftingSize=2;let craftingCells=emptyCraftGrid(2);
 const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
 const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInteger(damage)?giveDamagedItem(inventory,id,count,damage):giveItem(inventory,id,count);if(left<count){updateUI();saveTimer=0;audio.beep('craft')}return left},saved?.drops);
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
-const touchMode=window.matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
+const touchMode=window.matchMedia('(pointer:coarse)').matches && !window.matchMedia('(hover:hover) and (pointer:fine)').matches;
 if(touchMode)document.body.classList.add('touch-ui');
 applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
-const mobileMove={forward:0,strafe:0};const heldControls112=new Map();let mobileJump=false,mobileSneak=false;let activeLook=null;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
+const mobileMove={forward:0,strafe:0};const heldControls112=new Map();let mobileJump=false,mobileSneak=false;let activeLook=null;let loadingWorld=false,loadingResumeAuto=false,lastLoadingPercent=-1;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
@@ -157,9 +157,26 @@ function enqueue(cx,cz,urgent=false){
  }
  queued.add(k);if(urgent)pending.unshift([cx,cz]);else pending.push([cx,cz]);
 }
-function loadArea(){const cx=Math.floor(player.x/size),cz=Math.floor(player.z/size),base=chunkId(cx,cz);if(base===lastChunk)return;lastChunk=base;
+function loadArea(){if(!enteredWorld)return;const cx=Math.floor(player.x/size),cz=Math.floor(player.z/size),base=chunkId(cx,cz);if(base===lastChunk)return;lastChunk=base;
+ for(let i=pending.length-1;i>=0;i--){const [x,z]=pending[i];if(Math.max(Math.abs(x-cx),Math.abs(z-cz))>renderRadius){queued.delete(chunkId(x,z));pending.splice(i,1);}}
  for(let r=0;r<=renderRadius;r++)for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=cx+dx,z=cz+dz;if(!meshes.has(chunkId(x,z)))enqueue(x,z)}
  for(const [id,list] of [...meshes]){const [a,b]=id.split(',').map(Number);if(Math.abs(a-cx)>renderRadius+1||Math.abs(b-cz)>renderRadius+1){for(const m of list){scene.remove(m);m.geometry.dispose()}meshes.delete(id);clearPlacementPreviews(a,b)}}}
+function readyChunkProgress(){
+ const cx=Math.floor(player.x/size),cz=Math.floor(player.z/size),radius=12;
+ const total=(radius*2+1)**2;let count=0;
+ for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)if(meshes.has(chunkId(cx+dx,cz+dz)))count++;
+ return {count,total};
+}
+function rebuildEditedChunkNow(x,z){
+ const cx=Math.floor(x/size),cz=Math.floor(z/size),xs=[cx],zs=[cz];
+ const mx=((x%size)+size)%size,mz=((z%size)+size)%size;
+ if(mx===0)xs.push(cx-1);if(mx===size-1)xs.push(cx+1);
+ if(mz===0)zs.push(cz-1);if(mz===size-1)zs.push(cz+1);
+ for(const a of xs)for(const b of zs){
+  if(!meshes.has(chunkId(a,b)))continue;
+  const task=beginChunk(world,a,b);progressChunk(task,size*size);commitChunk(task);
+ }
+}
 const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{updateNearBlock(x,z);saveTimer=0;});
 function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz))||(activeBuild?.cx===cx+dx&&activeBuild?.cz===cz+dz))enqueue(cx+dx,cz+dz,true)}
 function collides(x,y,z){return playerCollides(world,x,y,z)}
@@ -277,15 +294,15 @@ function breakBlock(t){
  if(world.set(t.x,t.y,t.z,0)){
    const preview=placementPreviews.get(t.x+','+t.y+','+t.z);if(preview){scene.remove(preview.mesh);preview.mesh.geometry.dispose();placementPreviews.delete(t.x+','+t.y+','+t.z);}
   const tile=tiles.items.get(tileKey(t.x,t.y,t.z));
-  for(const item of tileDrops(tile))drops.spawn(item.id,t.x+.5,t.y+.6,t.z+.5,item.count,0,item.damage);
+  if(gameMode==='survival')for(const item of tileDrops(tile))drops.spawn(item.id,t.x+.5,t.y+.6,t.z+.5,item.count,0,item.damage);
   tiles.remove(t.x,t.y,t.z);
   if(t.id===BLOCK.LEVER)recomputeNearbyLamps(world,t.x,t.y,t.z);
-  updateNearBlock(t.x,t.z);gravityTicks.notifyChange(t.x,t.y,t.z);
-  for(const drop of blockDrops(t.id,{toolId:inventory[selected]?.id??0})){
+  rebuildEditedChunkNow(t.x,t.z);updateNearBlock(t.x,t.z);gravityTicks.notifyChange(t.x,t.y,t.z);
+  if(gameMode==='survival')for(const drop of blockDrops(t.id,{toolId:inventory[selected]?.id??0})){
     drops.spawn(drop.id,t.x+.5,t.y+.6,t.z+.5,drop.count);
   }
   track('mined');if(t.id===BLOCK.LOG||t.id===BLOCK.SPRUCE_LOG)track('woodMined');survival.exert(.005);
-  const wear=usePickaxe(inventory[selected]);if(wear.broken)notify('도구가 부서졌습니다.');
+  if(gameMode==='survival'){const wear=usePickaxe(inventory[selected]);if(wear.broken)notify('도구가 부서졌습니다.');}
   firstPerson.swing();effects.emit('block',[t.x+.5,t.y+.5,t.z+.5],[.35,.35,.35],.2,12);audio.beep('break');breakOverlay.clear();updateUI();saveTimer=7;
  }
 }
@@ -332,9 +349,14 @@ document.addEventListener('pointerdown',()=>{
  req?.catch?.(()=>{/* User-gesture fullscreen may be restricted by this browser. */});
 },{capture:true});
 function requestPlay({autoResume=false}={}){
- document.body.classList.remove('inventory-open');enteredWorld=true;worldPaused=false;
+ document.body.classList.remove('inventory-open');enteredWorld=true;
  menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;
- running=true;
+ loadArea();
+ const progress=readyChunkProgress();loadingWorld=progress.count<progress.total;
+ loadingResumeAuto=autoResume;lastLoadingPercent=-1;
+ worldPaused=loadingWorld;running=!loadingWorld;
+ el('worldLoading').classList.toggle('hidden',!loadingWorld);
+ if(loadingWorld)return;
  if(autoResume){
   // On newly created worlds the page has reloaded, so the browser won't
   // permit fullscreen until the player's next real pointer gesture.
@@ -350,7 +372,7 @@ function requestPlay({autoResume=false}={}){
  }
 }
 function resetTouchHolds112(){for(const reset of heldControls112.values())reset();}
-function pauseGame(){mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.();menus.showPause()}
+function pauseGame(){loadingWorld=false;el('worldLoading').classList.add('hidden');mineProgress(el('miningIndicator'),0);worldPaused=true;running=false;usingFood=false;clickHold=false;mobileMove.forward=mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.();menus.showPause()}
 // Initial command subset; commands never bypass the same World.set limits as normal placing.
 const commandUI=setupCommandUI({
  onOpen:()=>{document.body.classList.add('command-open112');running=false;cancelUsing();clickHold=false;keys.clear();mobileMove.forward=mobileMove.strafe=0;mobileJump=false;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.()},
@@ -403,7 +425,7 @@ const onPointer=()=>{
  // A world restored after creation stays playable even before the first
  // pointer-lock gesture. Only an actual lost lock pauses the game.
  if(!locked&&!everPointerLocked)return;
- if(locked){running=!inventoryOpen;return;}
+ if(locked){running=!inventoryOpen&&!loadingWorld;return;}
  running=false;cancelUsing();clickHold=false;damage=0;
  if(!survival.dead&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();
 };document.addEventListener('pointerlockchange',onPointer);
@@ -653,4 +675,4 @@ function loop(now){requestAnimationFrame(loop);
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
-updateUI();loadArea();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}});
+updateUI();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}});
