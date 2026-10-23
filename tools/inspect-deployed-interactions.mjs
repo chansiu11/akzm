@@ -32,6 +32,18 @@ try{
  await page.waitForFunction(()=>document.documentElement.dataset.appReady==='true',null,{timeout:30000});
  await capture('title');
  await page.locator('#menuSingle').click();await capture('worlds');
+ await page.locator('#worldCreate').click();await capture('world-create');
+ const createUI=await page.evaluate(()=>({
+  select: getComputedStyle(document.getElementById('worldMode')).appearance,
+  check: getComputedStyle(document.getElementById('worldCheats')).appearance,
+  selectBg: getComputedStyle(document.getElementById('worldMode')).backgroundColor,
+  checkBg: getComputedStyle(document.getElementById('worldCheats')).backgroundColor,
+  selectRect: document.getElementById('worldMode').getBoundingClientRect().toJSON(),
+  checkRect: document.getElementById('worldCheats').getBoundingClientRect().toJSON(),
+ }));
+ events.push({createUI});console.log('CREATE_UI '+JSON.stringify(createUI));
+ checks['world creation controls use nonnative pixel styling']=createUI.select==='none'&&createUI.check==='none';
+ await page.locator('#createBack').click();await capture('worlds-after-create');
  await page.locator('#worldPlay').click();
  await page.waitForFunction(()=>document.getElementById('worldLoading').classList.contains('hidden'),null,{timeout:110000});
  await page.waitForTimeout(700);await capture('gameplay');
@@ -84,5 +96,20 @@ try{
   await page.keyboard.press('Escape');await capture('pause');
   await page.locator('#pauseResume').click();await capture('resume');
  }
+ // Summon a synthetic mob using in-game player command (no private JAR needed).
+ // The same interaction ensures chat command input and scene update work after loading.
+ await test('command can spawn a nearby mob',async()=>{
+  if(v.touch)await page.locator('#touchCommand').tap({timeout:10000});
+  else await page.keyboard.press('/');
+  await page.locator('#commandPanel').waitFor({state:'visible',timeout:10000});
+  await page.locator('#commandInput').fill('/summon grazer ~ ~ ~-2');
+  await page.locator('#commandSubmit').click({timeout:12000});
+  await page.locator('#commandPanel').waitFor({state:'hidden',timeout:10000});
+  await page.waitForTimeout(1000);
+  const response=await page.evaluate(()=>document.getElementById('chatHistory112')?.textContent??'');
+  checks['command can spawn a nearby mob']=response.includes('grazer')||response.includes('엔티티 생성');
+  if(!checks['command can spawn a nearby mob'])throw Error('summon command result not found in chat: '+response.slice(-400));
+ });
+ await capture('after-summon-mob');
 }catch(e){errors.push('FATAL '+(e.stack??e.message));await capture('failure').catch(()=>{});}
 finally{await fs.writeFile(dir+'/'+label+'-report.json',JSON.stringify({label,checks,errors,events},null,2));console.log('AUDIT_RESULT '+JSON.stringify({label,checks,errors}));await browser.close();}
