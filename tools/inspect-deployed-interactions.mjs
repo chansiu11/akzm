@@ -103,7 +103,8 @@ try{
   else await page.keyboard.press('/');
   await page.locator('#commandPanel').waitFor({state:'visible',timeout:10000});
   await page.locator('#commandInput').fill('/summon grazer ~ ~ ~-2');
-  await page.locator('#commandSubmit').click({timeout:12000});
+  // Java 1.12.2-style command entry is submitted with Enter; the web-only helper button is deliberately hidden.
+  await page.locator('#commandInput').press('Enter',{timeout:12000});
   await page.locator('#commandPanel').waitFor({state:'hidden',timeout:10000});
   await page.waitForTimeout(1000);
   const response=await page.evaluate(()=>document.getElementById('chatHistory112')?.textContent??'');

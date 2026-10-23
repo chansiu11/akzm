@@ -1,1 +1,1 @@
-2026-10-23 stage 4 visual verification on deployed Pages: world creation native-style controls and mob summon after gameplay, each click followed by screenshot, desktop and mobile. No Minecraft original JAR.
+2026-10-23 stage 4 live rerun verifies native Enter-based chat command, mob summon after world creation UI and mining, screenshot after each action. No private Minecraft JAR.
