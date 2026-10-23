@@ -499,3 +499,14 @@ html.bitmap-font-ready112 #overlay #menu-worlds .bitmap-label{
 html.bitmap-font-ready112 canvas.bitmap-text.bitmap-flow112{
  top:0;left:0;transform:none;
 }
+
+/* Chunk loading keeps the world hidden until the central 25x25 chunk square is meshed. */
+#worldLoading{position:fixed;inset:0;z-index:100;background:#171717f5;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#f4f4f4;font:16px monospace;text-align:center;pointer-events:auto}
+#worldLoading.hidden{display:none!important}
+#worldLoading .loading-title112{font-size:18px;text-shadow:2px 2px #000}
+#worldLoading .loading-track112{width:min(420px,85vw);height:18px;background:#262626;border:2px solid #999;box-shadow:inset 0 0 0 2px #111;overflow:hidden}
+#loadingFill112{height:100%;width:0;background:#7fa85a;transition:width .1s linear}
+#loadingText112{font-size:13px}
+#touchMine{font-size:20px!important}
+@media(hover:hover) and (pointer:fine){body #touchControls{display:none!important;visibility:hidden!important;pointer-events:none!important}}
+@media(max-height:440px){body.touch-ui #touchActions{gap:3px}body.touch-ui #touchMine{width:46px;height:46px}}

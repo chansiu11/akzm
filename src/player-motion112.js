@@ -31,10 +31,10 @@ export function waterExitLift112(velocityY,{jump=false,inWater=false,blockedBySh
  // teleport the player through the block; ordinary collision handles it.
  return Math.max(velocityY,blockedByShore?5.2:4);
 }
-export function defaultRenderDistance112(touch=false){return touch?4:6;}
+export function defaultRenderDistance112(touch=false){return 12;}
 export function sanitizeRenderDistance112(distance,touch=false){
  const fallback=defaultRenderDistance112(touch);
- return Math.min(touch?6:10,Math.max(2,Math.round(Number(distance)||fallback)));
+ return Math.min(16,Math.max(12,Math.round(Number(distance)||fallback)));
 }
 export function fogDistances112(radius,weather='clear'){
  const blocks=Math.max(2,radius)*16;
