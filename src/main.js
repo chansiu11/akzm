@@ -1,8 +1,11 @@
+import {installCreativeInventory112} from './creative-inventory112.js';
+import {ITEM_DEFS} from './item-registry.js';
+import {createWaterFlow112} from './water-flow112.js';
 import {applyCameraFov112} from './fov112.js';
 import {renderBlockItemIcons} from './block-item-icons.js';
 import {createPlayerPreview112} from './player-preview112.js?v=1.1';
 import {installTitleLayout112} from './title-layout112.js';
-import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
+import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js?v=12';
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.3';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import {installBundledSiteTheme112} from './site-default112.js?v=1.1';
@@ -19,7 +22,7 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.1';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.2';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js';
 import {WeatherCycle} from './environment.js?v=1.4';
@@ -31,7 +34,7 @@ import {Survival} from './survival.js';
 import {shouldAdvanceWorld} from './simulation-state.js';
 import {expandInventory,giveItem,moveStack} from './inventory-utils.js';
 import {restoreInventory,replenishOverflow} from './inventory-restore.js';
-import {createEntityWorld} from './entity-renderer.js';
+import {createEntityWorld} from './entity-renderer.js?v=2';
 import {createDrops} from './drops.js';
 import {createAudio} from './audio.js?v=1.1';
 import {formatOwnerDeath112} from './death-messages112.js';
@@ -46,7 +49,7 @@ import {dropInventoryOnDeath} from './death-drops.js';
 import {giveDamagedItem} from './damaged-items.js';
 import {changeBlockWithLifecycle} from './block-change.js';
 import {createGravityTicks} from './block-gravity.js';
-import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngredient,craftGridOnce,clearCraftGrid} from './crafting-grid.js';
+import {GRID_RECIPES,fillRecipe112,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngredient,craftGridOnce,clearCraftGrid} from './crafting-grid.js';
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js?v=2.1';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
@@ -54,7 +57,7 @@ import {createFirstPerson} from './first-person.js?v=1.9';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.2';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.3';
 
 const el=id=>document.getElementById(id);
 installBundledSiteTheme112();
@@ -89,10 +92,12 @@ const commandState=new CommandWorldState(saved?.commandState);
 const spawn=findSafeSpawn(world);
 const restoredPosition=restoreSafePlayerPosition(world,saved?.player,spawn);
 const player={x:restoredPosition.x,y:restoredPosition.y,z:restoredPosition.z,vx:0,vz:0,vy:0,onGround:false,yaw:saved?.player?.yaw??0,pitch:saved?.player?.pitch??0};
+let creativeUI112=null,flight112=false,lastJump112=-Infinity;
+const creative112=gameMode!=='survival';document.body.classList.toggle('creative-ui112',creative112);player.invulnerable=creative112;
 let settings=loadSettings();let running=false,enteredWorld=false,worldPaused=true,inventoryOpen=false,day=saved?.day??.21,daylightCycle=saved?.daylightCycle!==false,nightVisionSeconds=Math.max(0,Math.min(1000000,Number(saved?.nightVisionSeconds)||0)),clickHold=false,damage=0,mineTickRemainder=0,missedMineTime=0,aimKey='',saveTimer=0,noticeTimer=0;
 const keys=new Set(),meshes=new Map(),pending=[],queued=new Set(),placementPreviews=new Map();let activeBuild=null;
 const effects=createParticles(scene);
-const survival=new Survival(saved?.survival);
+const survival=new Survival(saved?.survival);if(creative112)survival.respawn();
 const weatherCycle=new WeatherCycle(saved?.weather);
 const worldVisuals=createWorldVisuals(scene,renderer,world);
 const audio=createAudio();
@@ -104,7 +109,7 @@ function registerHurt(cause='generic',source=null){
 const breakOverlay=createBreakOverlay112(scene,world);
 const progression=new Progression(saved?.progression);const tiles=new TileStore(saved?.tiles);let activeTile=null;
 let craftingSize=2;let craftingCells=emptyCraftGrid(2);
-const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(survival.damage(amount)>0){registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
+const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(creative112)return;if(survival.damage(amount)>0){registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
 const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInteger(damage)?giveDamagedItem(inventory,id,count,damage):giveItem(inventory,id,count);if(left<count){updateUI();saveTimer=0;audio.beep('craft')}return left},saved?.drops);
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches && !window.matchMedia('(hover:hover) and (pointer:fine)').matches;
@@ -179,7 +184,9 @@ function rebuildEditedChunkNow(x,z){
   const task=beginChunk(world,a,b);progressChunk(task,size*size);commitChunk(task);
  }
 }
-const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{updateNearBlock(x,z);saveTimer=0;});
+const waterTicks112=createWaterFlow112(world,(x,y,z)=>{updateNearBlock(x,z);saveTimer=0;});
+const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{updateNearBlock(x,z);waterTicks112.notifyChange(x,y,z);waterTicks112.notifyChange(x,toY,z);saveTimer=0;});
+for(const [key,block] of world.changes)if(block.id===BLOCK.WATER)waterTicks112.notifyChange(...key.split(',').map(Number));
 function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz))||(activeBuild?.cx===cx+dx&&activeBuild?.cz===cz+dz))enqueue(cx+dx,cz+dz,true)}
 function collides(x,y,z){return playerCollides(world,x,y,z)}
 function moveAxis(axis,delta){
@@ -203,9 +210,9 @@ function moveAxis(axis,delta){
 }
 function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;
  const immersed=waterContact112(world,player,BLOCK.WATER);
- const sprinting=keys.has('ControlLeft') && survival.hunger>6 && !sneaking && !immersed;
+ const sprinting=keys.has('ControlLeft') && (creative112||survival.hunger>6) && !sneaking && !immersed;
  let speed=sneaking?MOVE_SPEED112.sneak:sprinting?MOVE_SPEED112.sprint:MOVE_SPEED112.walk;
- if(immersed)speed*=.5;
+ if(flight112)speed=sprinting?21.78:10.89;else if(immersed)speed*=.5;
  if(usingFood)speed*=.2;
   if(front||strafe){const l=Math.hypot(front,strafe);front/=l;strafe/=l;}
   const targetX=(-Math.sin(player.yaw)*front+Math.cos(player.yaw)*strafe)*speed;
@@ -216,13 +223,14 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  const water=waterContact112(world,player,BLOCK.WATER);
  const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER;
  const jumpPressed=keys.has('Space')||mobileJump;
+ if(flight112){player.vy=(jumpPressed?10.89:0)-(sneaking?10.89:0);moveAxis('y',player.vy*dt);player.onGround=false;fallDistance=0;return;}
  if(jumpPressed&&water)player.vy=waterExitLift112(player.vy,{jump:true,inWater:true});
  else if(jumpPressed&&player.onGround){player.vy=MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05);}
  const verticalStep=player.vy;player.onGround=false;moveAxis('y',verticalStep*dt);if(!player.onGround)player.vy=verticalVelocity112(player.vy,dt,{water});
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
- if(player.onGround){if(fallDistance>3){const amount=survival.fall(fallDistance);if(amount){registerHurt('fall');}}fallDistance=0;}
+ if(player.onGround){if(!creative112&&fallDistance>3){const amount=survival.fall(fallDistance);if(amount){registerHurt('fall');}}fallDistance=0;}
  const healthBeforeTick=survival.health;
- survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,
+ if(!creative112)survival.tick(dt,{underwater:headUnderwater,moving:!!(front||strafe),sprinting,
   travelDistance:water?Math.hypot(player.x-startX,player.y-initialY,player.z-startZ):
    Math.hypot(player.x-startX,player.z-startZ),swimming:water});
  if(survival.health<healthBeforeTick)
@@ -281,7 +289,7 @@ function updateUI(){
  firstPerson.setItem(inventory[selected]?.count>0?inventory[selected].id:0);
  el('hotbar').innerHTML=inventory.slice(0,9).map((item,i)=>`<button class="slot ${selected===i?'active':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Unknown'}"><small>${i+1}</small><i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span></button>`).join('');
  el('invItems').innerHTML=inventory.map((item,i)=>`<button class="item ${selected===i?'selected':''}" data-i="${i}" title="${itemDefinition(item.id)?.name??'Empty'}"><i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.id?(item.count>1?item.count:''):''}</span></button>`).join('');
- layoutContainer112(el('inventory'));
+ layoutContainer112(el('inventory'));creativeUI112?.refresh();
 }
 function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
 function breakBlock(t){
@@ -292,7 +300,7 @@ function breakBlock(t){
   if(gameMode==='survival')for(const item of tileDrops(tile))drops.spawn(item.id,t.x+.5,t.y+.6,t.z+.5,item.count,0,item.damage);
   tiles.remove(t.x,t.y,t.z);
   if(t.id===BLOCK.LEVER)recomputeNearbyLamps(world,t.x,t.y,t.z);
-  rebuildEditedChunkNow(t.x,t.z);updateNearBlock(t.x,t.z);gravityTicks.notifyChange(t.x,t.y,t.z);
+  rebuildEditedChunkNow(t.x,t.z);updateNearBlock(t.x,t.z);gravityTicks.notifyChange(t.x,t.y,t.z);waterTicks112.notifyChange(t.x,t.y,t.z);
   if(gameMode==='survival')for(const drop of blockDrops(t.id,{toolId:inventory[selected]?.id??0})){
     drops.spawn(drop.id,t.x+.5,t.y+.6,t.z+.5,drop.count);
   }
@@ -310,7 +318,7 @@ function placementState(blockId,target){
 }
 function placeBlock(t){
  if(!t)return;const kind=definition(t.id)?.interact;if(kind){interactBlock(t,kind);return;}const item=inventory[selected];if(!item||item.count<=0)return;
- const blockId=placeableItem(item.id);if(blockId===null||blockId===BLOCK.BEDROCK||blockId===BLOCK.WATER)return;
+ const blockId=placeableItem(item.id);if(blockId===null||(!creative112&&(blockId===BLOCK.BEDROCK||blockId===BLOCK.WATER)))return;
  const {x,y,z}=t,n=t.normal;const nx=x+n.x,ny=y+n.y,nz=z+n.z;
  if(world.get(nx,ny,nz)!==BLOCK.AIR&&world.get(nx,ny,nz)!==BLOCK.WATER)return;
  if(ny<=0||ny>MAX_Y)return;
@@ -318,7 +326,7 @@ function placeBlock(t){
  if(!world.set(nx,ny,nz,blockId,state))return;
  if(collides(player.x,player.y,player.z)){world.set(nx,ny,nz,prev.id,prev.state);return}
  if(blockId===BLOCK.LEVER||blockId===BLOCK.LAMP)recomputeNearbyLamps(world,nx,ny,nz);
- showPlacementPreview(nx,ny,nz);track('placed');item.count--;if(item.count<=0){item.id=0;item.count=0}audio.beep('place');effects.emit('block',[nx+.5,ny+.5,nz+.5],[.25,.25,.25],.08,6);updateNearBlock(nx,nz);gravityTicks.notifyChange(nx,ny,nz);updateUI();saveTimer=7;
+ showPlacementPreview(nx,ny,nz);track('placed');if(!creative112){item.count--;if(item.count<=0){item.id=0;item.count=0}}audio.beep('place');effects.emit('block',[nx+.5,ny+.5,nz+.5],[.25,.25,.25],.08,6);updateNearBlock(nx,nz);gravityTicks.notifyChange(nx,ny,nz);waterTicks112.notifyChange(nx,ny,nz);updateUI();saveTimer=7;
 }
 function hardness(id){const value=definition(id)?.hardness??1;return value<=0?999:value}
 function useOrPlace(){
@@ -334,15 +342,8 @@ function startUseSelected(){
 }
 function cancelUsing(){usingFood=false;foodHold=0;}
 
-function openInventory({table=false}={}){if(!enteredWorld)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));playerPreview112.draw()}
-function closeInventory(){document.body.classList.remove('inventory-open');recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
-let pendingFullscreenAfterWorldCreation112=false;
-document.addEventListener('pointerdown',()=>{
- if(!pendingFullscreenAfterWorldCreation112||!enteredWorld)return;
- pendingFullscreenAfterWorldCreation112=false;
- const req=document.documentElement.requestFullscreen?.();
- req?.catch?.(()=>{/* User-gesture fullscreen may be restricted by this browser. */});
-},{capture:true});
+function openInventory({table=false}={}){if(!enteredWorld||survival.dead)return;menus.close();el('inventory').dataset.container=activeTile?.kind??(table?'crafting':'inventory');mineProgress(el('miningIndicator'),0);cancelUsing();if(!table&&!activeTile)track('openedInventory');craftingSize=table?3:2;craftingCells=emptyCraftGrid(craftingSize);updateRecipes();el('progressionPanel').replaceChildren(...GOALS.map(g=>{const n=document.createElement('span');n.textContent=(progression.unlocked.has(g.id)?'✓ ':'□ ')+g.label+` (${Math.floor(progression.stats[g.stat])}/${g.goal})`;return n}));inventoryOpen=true;document.body.classList.add('inventory-open');running=false;clickHold=false;mobileMove.forward=0;mobileMove.strafe=0;mobileJump=false;activeLook=null;heldDirections.clear();resetTouchHolds112();document.exitPointerLock?.();el('inventory').classList.remove('hidden');updateUI();layoutContainer112(el('inventory'));creativeUI112?.show(creative112&&!table&&!activeTile);playerPreview112.draw()}
+function closeInventory(){document.body.classList.remove('inventory-open');creativeUI112?.show(false);recipeBook112.close();returnUncrafted();activeTile=null;el('tilePanel').classList.add('hidden');inventoryOpen=false;el('inventory').classList.add('hidden');if(!survival.dead)requestPlay()}
 function requestPlay({autoResume=false}={}){
  document.body.classList.remove('inventory-open');enteredWorld=true;
  menus.close();el('inventory').classList.add('hidden');inventoryOpen=false;
@@ -353,15 +354,7 @@ function requestPlay({autoResume=false}={}){
  worldPaused=loadingWorld;running=!loadingWorld;
  el('worldLoading').classList.toggle('hidden',!loadingWorld);
  if(loadingWorld)return;
- if(autoResume){
-  // On newly created worlds the page has reloaded, so the browser won't
-  // permit fullscreen until the player's next real pointer gesture.
-  pendingFullscreenAfterWorldCreation112=true;
-  return;
- }
- pendingFullscreenAfterWorldCreation112=false;
- const fullscreen=document.documentElement.requestFullscreen?.();
- fullscreen?.catch?.(()=>{/* Browser refused fullscreen; windowed play is supported. */});
+ if(survival.dead){showDeath();return;}
  if(!touchMode){
   const lock=canvas.requestPointerLock?.();
   lock?.catch?.(()=>{/* Click the canvas again to enable mouse capture. */});
@@ -403,7 +396,7 @@ const commandUI=setupCommandUI({
   setTime:t=>{day=((t%24000)+24000)%24000/24000;saveTimer=0},
   getDaylightCycle:()=>daylightCycle,
   setDaylightCycle:value=>{daylightCycle=value;saveTimer=0},
-  setBlock:(x,y,z,id)=>{if(!changeBlockWithLifecycle(world,tiles,x,y,z,id))return false;gravityTicks.notifyChange(x,y,z);updateNearBlock(x,z);saveTimer=0;return true},
+  setBlock:(x,y,z,id)=>{if(!changeBlockWithLifecycle(world,tiles,x,y,z,id))return false;gravityTicks.notifyChange(x,y,z);waterTicks112.notifyChange(x,y,z);updateNearBlock(x,z);saveTimer=0;return true},
   fill:(from,to,id)=>{let count=0;const touched=new Set();for(let x=from[0];x<=to[0];x++)for(let y=from[1];y<=to[1];y++)for(let z=from[2];z<=to[2];z++){
    if(world.get(x,y,z)===id)continue;if(changeBlockWithLifecycle(world,tiles,x,y,z,id)){count++;touched.add(chunkId(Math.floor(x/size),Math.floor(z/size)));}
   }
@@ -421,11 +414,19 @@ const onPointer=()=>{
  // A world restored after creation stays playable even before the first
  // pointer-lock gesture. Only an actual lost lock pauses the game.
  if(!locked&&!everPointerLocked)return;
- if(locked){running=!inventoryOpen&&!loadingWorld;return;}
- running=false;cancelUsing();clickHold=false;damage=0;
+ if(locked){running=!inventoryOpen&&!loadingWorld&&!survival.dead;return;}
+ running=false;worldPaused=true;cancelUsing();clickHold=false;damage=0;
  if(!survival.dead&&!inventoryOpen&&!commandUI.isOpen()&&!el('overlay').classList.contains('show'))menus.showPause();
 };document.addEventListener('pointerlockchange',onPointer);
-document.addEventListener('mousemove',e=>{if(!running||touchMode||document.pointerLockElement!==canvas)return;if(discardLockMovement){discardLockMovement=false;return;}Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100))});
+let mouseDrag112=null;
+document.addEventListener('mousemove',e=>{
+ if(!running||touchMode)return;
+ if(document.pointerLockElement===canvas){if(discardLockMovement){discardLockMovement=false;return;}Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100));return;}
+ if(!mouseDrag112)return;
+ const dx=e.clientX-mouseDrag112.x,dy=e.clientY-mouseDrag112.y;mouseDrag112.x=e.clientX;mouseDrag112.y=e.clientY;
+ if(dx||dy){mouseDrag112.moved=true;clickHold=false;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100));}
+});
+window.addEventListener('mouseup',()=>{if(mouseDrag112&&!mouseDrag112.moved&&running&&document.pointerLockElement!==canvas){if(mouseDrag112.button===2)useOrPlace();else{firstPerson.swing();beginMiningInput();}}mouseDrag112=null;});
 // Minecraft-style touch: drag to look, tap to use/place, hold a block to mine.
 // Pointer-captured viewport gestures do not interfere with the independent D-pad.
 function endTouchLook(e,cancelled=false){
@@ -454,7 +455,7 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
-window.addEventListener('keydown',e=>{if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&creative112&&running&&!e.repeat){const now=performance.now();if(now-lastJump112<300){flight112=!flight112;player.vy=0;fallDistance=0;}lastJump112=now;}if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
  if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();clickHold=false;damage=0;breakOverlay.clear()});
 function beginMiningInput(){
  clickHold=true;damage=0;mineTickRemainder=0;aimKey='';
@@ -463,7 +464,7 @@ function beginMiningInput(){
 canvas.addEventListener('mousedown',e=>{
  if(!running){if(enteredWorld&&!loadingWorld)requestPlay();return;}
  if(touchMode)return;
- if(document.pointerLockElement!==canvas)canvas.requestPointerLock?.()?.catch?.(()=>{});
+ if(document.pointerLockElement!==canvas){mouseDrag112={x:e.clientX,y:e.clientY,button:e.button,moved:false};const gesture=mouseDrag112;if(e.button===0)setTimeout(()=>{if(mouseDrag112===gesture&&!gesture.moved&&running)beginMiningInput();},180);canvas.requestPointerLock?.()?.catch?.(()=>{});return;}
  if(e.button===0){
   firstPerson.swing();
   const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));
@@ -569,7 +570,9 @@ document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
 if(gameMode==='survival'){palette.classList.add('hidden');document.querySelector('.catalog-title')?.classList.add('hidden');document.querySelector('.catalog-title')?.nextElementSibling?.classList.add('hidden');}
 const recipePane=el('craftRecipes');
-const recipeBook112=installRecipeBook112(el('inventory'),GRID_RECIPES,()=>craftingSize);
+const armorHints112=document.createElement('div');armorHints112.id='armorHints112';for(const [i,name] of ['helmet','chestplate','leggings','boots','shield'].entries()){const icon=document.createElement('i');icon.className='armor-hint112 '+name;icon.style.setProperty('--armor-row',i);armorHints112.append(icon);}el('inventory').append(armorHints112);
+const recipeBook112=installRecipeBook112(el('inventory'),GRID_RECIPES,()=>craftingSize,{paint:slotArtwork,onSelect:r=>{if(fillRecipe112(r,craftingSize,craftingCells,inventory)){updateUI();renderCrafting();saveTimer=0;}else notify("재료가 부족합니다.");}});
+creativeUI112=installCreativeInventory112(el('inventory'),ITEM_DEFS.filter(i=>i.id>0),{paint:slotArtwork,inventory:()=>inventory,choose:id=>{inventory[selected]={id,count:itemDefinition(id)?.stackLimit??64};updateUI();saveTimer=0;},selectHotbar:i=>{selected=i;updateUI();}});
 recipeBook112.setNames([...new Set(GRID_RECIPES.flatMap(r=>Object.values(r.keys)))].map(id=>[id,itemDefinition(id)?.name??String(id)]));
 function renderTile(){renderTileContents();layoutContainer112(el('inventory'));}
 function renderTileContents(){const panel=el('tilePanel'),items=el('tileContents');items.replaceChildren();if(!activeTile){panel.classList.add('hidden');return;}panel.classList.remove('hidden');const {x,y,z,kind}=activeTile;const t=tiles.ensure(x,y,z,kind);el('tileTitle').textContent=kind==='chest'?'상자 (입금: 클릭 / 회수: Shift+클릭)':'화로 (선택 슬롯의 광석·연료 넣기)';
@@ -611,6 +614,7 @@ el('craftOutput').addEventListener('click',()=>{const product=craftGridOnce(craf
 el('weatherToggle').addEventListener('click',()=>{weatherCycle.set(weatherCycle.kind==='clear'?'rain':weatherCycle.kind==='rain'?'thunder':'clear');el('weatherToggle').textContent='날씨 미리보기: '+weatherCycle.kind;notify('날씨: '+weatherCycle.kind)});
 el('respawnButton').addEventListener('click',()=>{survival.respawn();const requestedSpawn=commandState.personalSpawn||commandState.worldSpawn||[spawn.x,spawn.y,spawn.z];const safeRespawn=restoreSafePlayerPosition(world,{x:requestedSpawn[0],y:requestedSpawn[1],z:requestedSpawn[2]},spawn);player.x=safeRespawn.x;player.y=safeRespawn.y;player.z=safeRespawn.z;player.vx=player.vz=player.vy=0;fallDistance=0;voidDamageTime=0;el('deathScreen').classList.add('hidden');lastDeathCause='generic';requestPlay();saveTimer=0});
 function showDeath(){if(!survival.dead||!el('deathScreen').classList.contains('hidden'))return;
+ closeInventory();commandUI.hide(false);document.body.classList.remove('command-open112');menus.close();keys.clear();mouseDrag112=null;
  el('deathReason112').textContent=ownerDeathReason112(lastDeathCause);
  cancelUsing();running=false;document.exitPointerLock?.();
  if(gameMode==='survival'&&!commandState.rules.keepInventory){for(const item of dropInventoryOnDeath(inventory,inventoryOverflow)){
@@ -639,13 +643,13 @@ window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camer
 function loop(now){requestAnimationFrame(loop);
  if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;beginMiningInput();}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
-  for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);
+  for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);waterTicks112.tick(dt);
   if(running){const lastX=player.x,lastZ=player.z,healthBefore=survival.health;stepPhysics(dt);
    if(survival.health<healthBefore&&hurtTime<=0)registerHurt('generic');track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
    if(usingFood){foodHold+=dt;const food=foodFor(inventory[selected]?.id);if(!food||survival.dead)cancelUsing();else if(foodHold>=food.seconds){if(eatHeld(inventory,selected,survival)){audio.beep('craft');updateUI();notify('음식을 먹었습니다.');saveTimer=0;}cancelUsing();}}
   }
-  else survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
-  weatherCycle.update(dt);entityWorld.update(dt,player);drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
+  else if(!creative112)survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
+  weatherCycle.update(dt);entityWorld.update(dt,player,{daylight:Math.sin(day*Math.PI*2)>0});drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
   if(daylightCycle)day=(day+dt/1200)%1;
   nightVisionSeconds=Math.max(0,nightVisionSeconds-dt);effects.update(dt);
   const angle=day*Math.PI*2;
@@ -697,7 +701,7 @@ function loop(now){requestAnimationFrame(loop);
   }
   if(progress.count===progress.total){
    loadingWorld=false;worldPaused=false;running=true;el('worldLoading').classList.add('hidden');
-   pendingFullscreenAfterWorldCreation112=loadingResumeAuto;
+
   }
  }
  // Keep visible and honest background progress for the full 12-chunk radius.
@@ -710,6 +714,7 @@ function loop(now){requestAnimationFrame(loop);
  }
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
+ canvas.dataset.cameraYaw=String(player.yaw);canvas.dataset.cameraPitch=String(player.pitch);
  // Restore the camera even when a saved dead player cannot tick.
  camera.position.set(player.x,player.y+1.62,player.z);
  camera.rotation.set(player.pitch,player.yaw,camera.rotation.z);

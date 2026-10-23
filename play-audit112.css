@@ -1,0 +1,38 @@
+/* Original sprites are supplied only by the user's local JAR. */
+body:not(.touch-ui) #inventory[data-container] #closeInventory{display:none!important}
+body.creative-ui112 #survivalHud{display:none!important}
+#inventory.creative-container112{width:calc(195px * var(--gui-scale))!important;height:calc(136px * var(--gui-scale))!important;background:#c6c6c6!important;border:calc(3px * var(--gui-scale)) solid #eee!important;box-sizing:content-box}
+#inventory.creative-container112>:not(#creativeInventory112):not(.inventory-head){display:none!important}
+#inventory.creative-container112 .inventory-head strong{display:none!important}
+#creativeInventory112{position:absolute;inset:0;color:#404040;font-size:calc(8px * var(--gui-scale));image-rendering:pixelated}
+#creativeInventory112[hidden]{display:none!important}
+html.gui112-creativeItems #inventory.creative-container112{background:var(--gui112-creativeItems) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))!important;border:0!important}
+html.gui112-creativeSearch #inventory.creative-container112:has(#creativeInventory112[data-tab="search"]){background-image:var(--gui112-creativeSearch)!important}
+.creative-title112{position:absolute;left:calc(8px * var(--gui-scale));top:calc(6px * var(--gui-scale));font:inherit}
+#creativeInventory112 input[type="search"]{position:absolute;left:calc(82px * var(--gui-scale));top:calc(6px * var(--gui-scale));width:calc(89px * var(--gui-scale));height:calc(10px * var(--gui-scale));font:inherit;padding:0;border:0;background:#aaa;color:#fff}
+.creative-grid112,.creative-hotbar112{position:absolute;left:calc(9px * var(--gui-scale));top:calc(18px * var(--gui-scale));display:grid;grid-template-columns:repeat(9,calc(16px * var(--gui-scale)));gap:calc(2px * var(--gui-scale))}
+.creative-hotbar112{top:calc(112px * var(--gui-scale))}
+#creativeInventory112 .creative-slot112{position:relative;width:calc(16px * var(--gui-scale));height:calc(16px * var(--gui-scale));padding:0;border:0;min-height:0;background:#8b8b8b;border-radius:0;box-shadow:calc(-1px * var(--gui-scale)) calc(-1px * var(--gui-scale)) #373737,calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #fff}
+html.gui112-creativeItems #creativeInventory112 .creative-slot112{background:transparent;box-shadow:none}
+#creativeInventory112 .creative-slot112:hover{background:#ffffff80}
+#creativeInventory112 .tileIcon,#recipeBook112 .tileIcon{display:block!important;width:calc(16px * var(--gui-scale))!important;height:calc(16px * var(--gui-scale))!important;margin:0;image-rendering:pixelated}
+#creativeInventory112 .creative-slot112 span{position:absolute;right:0;bottom:0;font-size:calc(8px * var(--gui-scale));color:white;text-shadow:calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #333}
+.creative-tabs112{position:absolute;left:0;top:calc(-28px * var(--gui-scale));display:flex;gap:calc(2px * var(--gui-scale))}
+#creativeInventory112 .creative-tabs112 button{width:calc(28px * var(--gui-scale));height:calc(32px * var(--gui-scale));background:#aaa;border:calc(1px * var(--gui-scale)) solid #eee;border-radius:calc(3px * var(--gui-scale)) calc(3px * var(--gui-scale)) 0 0;padding:calc(5px * var(--gui-scale))}
+#creativeInventory112 .creative-tabs112 button[aria-selected="true"]{background:#c6c6c6;border-bottom:0}
+.creative-scroll112{position:absolute;left:calc(175px * var(--gui-scale));top:calc(18px * var(--gui-scale));height:calc(88px * var(--gui-scale));width:calc(12px * var(--gui-scale));writing-mode:vertical-lr;direction:ltr}
+#inventory #recipeBookToggle{font-size:0!important;background:#788879!important;border:0!important;width:calc(20px * var(--gui-scale));height:calc(18px * var(--gui-scale))}
+html.gui112-recipeBook #inventory #recipeBookToggle{background:var(--gui112-recipeBook) 0 calc(-168px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))!important;box-shadow:none!important}
+html.gui112-recipeBook #inventory #recipeBookToggle:hover{background-position-x:calc(-20px * var(--gui-scale))!important}
+#inventory #recipeBook112{box-sizing:border-box;width:calc(147px * var(--gui-scale));height:calc(166px * var(--gui-scale));padding:0;border:0;overflow:visible;background:#c6c6c6;box-shadow:none}
+html.gui112-recipeBook #inventory #recipeBook112{background:var(--gui112-recipeBook) calc(-1px * var(--gui-scale)) calc(-1px * var(--gui-scale)) / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))!important}
+#inventory #recipeBook112 input{position:absolute;left:calc(25px * var(--gui-scale));top:calc(13px * var(--gui-scale));width:calc(80px * var(--gui-scale));height:calc(12px * var(--gui-scale));font-size:calc(8px * var(--gui-scale));padding:0;background:transparent;border:0;color:white;outline:0}
+#inventory #recipeBook112 .recipe-grid112{position:absolute;left:calc(11px * var(--gui-scale));top:calc(31px * var(--gui-scale));display:grid;grid-template-columns:repeat(5,calc(24px * var(--gui-scale)));gap:calc(1px * var(--gui-scale))}
+#inventory #recipeBook112 .recipe-item112{width:calc(24px * var(--gui-scale));height:calc(24px * var(--gui-scale));padding:calc(4px * var(--gui-scale));margin:0;min-height:0;box-sizing:border-box;background:#999!important;border:calc(1px * var(--gui-scale)) solid #ddd;box-shadow:none;border-radius:calc(2px * var(--gui-scale))}
+#inventory #recipeBook112 .recipe-item112:hover{background:#bbb!important}
+#inventory #recipeBook112 .recipe-item112 span{display:none}
+.recipe-prev112,.recipe-next112,.recipe-page112{position:absolute;top:calc(139px * var(--gui-scale));font-size:calc(8px * var(--gui-scale))!important}
+.recipe-prev112{left:calc(35px * var(--gui-scale))}.recipe-next112{left:calc(105px * var(--gui-scale))}.recipe-page112{left:calc(67px * var(--gui-scale))}
+#armorHints112{display:none}#inventory[data-container="inventory"]:not(.creative-container112) #armorHints112{display:block}
+.armor-hint112{position:absolute;left:calc(8px * var(--gui-scale));top:calc((8px + var(--armor-row) * 18px) * var(--gui-scale));width:calc(16px * var(--gui-scale));height:calc(16px * var(--gui-scale));background-size:100% 100%;image-rendering:pixelated}
+.armor-hint112.helmet{background-image:var(--armor-helmet112)}.armor-hint112.chestplate{background-image:var(--armor-chestplate112)}.armor-hint112.leggings{background-image:var(--armor-leggings112)}.armor-hint112.boots{background-image:var(--armor-boots112)}.armor-hint112.shield{left:calc(77px * var(--gui-scale));top:calc(62px * var(--gui-scale));background-image:var(--armor-shield112)}

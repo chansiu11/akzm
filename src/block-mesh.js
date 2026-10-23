@@ -39,6 +39,16 @@ function add(quads,x,y,z,id,face,v){quads.push({x,y,z,id,d:face.d,v});}
 export function visibleBlockQuads(world,x,y,z){
  const block=world.getBlock(x,y,z),def=definition(block.id);if(!def||def.model==='empty')return [];
  const quads=[],boxes=renderBoxes(block);
+ if(def.layer==='water'){
+  const height=(b,above)=>above.id===block.id?1:(b.state?.level??0)>=8?1:(8-(b.state?.level??0))/9;
+  const h=height(block,world.getBlock(x,y+1,z));
+  for(const face of FACES){const [dx,dy,dz]=face.d,other=world.getBlock(x+dx,y+dy,z+dz),od=definition(other.id);
+   if(od?.layer==='opaque')continue;
+   if(other.id===block.id){if(dy!==0)continue;const oh=height(other,world.getBlock(x+dx,y+1,z+dz));if(oh>=h)continue;}
+   add(quads,x,y,z,block.id,face,face.v.map(([a,b,c])=>[a,b*h,c]));
+  }
+  return quads;
+ }
  if(def.model==='post'){
   // Render a narrow lever post directly: 1/2-block occupancy samples miss it.
   for(const bounds of boxes)for(const face of FACES){

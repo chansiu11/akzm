@@ -16,7 +16,7 @@ test('9 slots fit vanilla 182 pixel wide hotbar and mobile scaling remains safe'
  assert.ok(gui112Scale(375,667,{touch:true})>=1);
 });
 test('owner-owned JAR importer rejects incomplete graphical assets',()=>{
- assert.equal(Object.keys(GUI112_FILES).length,7);
+ assert.equal(Object.keys(GUI112_FILES).length,10);
  assert.ok(Object.values(GUI112_FILES).every(p=>p.startsWith('assets/minecraft/textures/gui/')));
  assert.equal(validGui112Assets({widgets:'data:image/png;base64,AA=='}),false);
  assert.equal(applyGui112(null,{}),false);
@@ -84,7 +84,7 @@ test('1.12.2 item models choose real owner-local PNG paths instead of guessing f
 });
 test('new item model resolution triggers private cached JAR re-extraction',async()=>{
  const {PRIVATE_RESOURCE_VERSION}=await import('../src/private-resource-cache.js');
- assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-mobs-v11');
+ assert.equal(PRIVATE_RESOURCE_VERSION,'112-menu-font-atlas6-mobs-v12');
 });
 
 test('original JAR block atlas water retains source PNG transparency',()=>{

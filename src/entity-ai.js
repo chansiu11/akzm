@@ -5,7 +5,7 @@ export function spawnEntity(kind,id,x,y,z){const base=ENTITY_KINDS[kind];if(!bas
 export function decide(e,player,dt,rng=Math.random){const meta=ENTITY_KINDS[e.kind];if(!meta||e.health<=0)return {mode:'dead',vx:0,vz:0,attack:false};
  e.attackTimer=Math.max(0,e.attackTimer-dt);e.think-=dt;
  const d=dist(e,player);let mode='wander',heading=e.heading;
- if(meta.hostile&&d<15){mode=e.kind==='shooter'&&d<=12?'ranged':d<2.0?'attack':'chase';heading=Math.atan2(player.z-e.z,player.x-e.x)}
+ if(meta.hostile&&!player.invulnerable&&d<15){mode=e.kind==='shooter'&&d<=12?'ranged':d<2.0?'attack':'chase';heading=Math.atan2(player.z-e.z,player.x-e.x)}
  else if(e.think<=0){e.think=1.5+rng()*3;e.heading=rng()*Math.PI*2;heading=e.heading;}
  const speed=mode==='attack'||mode==='ranged'?0:meta.speed*(mode==='wander'?.35:1);
  const attack=(mode==='attack'||mode==='ranged')&&e.attackTimer<=0;if(attack)e.attackTimer=e.kind==='shooter'?2:1.2;

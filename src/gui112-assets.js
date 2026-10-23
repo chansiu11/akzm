@@ -12,7 +12,10 @@ export const GUI112_FILES=Object.freeze({
  crafting:'assets/minecraft/textures/gui/container/crafting_table.png',
  chest:'assets/minecraft/textures/gui/container/generic_54.png',
  furnace:'assets/minecraft/textures/gui/container/furnace.png',
- recipeBook:'assets/minecraft/textures/gui/recipe_book.png'
+ recipeBook:'assets/minecraft/textures/gui/recipe_book.png',
+ creativeItems:'assets/minecraft/textures/gui/container/creative_inventory/tab_items.png',
+ creativeSearch:'assets/minecraft/textures/gui/container/creative_inventory/tab_item_search.png',
+ creativeTabs:'assets/minecraft/textures/gui/container/creative_inventory/tabs.png'
 });
 // 1.12.2 item model IDs and PNG basenames can differ (e.g. wooden -> wood).
 // Prefer the layer0 path declared by the owner's local model JSON. Do not publish it.
@@ -53,7 +56,8 @@ export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false
  if(typeof a.defaultWorldIcon==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a.defaultWorldIcon))
   root.style.setProperty('--owner-world-icon112','url("'+a.defaultWorldIcon+'")');
  else root.style.removeProperty?.('--owner-world-icon112');
- applyOwnerDeathButtons112(root,a.widgets);for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
+ for(const [name,uri] of Object.entries(a.armorSlots??{}))if(['helmet','chestplate','leggings','boots','shield'].includes(name)&&pngData(uri))root.style.setProperty('--armor-'+name+'112','url("'+uri+'")');
+ applyOwnerDeathButtons112(root,a.widgets);for(const k of ['chest','furnace','recipeBook','creativeItems','creativeSearch','creativeTabs'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
 export function restoreGui112(root){try{const a=JSON.parse(localStorage.getItem(GUI112_KEY)||'null');return applyGui112(root,a)?a:null;}catch{return null;}}
 export function storeGui112(a){if(!validGui112Assets(a))return false;try{localStorage.setItem(GUI112_KEY,JSON.stringify(a));return true;}catch{return false;}}
 export async function readOwner112Jar(file){
@@ -82,13 +86,14 @@ export async function readOwner112Jar(file){
  }
  const splashes=zip.file('assets/minecraft/texts/splashes.txt');if(splashes)a.splashes=(await splashes.async('string')).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
  for(const [key,path] of Object.entries(GUI112_FILES)){
-  const f=zip.file(path);if(!f)throw Error('원본 UI PNG 누락: '+path);
+  const f=zip.file(path);if(!f){if(key.startsWith('creative'))continue;throw Error('원본 UI PNG 누락: '+path);}
   const b=await f.async('uint8array');
   if(b.length<24||b[0]!==137||b[1]!==80||b[2]!==78||b[3]!==71)throw Error('잘못된 PNG: '+path);
   const view=new DataView(b.buffer,b.byteOffset,b.byteLength);
   if(view.getUint32(16)!==256||view.getUint32(20)!==256)throw Error('UI 텍스처 크기 불일치: '+path);
   a[key]='data:image/png;base64,'+await f.async('base64');
  }
+ a.armorSlots={};for(const name of ['helmet','chestplate','leggings','boots','shield']){const f=zip.file('assets/minecraft/textures/items/empty_armor_slot_'+name+'.png');if(f)a.armorSlots[name]='data:image/png;base64,'+await f.async('base64');}
  // Optional user-owned 1.12.2 default world preview (64x64, grayscale).
  const worldIcon=zip.file('assets/minecraft/textures/misc/unknown_server.png');
  if(worldIcon){
@@ -112,7 +117,9 @@ export async function readOwner112Jar(file){
  for(const [kind,path] of Object.entries({
   grazer:'assets/minecraft/textures/entity/cow/cow.png',
   wanderer:'assets/minecraft/textures/entity/zombie/zombie.png',
-  shooter:'assets/minecraft/textures/entity/skeleton/skeleton.png'
+  shooter:'assets/minecraft/textures/entity/skeleton/skeleton.png',
+  bow:'assets/minecraft/textures/items/bow_standby.png',
+  arrow:'assets/minecraft/textures/entity/projectiles/arrow.png'
  })){
   const f=zip.file(path);if(f)a.mobTextures[kind]='data:image/png;base64,'+await f.async('base64');
  }

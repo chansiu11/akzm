@@ -60,3 +60,15 @@ export function craftGridOnce(grid,size,inventory){const found=recipeAt(grid,siz
 export function clearCraftGrid(grid,inventory){let leftover=0;for(const slot of grid){if(!slot.id)continue;const rem=giveItem(inventory,slot.id,slot.count);leftover+=rem;if(rem){slot.count=rem}else{slot.id=0;slot.count=0}}
  return leftover;
 }
+export function fillRecipe112(recipe,size,grid,inventory){
+ if(recipe.pattern.length>size||recipe.pattern.some(row=>row.length>size))return false;
+ const copy=inventory.map(s=>({...s}));
+ for(const slot of grid)if(slot.id&&giveItem(copy,slot.id,slot.count))return false;
+ const next=emptyCraftGrid(size);
+ for(let y=0;y<recipe.pattern.length;y++)for(let x=0;x<recipe.pattern[y].length;x++){
+  const id=recipe.keys[recipe.pattern[y][x]];if(!id)continue;
+  const source=copy.find(s=>s.id===id&&s.count>0);if(!source)return false;
+  next[y*size+x]={id,count:1};source.count--;if(!source.count)source.id=0;
+ }
+ inventory.splice(0,inventory.length,...copy);grid.splice(0,grid.length,...next);return true;
+}

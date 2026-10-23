@@ -158,6 +158,10 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  for(const id of ['settingFov','settingDistance','settingSensitivity'])$(id).addEventListener('input',updateSettingLabels);
  $('settingFov').addEventListener('input',()=>{state.settings={...state.settings,fov:normalizeFov112($('settingFov').value)};applySettings(state.settings);write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});});
  $('settingsSave').addEventListener('click',saveSettings);
+ const fullscreen=$('settingFullscreen');
+ const syncFullscreen=()=>{fullscreen.textContent='전체화면: '+(document.fullscreenElement?'켜짐':'꺼짐');fullscreen.setAttribute('aria-pressed',String(!!document.fullscreenElement));};
+ fullscreen.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{fullscreen.textContent='전체화면: 브라우저에서 허용되지 않음';}syncFullscreen();});
+ document.addEventListener('fullscreenchange',syncFullscreen);syncFullscreen();
  $('settingsBack').addEventListener('click',()=>open(settingsBack));
  $('menuMultiplayer').addEventListener('click',()=>open('help'));
  $('menuRealms').addEventListener('click',()=>open('help'));

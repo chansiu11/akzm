@@ -42,7 +42,7 @@ const hardness=Object.freeze({1:.6,2:.5,3:1.5,4:.5,5:2,6:.2,7:2,9:2,10:3,11:.2,1
 export const BLOCK_DEFS=Object.freeze(base.map(([id,name,key,tile,layer,model,solid])=>Object.freeze({
  id,name,key,tile,layer,model,solid,hardness:hardness[id]??0,
  interact:id===BLOCK.CRAFTING_TABLE?'crafting':id===BLOCK.CHEST?'chest':id===BLOCK.FURNACE?'furnace':id===BLOCK.LEVER?'lever':null,
- states:model==='slab'?Object.freeze({half:['bottom','top']}):model==='stairs'?Object.freeze({facing:['north','south','east','west']}):id===BLOCK.LEVER||id===BLOCK.LAMP?Object.freeze({powered:[false,true]}):Object.freeze({})
+ states:id===BLOCK.WATER?Object.freeze({level:[0,1,2,3,4,5,6,7,8]}):model==='slab'?Object.freeze({half:['bottom','top']}):model==='stairs'?Object.freeze({facing:['north','south','east','west']}):id===BLOCK.LEVER||id===BLOCK.LAMP?Object.freeze({powered:[false,true]}):Object.freeze({})
 })));
 export const BLOCK_NAMES=Object.freeze(BLOCK_DEFS.map(d=>d.name));
 export function definition(id){return BLOCK_DEFS[id]??null}
