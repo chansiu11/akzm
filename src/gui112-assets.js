@@ -49,7 +49,7 @@ export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false
  // Only the local JAR supplies this familiar grayscale fallback world icon.
  if(typeof a.defaultWorldIcon==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a.defaultWorldIcon))
   root.style.setProperty('--owner-world-icon112','url("'+a.defaultWorldIcon+'")');
- else root.style.removeProperty('--owner-world-icon112');
+ else root.style.removeProperty?.('--owner-world-icon112');
  applyOwnerDeathButtons112(root,a.widgets);for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
 export function restoreGui112(root){try{const a=JSON.parse(localStorage.getItem(GUI112_KEY)||'null');return applyGui112(root,a)?a:null;}catch{return null;}}
 export function storeGui112(a){if(!validGui112Assets(a))return false;try{localStorage.setItem(GUI112_KEY,JSON.stringify(a));return true;}catch{return false;}}
