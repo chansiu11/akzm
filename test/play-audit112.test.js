@@ -5,6 +5,7 @@ import {MOB_MODELS112,modelFaceUV112,facingYaw112,hostileSpawnAllowed112} from '
 import {decide,spawnEntity} from '../src/entity-ai.js';
 import {GRID_RECIPES,fillRecipe112,emptyCraftGrid,recipeAt} from '../src/crafting-grid.js';
 import {readFileSync} from 'node:fs';
+import {mobCollides112,stepMobVertical112} from '../src/mob-physics112.js';
 function waterWorld(){const edits=new Map();return {getBlock(x,y,z){return edits.get([x,y,z].join(','))??{id:y<=1?BLOCK.STONE:BLOCK.AIR,state:{}};},get(x,y,z){return this.getBlock(x,y,z).id;},set(x,y,z,id,state={}){if(y<=1)return false;edits.set([x,y,z].join(','),{id,state:normalizeState(id,state)});return true;}};}
 test('water falls, spreads at most seven blocks and drains after source removal',()=>{
  const world=waterWorld(),flow=createWaterFlow112(world);world.set(0,3,0,BLOCK.WATER,{level:0});flow.notifyChange(0,3,0);
@@ -41,4 +42,10 @@ test('fullscreen is an explicit setting and never a world-entry side effect',()=
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8'),menu=readFileSync(new URL('../src/menu.js',import.meta.url),'utf8');
  assert.doesNotMatch(main,/requestFullscreen|pendingFullscreenAfterWorldCreation/);assert.match(menu,/fullscreen.addEventListener\('click'/);
  assert.match(main,/if\(!mouseDrag112\)return/);assert.match(main,/player.invulnerable=creative112/);
+});
+test('mob body cannot clip a neighbouring wall and falls onto ground after a ledge',()=>{
+ const world={get(x,y,z){return y<=0||x===2&&y<3?BLOCK.STONE:BLOCK.AIR;}},e={kind:'grazer',x:1.6,y:1,z:0,health:10};
+ assert.equal(mobCollides112(world,e),true);e.x=0;e.y=5;
+ for(let i=0;i<100;i++)stepMobVertical112(world,e,.05);
+ assert.ok(e.y>=1&&e.y<1.1);assert.equal(mobCollides112(world,e),false);
 });

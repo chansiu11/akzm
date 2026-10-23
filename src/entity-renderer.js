@@ -1,3 +1,4 @@
+import {mobCollides112,stepMobVertical112} from './mob-physics112.js';
 import {MOB_MODELS112,modelFaceUV112,facingYaw112,hostileSpawnAllowed112} from './mob-model112.js';
 // Basic original voxel creatures rendered as simple colored geometry.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
@@ -100,11 +101,11 @@ export function createEntityWorld(scene,world,onHit,savedEntities=[]){
     const next=e.nav.path.find(p=>Math.hypot(p.x+.5-e.x,p.z+.5-e.z)>.65);
     if(next)waypoint={x:next.x+.5,z:next.z+.5};
    }
-   const solidAt=(x,y,z)=>!!definition(world.get(Math.floor(x),Math.floor(y),Math.floor(z)))?.solid;
+   const solidAt=(x,y,z)=>mobCollides112(world,e,x,y,z);const previousX=e.x,previousZ=e.z;
     const action=stepEntity(e,player,dt,solidAt,Math.random,{waypoint});
     stepMobKnockback112(e,dt,solidAt);
-   // Keep simple walking entities at terrain surface. Pathfinding is not implemented.
-   const newY=world.columnTop(Math.floor(e.x),Math.floor(e.z))+1;if(Math.abs(newY-e.y)<=1.05)e.y=newY;
+   // Grounded AABB motion replaces snapping to the highest block in a column.
+   stepMobVertical112(world,e,dt,{moving:Math.hypot(action.vx,action.vz)>.1,blocked:e.x===previousX&&e.z===previousZ});
    group.position.set(e.x,e.y,e.z);group.rotation.y=facingYaw112(action.vx,action.vz,group.rotation.y);
     const moving=Math.hypot(action.vx,action.vz)>.1;e.walkPhase=(e.walkPhase??0)+Math.hypot(action.vx,action.vz)*dt*4;
     for(let k=0;k<limbs.length;k++){const limb=limbs[k],phase=e.walkPhase+((e.kind==='grazer'?[0,1,1,0][k]:k%2)?Math.PI:0);limb.rotation.x=limb.userData.arm&&e.kind==='wanderer'?-Math.PI/2:limb.userData.arm&&e.kind==='shooter'&&action.mode==='ranged'?-Math.PI/2:Math.sin(phase)*(moving?.65:0);}

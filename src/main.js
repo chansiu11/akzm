@@ -34,7 +34,7 @@ import {Survival} from './survival.js';
 import {shouldAdvanceWorld} from './simulation-state.js';
 import {expandInventory,giveItem,moveStack} from './inventory-utils.js';
 import {restoreInventory,replenishOverflow} from './inventory-restore.js';
-import {createEntityWorld} from './entity-renderer.js?v=2';
+import {createEntityWorld} from './entity-renderer.js?v=3';
 import {createDrops} from './drops.js';
 import {createAudio} from './audio.js?v=1.1';
 import {formatOwnerDeath112} from './death-messages112.js';
