@@ -60,6 +60,40 @@ try{
  }
  console.log('WORLD_BUTTON_GEOMETRY_PASS '+JSON.stringify({label,...selectionButtons}));
  await writeFile('command-review/'+label+'-world-buttons.json',JSON.stringify(selectionButtons,null,2));
+ // Check the rendered CSS in the real browser, including a simulated local
+ // owner widgets import; don't bundle any game-owned PNG in the repository.
+ const spriteCheck=await page.evaluate(()=>{
+  const root=document.documentElement;
+  const originalClass=root.classList.contains('gui112-assets');
+  const vars=['--owner-death-button-normal','--owner-death-button-hover','--owner-death-button-disabled'];
+  const previous=vars.map(name=>root.style.getPropertyValue(name));
+  const c=document.createElement('canvas');c.width=200;c.height=20;
+  const ctx=c.getContext('2d');ctx.fillStyle='#727272';ctx.fillRect(0,0,200,20);
+  ctx.fillStyle='#bdbdbd';ctx.fillRect(1,1,198,1);
+  ctx.fillStyle='#333333';ctx.fillRect(1,18,198,1);
+  const uri='url("'+c.toDataURL('image/png')+'")';
+  for(const v of vars)root.style.setProperty(v,uri);
+  root.classList.add('gui112-assets');
+  const buttons=['worldPlay','worldCreate','worldEdit','worldDelete','worldRecreate','worldBack'];
+  const result=buttons.map(id=>{
+   const el=document.getElementById(id);
+   const css=getComputedStyle(el),before=getComputedStyle(el,'::before'),after=getComputedStyle(el,'::after');
+   return {id,image:css.borderImageSource,slice:css.borderImageSlice,before:before.content,after:after.content,
+    borderWidth:css.borderTopWidth,bg:css.backgroundImage};
+  });
+  vars.forEach((v,i)=>previous[i]?root.style.setProperty(v,previous[i]):root.style.removeProperty(v));
+  if(!originalClass)root.classList.remove('gui112-assets');
+  return result;
+ });
+ if(spriteCheck.some(b=>!b.image.includes('data:image/png')||b.before!=='none'||b.after!=='none'||!b.slice.includes('3')))
+  throw Error('Broken split sprite in world-selection buttons: '+JSON.stringify(spriteCheck));
+ console.log('WORLD_BUTTON_SPRITE_PASS '+JSON.stringify({label,spriteCheck}));
+ const worldIconCheck=await page.locator('.world-icon112').first().evaluate(el=>{
+  const s=getComputedStyle(el);return {image:s.backgroundImage,size:s.backgroundSize,color:s.backgroundColor};
+ });
+ if(!worldIconCheck.image.includes('data:image/png'))throw Error('Default world icon missing: '+JSON.stringify(worldIconCheck));
+ console.log('WORLD_DEFAULT_ICON_PASS '+JSON.stringify({label,...worldIconCheck}));
+
  await page.screenshot({path:'command-review/'+label+'-02-worlds.png'});
  // Verify the buttons open the real screens and capture each interaction.
  await page.locator('#worldCreate').click();

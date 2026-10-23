@@ -45,7 +45,12 @@ function applyOwnerDeathButtons112(root,uri){
  image.onerror=()=>{};
  image.src=uri;
 }
-export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))if(typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');applyOwnerDeathButtons112(root,a.widgets);for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
+export function applyGui112(root,a){if(!root||!validGui112Assets(a))return false;for(const k of Object.keys(GUI112_FILES))if(typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]))root.style.setProperty('--gui112-'+k,'url("'+a[k]+'")');root.classList.add('gui112-assets');
+ // Only the local JAR supplies this familiar grayscale fallback world icon.
+ if(typeof a.defaultWorldIcon==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a.defaultWorldIcon))
+  root.style.setProperty('--owner-world-icon112','url("'+a.defaultWorldIcon+'")');
+ else root.style.removeProperty('--owner-world-icon112');
+ applyOwnerDeathButtons112(root,a.widgets);for(const k of ['chest','furnace','recipeBook'])root.classList.toggle('gui112-'+k,typeof a[k]==='string'&&/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(a[k]));return true;}
 export function restoreGui112(root){try{const a=JSON.parse(localStorage.getItem(GUI112_KEY)||'null');return applyGui112(root,a)?a:null;}catch{return null;}}
 export function storeGui112(a){if(!validGui112Assets(a))return false;try{localStorage.setItem(GUI112_KEY,JSON.stringify(a));return true;}catch{return false;}}
 export async function readOwner112Jar(file){
@@ -80,6 +85,13 @@ export async function readOwner112Jar(file){
   const view=new DataView(b.buffer,b.byteOffset,b.byteLength);
   if(view.getUint32(16)!==256||view.getUint32(20)!==256)throw Error('UI 텍스처 크기 불일치: '+path);
   a[key]='data:image/png;base64,'+await f.async('base64');
+ }
+ // Optional user-owned 1.12.2 default world preview (64x64, grayscale).
+ const worldIcon=zip.file('assets/minecraft/textures/misc/unknown_server.png');
+ if(worldIcon){
+  const data=await worldIcon.async('uint8array');
+  if(data.length>=24&&data.length<262144&&data[0]===137&&data[1]===80&&data[2]===78&&data[3]===71)
+   a.defaultWorldIcon='data:image/png;base64,'+await worldIcon.async('base64');
  }
  for(const [key,path] of Object.entries(MENU112_FILES)){
   const entry=zip.file(path);if(entry)a[key]='data:image/png;base64,'+await entry.async('base64');

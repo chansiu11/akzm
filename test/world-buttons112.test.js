@@ -19,3 +19,20 @@ test('selection screen is still interactive and screenshots are created after cl
   assert.ok(audit.includes(`page.locator('${selector}').click()`));
  }
 });
+
+const gui=readFileSync(new URL('../src/gui112-assets.js',import.meta.url),'utf8');
+const fallback=readFileSync(new URL('../src/site-default112.js',import.meta.url),'utf8');
+test('world-selection icon is a default grayscale landscape instead of diagonal swatches',()=>{
+ assert.doesNotMatch(css, /world-icon112\\{[^}]*linear-gradient\\(45deg/);
+ assert.match(css,/background-image:var\\(--owner-world-icon112,var\\(--site112-world\\)\\)/);
+ assert.match(fallback,/sprites\\.world=wc\\.toDataURL/);
+ assert.match(gui,/textures\\/misc\\/unknown_server\\.png/);
+});
+test('narrow world-selection buttons use a whole cropped frame instead of split pseudo sprites',()=>{
+ assert.match(css,/world-actions112 button\\.stone-button::before/);
+ assert.match(css,/display:none!important;content:none!important;background-image:none!important/);
+ assert.match(css,/border-image-source:var\\(--owner-death-button-normal,var\\(--site112-normal\\)\\)/);
+ assert.match(css,/border-image-slice:3 fill/);
+ assert.match(css,/owner-death-button-hover/);
+ assert.match(css,/owner-death-button-disabled/);
+});

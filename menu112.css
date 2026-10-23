@@ -173,12 +173,18 @@ html.menu112-assets #overlay .menu-page.menu-vanilla112{
 #overlay #menu-worlds .world-row:focus-visible{
  background:#73737370!important;border-color:#a0a0a0!important;outline:none
 }
+/* 1.12.2 uses a small grayscale terrain thumbnail for worlds without icon.png.
+   Site fallback is original procedural art; a user-imported local JAR can supply
+   their own unknown_server.png without distributing it from GitHub Pages. */
 #overlay #menu-worlds .world-icon112{
  position:relative;flex:0 0 calc(30px * var(--panel-s));
  width:calc(30px * var(--panel-s));height:calc(30px * var(--panel-s));
- background:linear-gradient(45deg,#556a59 0 24%,#7b846f 24% 49%,#596b74 49% 72%,#8e8b79 72%);
+ background-color:#5c5c5c!important;
+ background-image:var(--owner-world-icon112,var(--site112-world))!important;
+ background-position:center!important;background-repeat:no-repeat!important;
+ background-size:100% 100%!important;
  box-shadow:inset 0 0 0 calc(1px * var(--panel-s)) #303131;
- image-rendering:pixelated
+ image-rendering:pixelated;overflow:hidden
 }
 #overlay #menu-worlds .world-row:hover .world-icon112:after,
 #overlay #menu-worlds .world-row.selected .world-icon112:after{
@@ -223,6 +229,34 @@ html.menu112-assets #overlay .menu-page.menu-vanilla112{
 #overlay #menu-worlds .world-actions-bottom112 > :nth-child(n+3){
  position:relative;left:calc(2px * var(--panel-s));
 }
+
+/* A world-selection button may be only 72px wide. The old :before/:after
+   halves cropped widgets.png using the full 256px sprite sheet and exposed
+   the neighboring blue pixels at narrower widths. Use a single cropped
+   200x20 button frame with nine-slice borders instead. */
+html.gui112-assets #overlay #menu-worlds .world-actions112 button.stone-button{
+ border:calc(3px * var(--panel-s)) solid transparent!important;
+ border-image-source:var(--owner-death-button-normal,var(--site112-normal))!important;
+ border-image-slice:3 fill!important;
+ border-image-width:calc(3px * var(--panel-s))!important;
+ border-image-repeat:stretch!important;border-image-outset:0!important;
+ background:none!important;box-shadow:none!important;color:#e0e0e0!important;
+ text-shadow:calc(1px * var(--panel-s)) calc(1px * var(--panel-s)) #373737!important;
+ image-rendering:pixelated;
+}
+html.gui112-assets #overlay #menu-worlds .world-actions112 button.stone-button::before,
+html.gui112-assets #overlay #menu-worlds .world-actions112 button.stone-button::after{
+ display:none!important;content:none!important;background-image:none!important;
+}
+html.gui112-assets #overlay #menu-worlds .world-actions112 button.stone-button:hover:not(:disabled){
+ border-image-source:var(--owner-death-button-hover,var(--site112-hover))!important;
+ color:#ffffa0!important;
+}
+html.gui112-assets #overlay #menu-worlds .world-actions112 button.stone-button:disabled{
+ border-image-source:var(--owner-death-button-disabled,var(--site112-disabled))!important;
+ color:#a0a0a0!important;opacity:1!important;
+}
+
 #overlay #menu-settings .options-grid112,
 #overlay .options-grid112.options-sub112{
  position:absolute;top:calc(40px * var(--panel-s));left:50%;

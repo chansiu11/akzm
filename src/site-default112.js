@@ -44,6 +44,32 @@ export function drawBundledMenu112(documentRef=document){
   pixel(x,y,dist>34?'#d0d5d9':stripe?'#6c9b79':'#4b7e9b');
  }
  sprites.language=globe.toDataURL('image/png');
+ // Default world-selection icon: an independent monochrome landscape, rather
+ // than the prior colored diagonal swatches. Real owner-provided JAR icon wins.
+ const wc=documentRef.createElement('canvas');wc.width=wc.height=64;
+ const wx=wc.getContext('2d',{willReadFrequently:true});
+ if(wx){
+  const pixels=wx.createImageData(64,64);
+  const rowY=x=>Math.floor(33+4*Math.sin(x/9)+2*Math.sin(x/3));
+  for(let y=0;y<64;y++)for(let x=0;x<64;x++){
+   const cloud=(y>7&&y<23&&Math.sin(x/5+y/6)>1.1);
+   const noise=(rand(x,y,141)-.5)*22;
+   const high=y<rowY(x);
+   const c=high?(cloud?156:124+Math.round(y*.6)):y<rowY(x)+8?93:73;
+   const v=clamp(c+Math.round(noise),38,184),i=(y*64+x)*4;
+   pixels.data.set([v,v,v,255],i);
+  }
+  wx.putImageData(pixels,0,0);
+  // Distant tree silhouettes give the fallback its recognizable world thumbnail.
+  for(const [x,y,h] of [[6,34,11],[13,37,9],[43,33,13],[55,36,10]]){
+   wx.fillStyle='#585858';wx.fillRect(x,y,3,h);
+   wx.fillStyle='#656565';wx.fillRect(x-4,y-6,11,7);
+   wx.fillStyle='#777777';wx.fillRect(x-2,y-10,7,6);
+   wx.fillStyle='#828282';wx.fillRect(x,y-12,3,4);
+  }
+  sprites.world=wc.toDataURL('image/png');
+ }
+
  // Original artwork is not redistributed. This is a deterministic 32x32
  // pixel texture inspired by the low-contrast Java menu background.
  const dirt=documentRef.createElement('canvas');dirt.width=dirt.height=32;
