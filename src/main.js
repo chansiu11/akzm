@@ -12,6 +12,7 @@ import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
 import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-registry.js';
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
+import {raycastVoxel112} from './voxel-raycast112.js';
 import {beginChunk,progressChunk,progressChunkWithinBudget} from './chunk-builder.js?v=1.2';
 import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.2';
 import {loadAutomaticTextures} from './auto-resources.js';
@@ -232,27 +233,20 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  const tilt=hurtTime>0?Math.sin((.55-hurtTime)*24)*.05*(hurtTime/.55):0;
  camera.rotation.set(player.pitch,player.yaw,tilt);}
 const selectOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:'#141818',depthTest:true}));selectOutline.visible=false;scene.add(selectOutline);
-const raycaster=new THREE.Raycaster();raycaster.far=5;const forward=new THREE.Vector3();let currentHit=null;
+const forward=new THREE.Vector3();
 function look(){
  const facing=camera.getWorldDirection(forward);
  const blocked=obstructingBlockTarget(world,player,facing);
  if(blocked){
-  currentHit=null;
-  selectOutline.position.set(blocked.x+.5,blocked.y+.5,blocked.z+.5);
-  selectOutline.visible=true;
+  selectOutline.position.set(blocked.x+.5,blocked.y+.5,blocked.z+.5);selectOutline.visible=true;
   el('target').textContent=`${BLOCK_NAMES[blocked.id]} · 끼인 블록 · ${blocked.x} ${blocked.y} ${blocked.z}`;
   return blocked;
  }
- raycaster.setFromCamera({x:0,y:0},camera);
- const targets=[...meshes.values()].flat().concat([...placementPreviews.values()].map(v=>v.mesh));
- const hits=raycaster.intersectObjects(targets,false);
- const h=hits.find(hit=>hit.object.material!==waterMat);currentHit=h||null;
- if(h){
-  const n=h.face.normal,p=h.point;
-  const x=Math.floor(p.x-n.x*.002),y=Math.floor(p.y-n.y*.002),z=Math.floor(p.z-n.z*.002);
-  selectOutline.position.set(x+.5,y+.5,z+.5);selectOutline.visible=true;
-  el('target').textContent=`${BLOCK_NAMES[world.get(x,y,z)]} · ${x} ${y} ${z}`;
-  return {x,y,z,normal:n,id:world.get(x,y,z),hitY:p.y};
+ const hit=raycastVoxel112(world,camera.position,facing,5);
+ if(hit){
+  selectOutline.position.set(hit.x+.5,hit.y+.5,hit.z+.5);selectOutline.visible=true;
+  el('target').textContent=`${BLOCK_NAMES[hit.id]} · ${hit.x} ${hit.y} ${hit.z}`;
+  return hit;
  }
  selectOutline.visible=false;el('target').textContent='';return null;
 }
