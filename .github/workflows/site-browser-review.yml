@@ -1,10 +1,6 @@
 name: Deployed akzm browser screenshots
+# Browser screenshots must run only after the user explicitly requests a visual review.
 on:
-  push:
-    branches: [main]
-  workflow_run:
-    workflows: ['pages build and deployment']
-    types: [completed]
   workflow_dispatch:
 permissions:
   contents: read
