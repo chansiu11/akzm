@@ -35,7 +35,23 @@ try{
  await page.locator('#worldPlay').click();
  await page.waitForFunction(()=>document.getElementById('worldLoading').classList.contains('hidden'),null,{timeout:110000});
  await page.waitForTimeout(700);await capture('gameplay');
- const before=await getState();
+ // Move within Minecraft's five-block selection reach before testing mining.
+ let before=await getState();
+ if(!before.target){
+  if(v.touch){
+   const r=await page.locator('#touchUp').boundingBox();if(!r)throw Error('Missing mobile forward button');
+   await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down({button:'left'});
+   for(let i=0;i<15;i++){await page.waitForTimeout(300);before=await getState();if(before.target)break;}
+   await page.mouse.up({button:'left'});
+  }else{
+   await page.keyboard.down('w');
+   for(let i=0;i<15;i++){await page.waitForTimeout(300);before=await getState();if(before.target)break;}
+   await page.keyboard.up('w');
+  }
+  await page.waitForTimeout(150);before=await getState();await capture('approach-reachable-block');
+ }
+ checks['aimed at a reachable block']=!!before.target;
+
  checks['visible HUD and stream']=!!before.streamVisible&&!!before.hudBackground;
  checks['public sprite transparent backing']=before.hudColor==='rgba(0, 0, 0, 0)';
  checks['desktop touch controls absent']=v.touch||before.mobileControls==='none';

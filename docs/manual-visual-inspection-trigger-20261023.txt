@@ -1,1 +1,1 @@
-2026-10-23 stage 3 live retest of voxel-coordinate target raycast and mobile/desktop click after deployed source 52c62f. No private assets.
+2026-10-23 live mining test from reachable range, mobile forward button and PC W movement; no private assets.
