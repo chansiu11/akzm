@@ -195,7 +195,7 @@ try{
   const ac=ascii.getContext('2d');ac.fillStyle='#fff';
   for(let n=33;n<127;n++){ac.fillRect((n%16)*8,Math.floor(n/16)*8,6,8);}
   const sizes=new Uint8Array(65536),usedPages=new Map();
-  const targets=['세계 선택','선택한 세계 플레이','새로운 세계 만들기','취소','수정','삭제','다시 만들기'];
+  const targets=['세계 선택','선택한 세계 플레이','새로운 세계 만들기','취소','수정','삭제','다시 만들기',...Array.from(document.querySelectorAll('#menu-worlds .world-text112 strong,#menu-worlds .world-text112 small'),el=>el.textContent)];
   for(const ch of targets.join('')){
    const n=ch.codePointAt(0);
    if(n<127)continue;
