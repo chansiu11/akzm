@@ -1,1 +1,1 @@
-2026-10-23 stage 4 live rerun verifies native Enter-based chat command, mob summon after world creation UI and mining, screenshot after each action. No private Minecraft JAR.
+2026-10-23 stage 5: inspect actual new survival world, empty first-person hand, hunger/health HUD, timed break hold, inventory desktop/mobile, screenshots for every interaction, no private resources.
