@@ -1,0 +1,36 @@
+name: One-shot akzm deployed visual inspection
+on:
+  push:
+    paths:
+      - docs/manual-visual-inspection-trigger-20261023.txt
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile, landscape]
+    env:
+      REVIEW_VIEWPORT: ${{ matrix.viewport }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Capture and click through deployed site
+        run: node tools/inspect-deployed-once.mjs
+      - name: Upload audit screenshots and observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akzm-audit-${{ matrix.viewport }}
+          path: inspection-evidence/
+          if-no-files-found: warn
+          retention-days: 7
