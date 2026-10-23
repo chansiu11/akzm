@@ -45,7 +45,7 @@ test('new placements show a mesh immediately and reprioritize dirty chunks',()=>
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/function showPlacementPreview\(x,y,z\)/);
  assert.match(main,/showPlacementPreview\(nx,ny,nz\);track\('placed'\)/);
- assert.match(main,/const targets=\[\.\.\.meshes\.values\(\)\]\.flat\(\)\.concat/);
+ assert.match(main,/raycastVoxel112\(world,camera\.position,facing,5\)/);
  assert.match(main,/enqueue\(cx,cz,urgent=false\)/);
  assert.match(main,/pending\.unshift\(\[cx,cz\]\)/);
  assert.match(main,/clearPlacementPreviews\(cx,cz\)/);
