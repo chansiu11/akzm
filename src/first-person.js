@@ -130,6 +130,9 @@ export function createFirstPerson(renderer,atlasTexture){
    toolGroup.rotation.set(.10,0,-.53);
   }
   if(held.visible){
+   const shape=view.kind==='block'?definition(view.id)?.model:null;
+   held.geometry=ownerBlockGeometry.get(view.id)??(shape&&shape!=='cube'?nonCubeGeometry(view.id):blockCubeGeometry);
+   if(held.geometry===blockCubeGeometry)textureBoxUV(held,view.tiles);
    const pose=firstPersonPose112(native,{item:false});
    held.position.set(.42+pose.offset[0]*.45,-.30+pose.offset[1]*.45,-.79+pose.offset[2]*.45);
    held.rotation.set(...pose.rotation);
@@ -139,8 +142,8 @@ export function createFirstPerson(renderer,atlasTexture){
    const nativeBlock=ownerBlockGeometry.get(view.id)===held.geometry;
    held.scale.set(...pose.scale.map(value=>value*(nativeBlock?.28:1)));
   }
-  // Vanilla renders the right arm holding an object, not only an empty hand.
-  arm.visible=true;cuff.visible=!ownerSkin;
+  // Item-only view as requested; expose the skin arm when the slot is empty.
+  arm.visible=view.kind==='empty';cuff.visible=view.kind==='empty'&&!ownerSkin;
   if(view.kind==='tool'){
    const family=toolFamily112(id)??'pickaxe',shape=toolGeometry[family];
    head.geometry=shape.head;tip.geometry=shape.tip;
@@ -150,12 +153,7 @@ export function createFirstPerson(renderer,atlasTexture){
    tip.visible=family!=='shovel';
    return;
   }
-  if(held.visible){
-   const shape=view.kind==='block'?definition(view.id)?.model:null;
-   held.geometry=ownerBlockGeometry.get(view.id)??(shape&&shape!=='cube'?nonCubeGeometry(view.id):blockCubeGeometry);
-   if(held.geometry===blockCubeGeometry)textureBoxUV(held,view.tiles);
-   if(view.kind==='item')held.scale.z*=.08;
-  }
+  if(held.visible&&view.kind==='item')held.scale.z*=.08;
  }
  setItem(0);
  function update(dt,moving=false,mining=false){age+=dt;swingRemaining=Math.max(0,swingRemaining-dt);

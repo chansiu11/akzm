@@ -171,3 +171,13 @@ html:not(.gui112-assets) body #inventory[data-container="inventory"] #ownerPlaye
  height:calc(72px * var(--gui-scale));z-index:1;pointer-events:none;
  background:transparent;image-rendering:pixelated
 }
+
+/* Align owner hotbar, native sprite-only vitals and XP to one bottom baseline. */
+html.gui112-assets body:not(.touch-ui){--gui-bottom:max(9px,env(safe-area-inset-bottom))}
+html.gui112-assets body.touch-ui{--gui-bottom:max(11px,env(safe-area-inset-bottom))}
+html.gui112-assets body #hotbar{bottom:var(--gui-bottom)!important}
+html.gui112-assets body #survivalHud,
+html.gui112-assets body #survivalHud .vitals-top,
+html.gui112-assets body #survivalHud .vital-hearts,
+html.gui112-assets body #survivalHud .vital-food,
+html.gui112-assets body #survivalHud .vital-air{background:transparent!important;border:0!important;box-shadow:none!important;text-shadow:none!important}

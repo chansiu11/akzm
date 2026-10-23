@@ -18,12 +18,31 @@ html.menu112-assets .java-edition{font-size:0;width:calc(128px * var(--gui-scale
 html.menu112-assets #menuPanorama{filter:blur(3px);image-rendering:auto}
 html.menu112-assets #overlay{background:linear-gradient(#ffffff38,#ffffff00 55%,#00000060)}
 html.menu112-assets body:has(#menu-title.hidden):not(:has(#menu-pause:not(.hidden))) #overlay{background:linear-gradient(#0009,#0009),var(--menu112-dirt);background-size:auto,calc(32px * var(--gui-scale)) calc(32px * var(--gui-scale))}
-html.gui112-assets #overlay button.stone-button{--button-row:66;border:0;box-shadow:none;background:none!important;isolation:isolate;position:relative;text-shadow:calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #373737;image-rendering:pixelated;color:#e0e0e0}
-html.gui112-assets #overlay button.stone-button::before,html.gui112-assets #overlay button.stone-button::after{content:'';position:absolute;top:0;bottom:0;width:50%;z-index:-1;background-image:var(--gui112-widgets);background-size:calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale));background-position-y:calc(-1px * var(--button-row) * var(--gui-scale))}
-html.gui112-assets #overlay button.stone-button::before{left:0;background-position-x:0}
-html.gui112-assets #overlay button.stone-button::after{right:0;background-position-x:calc(100% + 56px * var(--gui-scale))}
-html.gui112-assets #overlay button.stone-button:hover:not(:disabled){--button-row:86;color:#ffffa0}
-html.gui112-assets #overlay button.stone-button:disabled{--button-row:46;color:#a0a0a0;opacity:1;filter:none}
+/* Crop each state from the user-owned widgets.png to one coherent 200x20 frame.
+   A 9-slice scales width without revealing a neighbor row or a blue half. */
+html.gui112-assets #overlay button.stone-button{
+ border:calc(3px * var(--gui-scale)) solid transparent!important;
+ border-image-source:var(--owner-death-button-normal,var(--site112-normal))!important;
+ border-image-slice:3 fill!important;
+ border-image-width:calc(3px * var(--gui-scale))!important;
+ border-image-repeat:stretch!important;border-image-outset:0!important;
+ background:none!important;box-shadow:none!important;isolation:isolate;
+ image-rendering:pixelated;color:#e0e0e0;position:relative;
+ text-shadow:calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #373737
+}
+html.gui112-assets #overlay button.stone-button::before,
+html.gui112-assets #overlay button.stone-button::after{
+ display:none!important;content:none!important;background:none!important
+}
+html.gui112-assets #overlay button.stone-button:hover:not(:disabled),
+html.gui112-assets #overlay button.stone-button:focus-visible:not(:disabled){
+ border-image-source:var(--owner-death-button-hover,var(--site112-hover))!important;color:#ffffa0
+}
+html.gui112-assets #overlay button.stone-button:disabled{
+ border-image-source:var(--owner-death-button-disabled,var(--site112-disabled))!important;
+ color:#a0a0a0;opacity:1;filter:none
+}
+
 .owner-item-icon{transform:none!important;clip-path:none!important;image-rendering:pixelated}
 .owner-item-icon:before,.owner-item-icon:after{display:none!important}
 /* Imported container images already contain their slot recesses. */
