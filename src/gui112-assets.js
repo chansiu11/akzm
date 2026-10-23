@@ -105,6 +105,14 @@ export async function readOwner112Jar(file){
  a.blockIconModels=await readOwnerBlockIconModels(zip,BLOCK_ITEMS);
  a.firstPersonModels=await readOwnerFirstPersonModels112(zip,ITEM_DEFS);
  const steve=zip.file('assets/minecraft/textures/entity/steve.png');if(steve)a.playerSkin='data:image/png;base64,'+await steve.async('base64');
+ a.mobTextures={};
+ for(const [kind,path] of Object.entries({
+  grazer:'assets/minecraft/textures/entity/cow/cow.png',
+  wanderer:'assets/minecraft/textures/entity/zombie/zombie.png',
+  shooter:'assets/minecraft/textures/entity/skeleton/skeleton.png'
+ })){
+  const f=zip.file(path);if(f)a.mobTextures[kind]='data:image/png;base64,'+await f.async('base64');
+ }
  a.itemIcons={};
  for(const item of ITEM_DEFS.filter(i=>i.blockId===null)){
   const modelName=item.key.split(':')[1];
