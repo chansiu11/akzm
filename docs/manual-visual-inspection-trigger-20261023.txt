@@ -1,1 +1,1 @@
-2026-10-23 second user-requested browser pass: exercise actual game loading, HUD, and input after completing 625 chunks. No copyrighted assets.
+2026-10-23 stage 1 deployed browser regression: verify 5x5 initial ready, background 12-chunk streaming, screenshots of actual HUD/inventory and click interactions. Only public fallback assets.
