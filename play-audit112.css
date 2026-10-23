@@ -36,3 +36,16 @@ html.gui112-recipeBook #inventory #recipeBook112{background:var(--gui112-recipeB
 #armorHints112{display:none}#inventory[data-container="inventory"]:not(.creative-container112) #armorHints112{display:block}
 .armor-hint112{position:absolute;left:calc(8px * var(--gui-scale));top:calc((8px + var(--armor-row) * 18px) * var(--gui-scale));width:calc(16px * var(--gui-scale));height:calc(16px * var(--gui-scale));background-size:100% 100%;image-rendering:pixelated}
 .armor-hint112.helmet{background-image:var(--armor-helmet112)}.armor-hint112.chestplate{background-image:var(--armor-chestplate112)}.armor-hint112.leggings{background-image:var(--armor-leggings112)}.armor-hint112.boots{background-image:var(--armor-boots112)}.armor-hint112.shield{left:calc(77px * var(--gui-scale));top:calc(62px * var(--gui-scale));background-image:var(--armor-shield112)}
+/* Beat the owner survival-container selector; its artwork must not cover creative. */
+html.gui112-assets body #inventory[data-container].creative-container112{background:#c6c6c6!important}
+html.gui112-creativeItems body #inventory[data-container].creative-container112{background:var(--gui112-creativeItems) 0 0 / calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale)) no-repeat!important;border:0!important}
+html.gui112-creativeSearch body #inventory[data-container].creative-container112:has(#creativeInventory112[data-tab="search"]){background-image:var(--gui112-creativeSearch)!important}
+html.gui112-assets body #inventory[data-container].creative-container112 #ownerPlayerPreview112{display:none!important}
+html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button{background-image:var(--gui112-creativeTabs)!important;background-size:calc(256px * var(--gui-scale)) calc(256px * var(--gui-scale))!important;background-position:0 0!important;background-color:transparent!important;border:0!important;box-shadow:none!important}
+html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button[aria-selected="true"]{background-position-y:calc(-32px * var(--gui-scale))!important}
+html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button:nth-child(2){background-position-x:calc(-28px * var(--gui-scale))!important}
+html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button:nth-child(3){background-position-x:calc(-56px * var(--gui-scale))!important}
+html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button:nth-child(4){background-position-x:calc(-84px * var(--gui-scale))!important}
+html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button:nth-child(5){background-position-x:calc(-112px * var(--gui-scale))!important}
+.creative-scroll112{-webkit-appearance:none;appearance:none;background:transparent;outline:0;padding:0;margin:0;border:0}
+.creative-scroll112::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(12px * var(--gui-scale));height:calc(15px * var(--gui-scale));background:#aaa;border:calc(1px * var(--gui-scale)) solid #eee;border-radius:0}
