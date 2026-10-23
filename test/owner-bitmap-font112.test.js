@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {unicodeGlyphMetric,bitmapTextSupported112,glyphDescriptor112} from '../src/bitmap-font112.js';
 
-const pages=new Map([[0xac,{kind:'fake-hangul-image'}],[0x20,{kind:'fake-punctuation'}]]);
+const pages=new Map([...Array.from({length:44},(_,i)=>[0xac+i,{kind:'fake-hangul-image'}]),[0x20,{kind:'fake-punctuation'}]]);
 const sizes=new Uint8Array(65536);
 sizes[0xac00]=0x1e;
 sizes[0x2026]=0x1e;
@@ -29,7 +29,7 @@ test('original glyph files and Korean pages are imported locally and drawn to ca
  assert.match(file,/glyph_sizes\.bin/);
  assert.match(file,/unicode_page_/);
  assert.match(file,/0xac\+i/);
- assert.match(font,/font\.pages/);
+ assert.match(font,/pages\.get|new Map\(entries\)/);
  assert.match(font,/sourceLayer\(lines/);
  assert.match(font,/paintField/);
  assert.match(css,/canvas\.bitmap-text\.bitmap-left112/);

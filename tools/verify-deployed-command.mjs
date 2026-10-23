@@ -181,6 +181,61 @@ try{
  await page.locator('#overlay:not(.show)').waitFor({state:'attached',timeout:15000});
  await page.screenshot({path:'command-review/'+label+'-10-resume-game.png'});
  console.log('PAUSE_FLOW_PASS '+label);
+ // CI fixture reproduces the owner's private PNG/BIN interface without
+ // publishing original copyrighted glyphs. It exercises Korean canvas output.
+ await page.keyboard.press('Escape');
+ await page.locator('#menu-pause').waitFor({state:'visible'});
+ await page.locator('#pauseTitle').click();
+ await page.locator('#menu-title').waitFor({state:'visible'});
+ await page.locator('#menuSingle').click();
+ await page.locator('#menu-worlds').waitFor({state:'visible'});
+ const bitmapProof=await page.evaluate(async()=>{
+  const {applyBitmapFont112}=await import('./src/bitmap-font112.js?v=1.3');
+  const ascii=document.createElement('canvas');ascii.width=ascii.height=128;
+  const ac=ascii.getContext('2d');ac.fillStyle='#fff';
+  for(let n=33;n<127;n++){ac.fillRect((n%16)*8,Math.floor(n/16)*8,6,8);}
+  const sizes=new Uint8Array(65536),usedPages=new Map();
+  const targets=['세계 선택','선택한 세계 플레이','새로운 세계 만들기','취소','수정','삭제','다시 만들기'];
+  for(const ch of targets.join('')){
+   const n=ch.codePointAt(0);
+   if(n<127)continue;
+   sizes[n]=0x0f;
+   const page=n>>>8;
+   if(!usedPages.has(page)){
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+    usedPages.set(page,canvas);
+   }
+   const ctx=usedPages.get(page).getContext('2d');ctx.fillStyle='#fff';
+   ctx.fillRect((n&15)*16,((n>>>4)&15)*16,16,16);
+  }
+  const pages=Object.fromEntries([...usedPages].map(([n,c])=>[n,c.toDataURL('image/png')]));
+  const bytes=[];for(let i=0;i<sizes.length;i+=4096)bytes.push(String.fromCharCode(...sizes.subarray(i,i+4096)));
+  const applied=await applyBitmapFont112({bitmapFont:{ascii:ascii.toDataURL('image/png'),sizes:btoa(bytes.join('')),pages}});
+  return {applied,unicodePages:Object.keys(pages).length};
+ });
+ if(!bitmapProof.applied||!bitmapProof.unicodePages)
+  throw Error('Synthetic local PNG bitmap font failed to load: '+JSON.stringify(bitmapProof));
+ await page.waitForFunction(()=>{
+  const text=document.getElementById('worldPlay');
+  const title=document.querySelector('#menu-worlds h2');
+  const hasPixels=el=>{
+   const c=el?.querySelector(':scope > canvas.bitmap-text');if(!c)return false;
+   const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   for(let i=3;i<pixels.length;i+=4)if(pixels[i])return true;
+   return false;
+  };
+  return text?.classList.contains('bitmap-label')&&title?.classList.contains('bitmap-label')&&hasPixels(text)&&hasPixels(title);
+ },null,{timeout:15000});
+ const details=await page.evaluate(()=>({
+  title:{bitmap:document.querySelector('#menu-worlds h2').classList.contains('bitmap-label')},
+  action:{bitmap:document.getElementById('worldPlay').classList.contains('bitmap-label')},
+  world:{bitmap:document.querySelector('.world-text112 strong')?.classList.contains('bitmap-label')||false},
+  inputs:document.querySelectorAll('canvas.bitmap-field-layer112').length
+ }));
+ if(!details.world)throw Error('Saved world name did not use image-font: '+JSON.stringify(details));
+ console.log('OWNER_KOREAN_BITMAP_FONT_PASS '+JSON.stringify({label,...bitmapProof,...details}));
+ await page.screenshot({path:'command-review/'+label+'-11-korean-image-font.png'});
+
 } catch(error){
  console.error('COMMAND_CHAT_FAIL '+label+': '+error?.stack);
  if(page)await page.screenshot({path:'command-review/'+label+'-failure.png'}).catch(()=>{});

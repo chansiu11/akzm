@@ -13,7 +13,7 @@ test('Korean labels never get hidden underneath unreadable owner bitmap font spr
  assert.equal(bitmapTextSupported112('설정 · 완료'),false);
  assert.equal(bitmapTextSupported112('포션 2개'),false);
  const js=readFileSync(new URL('../src/bitmap-font112.js',import.meta.url),'utf8');
- assert.match(js,/clearBitmap\(node\);return/);
+ assert.match(js,/if\(!lines\)\{clearLabel\(node\);return;\}/);
  assert.match(js,/node\.classList\.remove\('bitmap-label'\)/);
 });
 test('horizontal acceleration and friction gradually approach the desired speed',()=>{
