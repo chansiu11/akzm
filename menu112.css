@@ -461,3 +461,22 @@ html.bitmap-font-ready112 canvas.bitmap-field-layer112{
  position:fixed;pointer-events:none;z-index:85;image-rendering:pixelated;
  max-width:none;border:0!important;background:none!important;
 }
+
+/* World-list rows and HUD labels use !important colors: never show two
+   text layers after their original-owner font canvases have been drawn. */
+html.bitmap-font-ready112 #overlay .bitmap-label,
+html.bitmap-font-ready112 #inventory .bitmap-label,
+html.bitmap-font-ready112 #hotbar .bitmap-label,
+html.bitmap-font-ready112 #status.bitmap-label,
+html.bitmap-font-ready112 #gameNotice.bitmap-label,
+html.bitmap-font-ready112 #chatHistory112.bitmap-label,
+html.bitmap-font-ready112 #commandPanel .bitmap-label,
+html.bitmap-font-ready112 #deathScreen .bitmap-label{
+ color:transparent!important;text-shadow:none!important;
+}
+html.bitmap-font-ready112 #overlay #menu-worlds .bitmap-label{
+ color:transparent!important;text-shadow:none!important;
+}
+html.bitmap-font-ready112 canvas.bitmap-text.bitmap-flow112{
+ top:0;left:0;transform:none;
+}

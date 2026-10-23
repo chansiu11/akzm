@@ -62,10 +62,10 @@ const img=uri=>new Promise((resolve,reject)=>{
 });
 function sourceText(node){
  // Text nodes only: never hide the names of nested buttons or world icons.
- return [...node.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('')
+ return [...node.childNodes].filter(n=>n.nodeType===3||n.nodeName==='BR').map(n=>n.nodeName==='BR'?'\n':n.textContent).join('')
    .replace(/\r\n?/g,'\n').trim();
 }
-function glyphLines(text){
+function glyphLines(text,maxWidth=Infinity){
  const lines=text.split('\n').slice(0,24),output=[];
  for(const line of lines){
   const glyphs=[];
@@ -74,7 +74,14 @@ function glyphLines(text){
    if(!entry)return null;
    glyphs.push(entry);
   }
-  output.push(glyphs);
+  if(Number.isFinite(maxWidth)){
+   let row=[],width=0;
+   for(const g of glyphs){
+    if(row.length&&width+g.advance>maxWidth){output.push(row);row=[];width=0;}
+    row.push(g);width+=g.advance;
+   }
+   output.push(row);
+  }else output.push(glyphs);
  }
  return output;
 }
@@ -120,14 +127,15 @@ function paintLabel(node){
  if(!font||!visible(node)||node.closest('.bitmap-field-layer112'))return;
  const text=sourceText(node);
  if(!text){clearLabel(node);return;}
- const lines=glyphLines(text);
- if(!lines){clearLabel(node);return;}
  const style=getComputedStyle(node),rect=node.getBoundingClientRect();
  const s=Math.max(1,Math.min(7,(parseFloat(style.fontSize)||12)/8));
+ const flow=node.matches('.help-text,.vanilla-resource-note112,.command-output,#status,#chatHistory112,#inventory p,#overlay p');
+ const lines=glyphLines(text,flow?Math.max(10,(rect.width-8)/s):Infinity);
+ if(!lines){clearLabel(node);return;}
  const lh=parseFloat(style.lineHeight),lineHeight=Number.isFinite(lh)?Math.max(9,lh/s):10;
  const left=node.matches(leftSelector);
  const colors=palette(node);
- const key=JSON.stringify([text,s,lineHeight,left,rect.width,rect.height,colors.foreground,colors.shadow]);
+ const key=JSON.stringify([text,s,lineHeight,left,flow,rect.width,rect.height,colors.foreground,colors.shadow]);
  const canvas=node.querySelector(':scope > canvas.bitmap-text');
  if(labelCache.get(node)===key&&canvas)return;
  const layer=sourceLayer(lines,colors,lineHeight);
@@ -139,6 +147,7 @@ function paintLabel(node){
  rendered.style.width=(layer.width/2*scale)+'px';
  rendered.style.height=(layer.height/2*scale)+'px';
  rendered.classList.toggle('bitmap-left112',left);
+ rendered.classList.toggle('bitmap-flow112',flow);
  const out=rendered.getContext('2d');out.clearRect(0,0,layer.width,layer.height);out.drawImage(layer,0,0);
  node.classList.add('bitmap-label');
  labelCache.set(node,key);
