@@ -25,12 +25,12 @@ jobs:
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
       - name: Capture and click through deployed site
-        run: node tools/inspect-deployed-once.mjs
+        run: node tools/inspect-deployed-gameplay.mjs
       - name: Upload audit screenshots and observations
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: akzm-audit-${{ matrix.viewport }}
-          path: inspection-evidence/
+          path: gameplay-evidence/
           if-no-files-found: warn
           retention-days: 7
