@@ -2,7 +2,7 @@ import {renderBlockItemIcons} from './block-item-icons.js';
 import {createPlayerPreview112} from './player-preview112.js?v=1.1';
 import {installTitleLayout112} from './title-layout112.js';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js';
-import {applyBitmapFont112} from './bitmap-font112.js?v=1.2';
+import {applyBitmapFont112} from './bitmap-font112.js?v=1.3';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import {installBundledSiteTheme112} from './site-default112.js?v=1.1';
 import {MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';

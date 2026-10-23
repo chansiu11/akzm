@@ -441,3 +441,23 @@ body.menu-open:has(#menu-pause:not(.hidden)) #menuPanorama{
 body:has(#menu-pause:not(.hidden)) #overlay .menu-footer{
  display:none!important
 }
+
+
+/* Private owner JAR font: canvases are images of the game's ascii.png and
+   unicode_page_*.png, not a web font or a remotely hosted image. */
+html.bitmap-font-ready112 .bitmap-label{color:transparent!important;text-shadow:none!important;position:relative}
+html.bitmap-font-ready112 canvas.bitmap-text{
+ position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+ image-rendering:pixelated;pointer-events:none;z-index:2;
+ max-width:none;max-height:none;border:0!important;background:none!important;
+}
+html.bitmap-font-ready112 canvas.bitmap-text.bitmap-left112{
+ left:0;top:50%;transform:translateY(-50%);
+}
+html.bitmap-font-ready112 input.bitmap-input112{
+ color:transparent!important;text-shadow:none!important;caret-color:#fff!important;
+}
+html.bitmap-font-ready112 canvas.bitmap-field-layer112{
+ position:fixed;pointer-events:none;z-index:85;image-rendering:pixelated;
+ max-width:none;border:0!important;background:none!important;
+}
