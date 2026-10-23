@@ -48,7 +48,7 @@ export function createEntityWorld(scene,world,onHit,savedEntities=[]){
   const generation=++textureGeneration;
   const loaded=await Promise.all(Object.keys(colors).map(async(kind)=>{
    const uri=uris?.[kind];
-   if(typeof uri!=='string'||!/^data:image\\/png;base64,[a-z0-9+/=]+$/i.test(uri))return [kind,null];
+   if(typeof uri!=='string'||!/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(uri))return [kind,null];
    const texture=await new THREE.TextureLoader().loadAsync(uri);
    texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;
    texture.colorSpace=THREE.SRGBColorSpace;return [kind,texture];

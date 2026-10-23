@@ -510,3 +510,18 @@ html.bitmap-font-ready112 canvas.bitmap-text.bitmap-flow112{
 #touchMine{font-size:20px!important}
 @media(hover:hover) and (pointer:fine){body #touchControls{display:none!important;visibility:hidden!important;pointer-events:none!important}}
 @media(max-height:440px){body.touch-ui #touchActions{gap:3px}body.touch-ui #touchMine{width:46px;height:46px}}
+
+/* Only painted labels hide HTML glyphs. Missing owner glyphs keep the native fallback. */
+html.bitmap-font-ready112 :is(#overlay,#inventory,#hotbar,#status,#gameNotice,#chatHistory112,#commandPanel,#deathScreen) .bitmap-label{
+ color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important
+}
+html.bitmap-font-ready112 input.bitmap-input112{-webkit-text-fill-color:transparent!important}
+html.bitmap-font-ready112 canvas.bitmap-text{-webkit-text-fill-color:initial!important}
+/* Compact touch buttons stay inside the viewport in landscape and portrait. */
+body.touch-ui #touchActions{bottom:max(75px,calc(env(safe-area-inset-bottom) + 68px));gap:clamp(4px,1.4vh,11px)}
+body.touch-ui #touchActions button{width:clamp(40px,8vh,65px);height:clamp(40px,8vh,65px);font-size:clamp(19px,3.5vh,25px)}
+body.touch-ui #touchActions #touchJump{width:clamp(44px,9vh,75px);height:clamp(44px,9vh,75px)}
+@media (max-height:460px) and (orientation:landscape){
+ body.touch-ui #touchActions{flex-direction:row;align-items:center;right:max(6px,env(safe-area-inset-right));bottom:max(48px,env(safe-area-inset-bottom))}
+ body.touch-ui #touchDpad{bottom:max(52px,env(safe-area-inset-bottom))}
+}

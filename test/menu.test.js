@@ -10,13 +10,13 @@ test('world names and player saves stay isolated by selected world',()=>{
  assert.equal(activeWorldId(),'test-new');assert.equal(worldSaveKey(),'voxel-frontier-save-v1-test-new');assert.equal(listWorlds()[0].name,'시험 세계');
 });
 test('settings are sanitized before use',()=>{
- mockStorage();assert.deepEqual(loadSettings(),{fov:75,renderDistance:6,sensitivity:.24,showCoordinates:true});
+ mockStorage();assert.deepEqual(loadSettings(),{fov:75,renderDistance:12,sensitivity:.24,showCoordinates:true});
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({fov:10000,renderDistance:99,sensitivity:-2,showCoordinates:false}));
- assert.deepEqual(loadSettings(),{fov:100,renderDistance:10,sensitivity:.08,showCoordinates:false});
+ assert.deepEqual(loadSettings(),{fov:100,renderDistance:16,sensitivity:.08,showCoordinates:false});
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({renderDistance:2}));
- assert.equal(loadSettings().renderDistance,6,'upgrade old 2-chunk setting to a usable 6 chunks');
+ assert.equal(loadSettings().renderDistance,12,'upgrade old 2-chunk setting to the required 12 chunks');
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({renderDistance:2,renderDistanceV2:true}));
- assert.equal(loadSettings().renderDistance,2,'a new deliberate 2-chunk setting must persist');
+ assert.equal(loadSettings().renderDistance,12,'even an explicit setting cannot drop below the 12-chunk preload floor');
 
 });
 

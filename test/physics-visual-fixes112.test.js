@@ -31,12 +31,12 @@ test('horizontal acceleration and friction gradually approach the desired speed'
  assert.ok(Math.abs(verticalVelocity112(0,.05,{water:true})+.32)<1e-8);
  assert.ok(MOVE_SPEED112.sprint>MOVE_SPEED112.walk);
 });
-test('new desktop distance reaches 10 chunks and fog tracks actual world render distance',()=>{
- assert.equal(defaultRenderDistance112(false),6);
- assert.equal(defaultRenderDistance112(true),4);
- assert.equal(sanitizeRenderDistance112(99,false),10);
- assert.equal(sanitizeRenderDistance112(99,true),6);
- assert.equal(sanitizeRenderDistance112(-3,false),2);
+test('all devices render at least 12 chunks and fog tracks actual world render distance',()=>{
+ assert.equal(defaultRenderDistance112(false),12);
+ assert.equal(defaultRenderDistance112(true),12);
+ assert.equal(sanitizeRenderDistance112(99,false),16);
+ assert.equal(sanitizeRenderDistance112(99,true),16);
+ assert.equal(sanitizeRenderDistance112(-3,false),12);
  const near=fogDistances112(3),far=fogDistances112(8);
  assert.ok(far.far>near.far*2);
  assert.ok(far.near<far.far);
@@ -49,7 +49,7 @@ test('new placements show a mesh immediately and reprioritize dirty chunks',()=>
  assert.match(main,/enqueue\(cx,cz,urgent=false\)/);
  assert.match(main,/pending\.unshift\(\[cx,cz\]\)/);
  assert.match(main,/clearPlacementPreviews\(cx,cz\)/);
- assert.match(main,/progressChunkWithinBudget\(activeBuild,\{budgetMs:touchMode\?3:6/);
+ assert.match(main,/progressChunkWithinBudget\(activeBuild,\{budgetMs:Math\.max/);
 });
 
 test('daytime is materially brighter with a less aggressive face-shadow multiplier',()=>{

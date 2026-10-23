@@ -11,7 +11,7 @@ test('legacy joystick and break/place buttons are absent',()=>{
  }
 });
 test('all touch direction and action IDs are rendered and bound',()=>{
- for(const id of ['touchUp','touchDown','touchLeft','touchRight','touchJump','touchSneak','touchBag','touchPause','touchCommand']){
+ for(const id of ['touchUp','touchDown','touchLeft','touchRight','touchJump','touchMine','touchSneak','touchBag','touchPause','touchCommand']){
   assert.ok(html.includes(`id="${id}"`),`missing ${id} markup`);
   assert.ok(main.includes(`'${id}'`),`missing ${id} event wiring`);
  }
