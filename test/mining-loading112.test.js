@@ -44,3 +44,9 @@ test('world creation controls use pixel-styled widgets instead of native blue br
  assert.match(css,/input#worldCheats\{/);
  assert.match(css,/appearance:none!important/);
 });
+
+test('portrait touch actions sit above the bottom HUD instead of covering food glyphs',()=>{
+ const menuCss=readFileSync(new URL('../menu112.css',import.meta.url),'utf8');
+ assert.match(menuCss,/Stage 6: keep touch mining\/jump controls above/);
+ assert.match(menuCss,/body\.touch-ui #touchActions\{bottom:max\(145px/);
+});

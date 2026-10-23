@@ -557,3 +557,8 @@ body.touch-ui #chunkStream112{top:calc(53px + env(safe-area-inset-top));font-siz
  line-height:calc(8px * var(--menu-scale,1));font:bold calc(8px * var(--menu-scale,1)) monospace;
  text-shadow:1px 1px #111;
 }
+
+/* Stage 6: keep touch mining/jump controls above the health and hunger HUD. */
+@media (orientation:portrait) and (max-width:600px) and (min-height:500px){
+ body.touch-ui #touchActions{bottom:max(145px,calc(env(safe-area-inset-bottom) + 137px))}
+}
