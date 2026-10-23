@@ -1,0 +1,36 @@
+name: Live akzm multi-touch action validation
+on:
+  push:
+    paths:
+      - docs/mobile-touch-review-20261023.txt
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [mobile, landscape]
+    env:
+      REVIEW_VIEWPORT: ${{ matrix.viewport }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Validate real touch pointers on deployed GitHub Pages game
+        run: node tools/inspect-touch-interactions.mjs
+      - name: Save screenshots and touch geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akzm-touch-test-${{ matrix.viewport }}
+          path: touch-review/
+          if-no-files-found: warn
+          retention-days: 7
