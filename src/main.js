@@ -13,7 +13,7 @@ import {definition,blockBoxes,intersectsAABB,normalizeState} from './block-regis
 import {BLOCK_ITEMS,cleanInventory,itemDefinition,placeableItem} from './item-registry.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {raycastVoxel112} from './voxel-raycast112.js';
-import {beginChunk,progressChunk,progressChunkWithinBudget} from './chunk-builder.js?v=1.2';
+import {beginChunk,progressChunk,progressChunkWithinBudget} from './chunk-builder.js?v=1.3';
 import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource-pack.js?v=1.2';
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';

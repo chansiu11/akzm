@@ -20,3 +20,11 @@ test('incremental mesh equals direct one-chunk geometry across partial updates',
   assert.deepEqual(task.layers[k],full[k],`different quads in ${k}`);
  }
 });
+
+test('full-cube neighbor fast path preserves contiguous stone face count',()=>{
+ const world={getBlock(x,y,z){return {id:3,state:{}}}};
+ const faces=visibleBlockQuads(world,0,0,0);
+ assert.equal(faces.length,0,'Opaque stone fully surrounded by other solid cubes has no visible faces');
+ const airWorld={getBlock(x,y,z){return {id:(x===0&&y===0&&z===0)?3:0,state:{}}}};
+ assert.equal(visibleBlockQuads(airWorld,0,0,0).length,6);
+});

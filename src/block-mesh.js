@@ -51,7 +51,14 @@ export function visibleBlockQuads(world,x,y,z){
  if(def.model==='cube'){
   for(const face of FACES){
    const [dx,dy,dz]=face.d,neighbor=world.getBlock(x+dx,y+dy,z+dz),nd=definition(neighbor.id);
-   const subdivisions=nd?.model==='slab'||nd?.model==='stairs'?2:1;
+   // A complete neighboring cube either hides this whole face or exposes it.
+   // Avoid six extra getBlock + occupancy queries for nearly all terrain faces.
+   if(!nd || nd.model==='empty'){add(quads,x,y,z,block.id,face,face.v);continue;}
+   if(nd.model==='cube'){
+    if(!hidesFace(block,neighbor))add(quads,x,y,z,block.id,face,face.v);
+    continue;
+   }
+   const subdivisions=nd.model==='slab'||nd.model==='stairs'?2:1;
    for(let u=0;u<subdivisions;u++)for(let v=0;v<subdivisions;v++){
     const part=subdivisions===1?face.v:subFace(face,u/2,v/2,.5);
     if(!hidden(world,x,y,z,block,face,center(part)))add(quads,x,y,z,block.id,face,part);
