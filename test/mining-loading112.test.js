@@ -29,3 +29,11 @@ test('a 5x5 playable core starts first while the requested 625-chunk radius stre
  assert.match(html,/id="loadingText112"/);
  assert.match(html,/id="chunkStream112"/);
 });
+
+test('fallback HUD removes dark colored hearts behind transparent PNG pixels',()=>{
+ const css=read('../visual-overhaul.css'),hand=read('../src/first-person.js'),mobile=read('../menu112.css');
+ assert.match(css,/background-color:transparent!important/);
+ assert.match(mobile,/body\.touch-ui #chunkStream112/);
+ assert.match(hand,/held\.position\.set\(\.51\+/);
+ assert.match(hand,/arm\.visible=view\.kind==='empty'/);
+});

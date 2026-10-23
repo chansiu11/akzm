@@ -259,7 +259,7 @@ html.fallback-hud112:not(.gui112-assets) body #survivalHud .pixel-vital{
  width:calc(9px * var(--gui-scale))!important;
  height:calc(9px * var(--gui-scale))!important;
  display:block!important;flex:none!important;
- background-size:100% 100%!important;background-position:center!important;
+ background-size:100% 100%!important;background-position:center!important;background-color:transparent!important;
  background-repeat:no-repeat!important;
  transform:none!important;clip-path:none!important;
  border:0!important;border-radius:0!important;
