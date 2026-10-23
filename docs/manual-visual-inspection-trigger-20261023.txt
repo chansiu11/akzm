@@ -1,1 +1,1 @@
-2026-10-23 stage 2/3 on-site visual and interaction recheck after deployed HUD, held block and mobile stream fixes. No private assets.
+2026-10-23 stage 3 live retest of voxel-coordinate target raycast and mobile/desktop click after deployed source 52c62f. No private assets.

@@ -16,14 +16,14 @@ for(let n=0;n<12;n++){
 }
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
 const ctx=await browser.newContext({viewport:{width:v.width,height:v.height},deviceScaleFactor:1,isMobile:v.touch,hasTouch:v.touch});
-const page=await ctx.newPage();const errors=[],events=[],checks={};let shots=0;
+const page=await ctx.newPage();page.setDefaultTimeout(12000);const errors=[],events=[],checks={};let shots=0;
 page.on('pageerror',e=>errors.push('JS '+e.message));
 page.on('response',r=>{if(r.status()===404)errors.push('404 '+r.url())});
 function getState(){return page.evaluate(()=>{
  const el=id=>document.getElementById(id),style=id=>getComputedStyle(el(id));
  const p=document.querySelector('.pixel-vital.heart');
  const text=el('status')?.textContent??'';
- return {loading:!el('worldLoading').classList.contains('hidden'),loadingText:el('loadingText112').textContent,streamVisible:!el('chunkStream112').classList.contains('hidden'),streamText:el('chunkStream112').textContent,streamBox:el('chunkStream112').getBoundingClientRect().toJSON(),changedBlocks:Number(text.match(/변경 블록\s+(\d+)/)?.[1]??-1),hudColor:p?getComputedStyle(p).backgroundColor:null,hudBackground:p?getComputedStyle(p).backgroundImage:null,firstHotbarItem:el('hotbar')?.querySelector('.slot.active')?.dataset.i,mobileControls:style('touchControls').display,inventoryOpen:!el('inventory').classList.contains('hidden'),pauseOpen:!el('menu-pause').classList.contains('hidden')};
+ return {loading:!el('worldLoading').classList.contains('hidden'),loadingText:el('loadingText112').textContent,streamVisible:!el('chunkStream112').classList.contains('hidden'),streamText:el('chunkStream112').textContent,streamBox:el('chunkStream112').getBoundingClientRect().toJSON(),changedBlocks:Number(text.match(/변경 블록\s+(\d+)/)?.[1]??-1),hudColor:p?getComputedStyle(p).backgroundColor:null,hudBackground:p?getComputedStyle(p).backgroundImage:null,target:el('target')?.textContent,firstHotbarItem:el('hotbar')?.querySelector('.slot.active')?.dataset.i,mobileControls:style('touchControls').display,inventoryOpen:!el('inventory').classList.contains('hidden'),pauseOpen:!el('menu-pause').classList.contains('hidden')};
 });}
 async function capture(name){const file=label+'-'+(++shots)+'-'+name+'.png';await page.screenshot({path:dir+'/'+file,timeout:20000});events.push({file,state:await getState()});console.log('SCREEN '+file+' '+JSON.stringify(events.at(-1).state));}
 async function test(name,action){try{await action();checks[name]=true;}catch(e){checks[name]=false;errors.push(name+': '+e.message);}}
