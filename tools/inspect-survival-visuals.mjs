@@ -67,6 +67,16 @@ try{
   await page.keyboard.press('e');await snap('survival-inventory');
   await page.keyboard.press('e');
  }
+ findings.assetVersion=await page.evaluate(()=>document.querySelector('script[src*="src/main.js"]')?.getAttribute('src'));
+ if(v.touch){
+  findings.touchGeometry=await page.evaluate(()=>{
+   const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+   const actions=rect('touchActions'),hud=rect('survivalHud'),bar=rect('hotbar');
+   const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+   return {actions,hud,bar,actionsOverlapHud:overlap(actions,hud),actionsOverlapHotbar:overlap(actions,bar)};
+  });
+  if(findings.touchGeometry.actionsOverlapHud||findings.touchGeometry.actionsOverlapHotbar)errors.push('Mobile touch action controls overlap HUD or hotbar');
+ }
  findings.afterMine=await status();
  findings['survival UI remains playable']=findings.afterMine.loadingHidden;
  await snap('post-mining');

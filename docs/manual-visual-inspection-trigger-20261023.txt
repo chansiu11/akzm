@@ -1,1 +1,3 @@
 2026-10-23 stage 5: inspect actual new survival world, empty first-person hand, hunger/health HUD, timed break hold, inventory desktop/mobile, screenshots for every interaction, no private resources.
+
+Stage6 follow-up review for portrait button/HUD bounds and versioned game assets: 2026-10-23.
