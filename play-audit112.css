@@ -49,3 +49,7 @@ html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button:nth
 html.gui112-creativeTabs body #creativeInventory112 .creative-tabs112 button:nth-child(5){background-position-x:calc(-112px * var(--gui-scale))!important}
 .creative-scroll112{-webkit-appearance:none;appearance:none;background:transparent;outline:0;padding:0;margin:0;border:0}
 .creative-scroll112::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(12px * var(--gui-scale));height:calc(15px * var(--gui-scale));background:#aaa;border:calc(1px * var(--gui-scale)) solid #eee;border-radius:0}
+/* Menu button padding must never shift 16px item icons outside their slots. */
+html body #inventory #creativeInventory112 .creative-slot112{padding:0!important;margin:0!important;border:0!important;min-width:0!important;min-height:0!important;display:grid!important;place-items:center!important;line-height:1!important;box-sizing:border-box!important}
+html body #inventory #creativeInventory112 .creative-slot112 .tileIcon{position:static!important;transform:none!important;border:0!important;box-shadow:none!important}
+html body #inventory #recipeBook112 .recipe-item112{padding:calc(4px * var(--gui-scale))!important;min-width:0!important;margin:0!important;display:grid!important;place-items:center!important}
