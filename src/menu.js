@@ -1,3 +1,4 @@
+import {normalizeFov112,fovLabel112} from './fov112.js';
 // Original UI implementation inspired by familiar sandbox game menu flows.
 // This does not contain proprietary menu artwork, fonts, or game code.
 export const WORLDS_KEY='voxel-frontier-worlds-v1';
@@ -28,9 +29,9 @@ export function listWorlds(){
  if(!Array.isArray(worlds))return [{...DEFAULT_WORLD}];
  return worlds.filter(w=>w&&typeof w.id==='string'&&typeof w.name==='string').slice(0,30);
 }
-export const DEFAULT_SETTINGS=Object.freeze({fov:75,renderDistance:12,sensitivity:0.24,showCoordinates:true});
+export const DEFAULT_SETTINGS=Object.freeze({fov:70,renderDistance:12,sensitivity:0.24,showCoordinates:true});
 export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
- fov:Math.max(60,Math.min(100,Number(s?.fov)||75)),
+ fov:normalizeFov112(s?.fov),
  renderDistance:Math.max(12,Math.min(16,Math.round((s?.renderDistanceV2===true?Number(s?.renderDistance):Math.max(12,Number(s?.renderDistance)||12))||12))),
  sensitivity:Math.max(.08,Math.min(.6,Number(s?.sensitivity)||.24)),
  showCoordinates:s?.showCoordinates!==false
@@ -129,7 +130,7 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  }
 
  function showSettings(from){settingsBack=from;const s=state.settings;$('settingFov').value=s.fov;$('settingDistance').value=s.renderDistance;$('settingSensitivity').value=s.sensitivity;$('settingCoords').checked=s.showCoordinates;$('menuLanguageSelect').value=state.language;updateSettingLabels();open('settings');}
- function updateSettingLabels(){$('fovValue').textContent=$('settingFov').value+'°';$('distanceValue').textContent=$('settingDistance').value+'청크';$('sensitivityValue').textContent=(Number($('settingSensitivity').value)*100).toFixed(0)+'%';}
+ function updateSettingLabels(){$('fovValue').textContent=fovLabel112($('settingFov').value,state.language);$('settingFov').setAttribute('aria-valuetext',$('fovValue').textContent);$('distanceValue').textContent=$('settingDistance').value+'청크';$('sensitivityValue').textContent=(Number($('settingSensitivity').value)*100).toFixed(0)+'%';}
  function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});
   state.language=$('menuLanguageSelect').value==='en_us'?'en_us':'ko_kr';try{localStorage.setItem(TITLE_LANGUAGE_KEY,state.language)}catch{}
   localizeTitle();applySettings(state.settings);open(settingsBack);}
@@ -155,6 +156,7 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  $('menuLanguageSelect').addEventListener('change',()=>{state.language=$('menuLanguageSelect').value==='en_us'?'en_us':'ko_kr';});
  $('pauseSettings').addEventListener('click',()=>showSettings('pause'));
  for(const id of ['settingFov','settingDistance','settingSensitivity'])$(id).addEventListener('input',updateSettingLabels);
+ $('settingFov').addEventListener('input',()=>{state.settings={...state.settings,fov:normalizeFov112($('settingFov').value)};applySettings(state.settings);write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});});
  $('settingsSave').addEventListener('click',saveSettings);
  $('settingsBack').addEventListener('click',()=>open(settingsBack));
  $('menuMultiplayer').addEventListener('click',()=>open('help'));

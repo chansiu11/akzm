@@ -16,7 +16,7 @@ test('original pixel panorama is present and visually behind all menu pages',()=
 });
 test('health, hunger, oxygen are clamped and independently represented as ten half icons',()=>{
  const v=vitalsModel(18,7,135);assert.equal(v.hearts.length,10);assert.equal(v.hearts[8],1);assert.equal(v.hearts[9],0);
- assert.deepEqual(v.food.slice(0,5),[1,1,1,.5,0]);assert.equal(v.bubbles.length,10);
+ assert.deepEqual(v.food.slice(0,5),[1,1,1,.5,0]);assert.equal(v.bubbles.length,5);
  assert.equal(vitalsModel(-4,99,300).hearts.every(x=>x===0),true);
  assert.equal(vitalsModel(-4,99,300).food.every(x=>x===1),true);
  assert.equal(vitalsModel(20,20,300).bubbles.length,0);

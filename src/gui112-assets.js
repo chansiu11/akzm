@@ -41,6 +41,9 @@ function applyOwnerDeathButtons112(root,uri){
    ctx.clearRect(0,0,200,20);ctx.drawImage(image,0,y,200,20,0,0,200,20);
    root.style.setProperty('--owner-death-button-'+name,'url("'+canvas.toDataURL('image/png')+'")');
   }
+  canvas.width=8;canvas.height=20;
+  ctx.clearRect(0,0,8,20);ctx.drawImage(image,0,66,4,20,0,0,4,20);ctx.drawImage(image,196,66,4,20,4,0,4,20);
+  root.style.setProperty('--owner-slider-thumb112','url("'+canvas.toDataURL('image/png')+'")');
  };
  image.onerror=()=>{};
  image.src=uri;

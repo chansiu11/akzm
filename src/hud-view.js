@@ -2,10 +2,10 @@
 import {installHudFallback112} from './hud-fallback112.js';
 const clamp=(value,max)=>Math.max(0,Math.min(max,Number(value)||0));
 export function vitalsModel(health,hunger,air=300){
- const healthValue=clamp(health,20),foodValue=clamp(hunger,20);
+ const healthValue=Math.ceil(clamp(health,20)),foodValue=clamp(hunger,20);
  return {hearts:Array.from({length:10},(_,i)=>clamp(healthValue-i*2,2)/2),
   food:Array.from({length:10},(_,i)=>clamp(foodValue-i*2,2)/2),
-  bubbles:air>=300?[]:Array.from({length:10},(_,i)=>clamp(air/30-i,1))};
+  bubbles:air>=300?[]:Array.from({length:Math.ceil(clamp(air,300)/30)},(_,i)=>i<Math.max(0,Math.ceil((clamp(air,300)-2)/30))?1:0).reverse()};
 }
 function icon(type,fill){
  const s=document.createElement('span');s.className=`pixel-vital ${type}`+(fill===0?' empty':'');

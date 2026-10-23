@@ -1,3 +1,4 @@
+import {applyCameraFov112} from './fov112.js';
 import {renderBlockItemIcons} from './block-item-icons.js';
 import {createPlayerPreview112} from './player-preview112.js?v=1.1';
 import {installTitleLayout112} from './title-layout112.js';
@@ -18,7 +19,7 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.1';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js';
 import {WeatherCycle} from './environment.js?v=1.4';
@@ -47,13 +48,13 @@ import {changeBlockWithLifecycle} from './block-change.js';
 import {createGravityTicks} from './block-gravity.js';
 import {GRID_RECIPES,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngredient,craftGridOnce,clearCraftGrid} from './crafting-grid.js';
 import {CommandWorldState} from './command-worldstate.js';
-import {createHud,mineProgress} from './hud-view.js';
+import {createHud,mineProgress} from './hud-view.js?v=2.1';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
 import {createFirstPerson} from './first-person.js?v=1.9';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
-import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.1';
+import {readOwner112Jar,restoreGui112,applyGui112,storeGui112} from './gui112-assets.js?v=2.2';
 
 const el=id=>document.getElementById(id);
 installBundledSiteTheme112();
@@ -61,7 +62,7 @@ const canvas=el('viewport');startMenuPanorama(el('menuPanorama'));const hud=crea
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 const scene=new THREE.Scene();scene.background=new THREE.Color('#83b3e1');scene.fog=new THREE.Fog('#83b3e1',32,68);
-const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.06,SKY_CAMERA_FAR);camera.rotation.order='YXZ';
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.06,SKY_CAMERA_FAR);camera.rotation.order='YXZ';
 const sunlight=new THREE.DirectionalLight('#fff6d8',1.4);scene.add(sunlight);const ambient=new THREE.HemisphereLight('#cfe9ff','#576644',1.2);scene.add(ambient);
 const texture=new THREE.CanvasTexture(createAtlas());texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;texture.colorSpace=THREE.SRGBColorSpace;
 // Dedicated water atlas tile: UVs scroll without moving all other block textures.
@@ -562,7 +563,7 @@ el('jar112Input').addEventListener('change',async event=>{
  }catch(error){status.textContent='사이트 기본 그래픽이 적용되었습니다 · 개인 원본 리소스 자동 복원에는 실패했습니다.';}
  finally{button.disabled=false;}
 })();
-const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);camera.fov=settings.fov;camera.updateProjectionMatrix();lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
+const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);applyCameraFov112(camera,settings.fov);canvas.dataset.cameraFov=String(camera.fov);lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
 installTitleLayout112();
 document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
@@ -692,7 +693,7 @@ function loop(now){requestAnimationFrame(loop);
   const progress=readyChunkProgress(2),pct=Math.floor(progress.count*100/progress.total);
   if(lastLoadingPercent!==pct){
    lastLoadingPercent=pct;el('loadingFill112').style.width=pct+'%';
-   el('loadingText112').textContent='플레이 가능 지역 '+progress.count+' / '+progress.total+' 청크 · '+pct+'%';
+   el('loadingText112').textContent='지형 생성 중';el('worldLoading').setAttribute('aria-label','월드 청크 로딩 '+pct+'%');
   }
   if(progress.count===progress.total){
    loadingWorld=false;worldPaused=false;running=true;el('worldLoading').classList.add('hidden');

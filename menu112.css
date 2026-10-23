@@ -557,6 +557,24 @@ body.touch-ui #chunkStream112{top:calc(53px + env(safe-area-inset-top));font-siz
  line-height:calc(8px * var(--menu-scale,1));font:bold calc(8px * var(--menu-scale,1)) monospace;
  text-shadow:1px 1px #111;
 }
+/* The original FOV control is a 150x20 button, with an 8x20 sliding handle. */
+#overlay .menu-page.menu-vanilla112 .fov-slider112{background:#0008!important;padding:0!important;gap:0}
+#overlay .menu-page.menu-vanilla112 .fov-slider112 > span{position:relative;z-index:2;pointer-events:none}
+#overlay .menu-page.menu-vanilla112 .fov-slider112:hover > span{color:#ffffa0}
+#overlay .menu-page.menu-vanilla112 .fov-slider112 input[type=range]{appearance:none;-webkit-appearance:none;inset:0;width:100%;height:100%;opacity:1;background:transparent;border:0;outline:0;z-index:1}
+#settingFov::-webkit-slider-runnable-track{height:100%;background:transparent}
+#settingFov::-moz-range-track{height:100%;background:transparent}
+#settingFov::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:calc(8px * var(--panel-s));height:100%;border:1px solid #222;background:#888;box-shadow:inset 1px 1px #ccc,inset -1px -1px #444;border-radius:0}
+#settingFov::-moz-range-thumb{width:calc(8px * var(--panel-s));height:100%;border:1px solid #222;background:#888;border-radius:0}
+html.gui112-assets #settingFov::-webkit-slider-thumb{border:0;box-shadow:none;background:var(--owner-slider-thumb112) 0 0/100% 100%;image-rendering:pixelated}
+html.gui112-assets #settingFov::-moz-range-thumb{border:0;background:var(--owner-slider-thumb112) 0 0/100% 100%;image-rendering:pixelated}
+/* Observed Java 1.12.2 loading screen: tiled dirt, two centered lines, 100x2 bar. */
+#worldLoading{background-image:linear-gradient(#0009,#0009),var(--menu112-dirt,var(--site112-dirt));background-size:auto,calc(32px * var(--gui-scale)) calc(32px * var(--gui-scale));image-rendering:pixelated;gap:0;font:calc(8px * var(--gui-scale))/1 monospace}
+#worldLoading .loading-title112{position:absolute;top:calc(50% - 20px * var(--gui-scale));left:0;width:100%;font:inherit;text-shadow:calc(1px * var(--gui-scale)) calc(1px * var(--gui-scale)) #333}
+#loadingText112{position:absolute;top:calc(50% + 4px * var(--gui-scale));left:0;width:100%;font:inherit}
+#worldLoading .loading-track112{position:absolute;top:calc(50% + 16px * var(--gui-scale));left:50%;transform:translateX(-50%);width:calc(100px * var(--gui-scale));height:calc(2px * var(--gui-scale));border:0;box-shadow:none;background:#808080}
+#loadingFill112{background:#80ff80;transition:none}
+body:not(.debug-overlay) #chunkStream112{display:none!important}
 
 /* Stage 6: keep touch mining/jump controls above the health and hunger HUD. */
 @media (orientation:portrait) and (max-width:600px) and (min-height:500px){
