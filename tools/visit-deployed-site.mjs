@@ -265,6 +265,17 @@ async function review(viewport,label,touch=false){
     secondBelow:edit.y>play.y,listAbove:list.bottom<=play.top+1};
   });
   if(!footer.aligned||!footer.secondBelow||!footer.listAbove)throw Error('1.12.2 six-button world selection layout failed: '+JSON.stringify(footer));
+  const buttonGeometry=await page.evaluate(()=>{
+   const s=Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--menu-scale'))||1;
+   return ['worldPlay','worldCreate','worldEdit','worldDelete','worldRecreate','worldBack'].map((id,i)=>{
+    const offsets=[[-154,52,150],[4,52,150],[-154,28,72],[-76,28,72],[4,28,72],[82,28,72]];
+    const [left,bottom,width]=offsets[i],r=document.getElementById(id).getBoundingClientRect();
+    return {id,actual:[r.x,r.y,r.width,r.height],expected:[innerWidth/2+left*s,innerHeight-bottom*s,width*s,20*s]};
+   });
+  });
+  if(buttonGeometry.some(b=>b.actual.some((n,i)=>Math.abs(n-b.expected[i])>1.25)))
+   throw Error('Java 1.12.2 world button coordinates differ: '+JSON.stringify(buttonGeometry));
+  console.log('World select button layout PASS '+JSON.stringify(buttonGeometry));
   await page.screenshot({path:'site-review/'+label+'-worlds.png'});
   await clickAndCapture(page,'#worldEdit',label+'-click09-edit','#menu-edit');
   await page.locator('#menu-edit').waitFor({state:'visible'});

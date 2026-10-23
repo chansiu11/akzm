@@ -15,7 +15,7 @@ if(!targets[label])throw Error('Unknown viewport: '+label);
 await mkdir('command-review',{recursive:true});
 const digest=buffer=>createHash('sha256').update(buffer).digest('hex');
 const expected=Object.fromEntries(await Promise.all(
- ['index.html','visual-overhaul.css','src/command-ui.js'].map(async path=>[path,digest(await readFile(path))])));
+ ['index.html','menu112.css','visual-overhaul.css','src/command-ui.js'].map(async path=>[path,digest(await readFile(path))])));
 let pending=Object.keys(expected);
 const deadline=Date.now()+180000;
 while(pending.length&&Date.now()<deadline){
@@ -41,7 +41,38 @@ try{
  await page.screenshot({path:'command-review/'+label+'-01-title.png'});
  await page.locator('#menuSingle').click();
  await page.locator('#menu-worlds').waitFor({state:'visible'});
+ // Assert button geometry directly against the version-1.12.2 logical GUI.
+ const selectionButtons=await page.evaluate(()=>{
+  const s=Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--menu-scale'))||1;
+  const ids=['worldPlay','worldCreate','worldEdit','worldDelete','worldRecreate','worldBack'];
+  return {scale:s,viewport:{width:innerWidth,height:innerHeight},buttons:ids.map(id=>{
+   const r=document.getElementById(id).getBoundingClientRect();
+   return {id,x:r.x,y:r.y,width:r.width,height:r.height};
+  })};
+ });
+ const wanted=[[-154,52,150],[4,52,150],[-154,28,72],[-76,28,72],[4,28,72],[82,28,72]];
+ for(let i=0;i<wanted.length;i++){
+  const [offset,bottom,w]=wanted[i],r=selectionButtons.buttons[i],s=selectionButtons.scale;
+  const expected={x:selectionButtons.viewport.width/2+offset*s,y:selectionButtons.viewport.height-bottom*s,width:w*s,height:20*s};
+  for(const [key,v]of Object.entries(expected)){
+   if(Math.abs(r[key]-v)>1.25)throw Error('WORLD_BUTTON_GEOMETRY_MISMATCH '+label+' '+r.id+' '+key+' '+JSON.stringify({actual:r,expected,scale:s}));
+  }
+ }
+ console.log('WORLD_BUTTON_GEOMETRY_PASS '+JSON.stringify({label,...selectionButtons}));
+ await writeFile('command-review/'+label+'-world-buttons.json',JSON.stringify(selectionButtons,null,2));
  await page.screenshot({path:'command-review/'+label+'-02-worlds.png'});
+ // Verify the buttons open the real screens and capture each interaction.
+ await page.locator('#worldCreate').click();
+ await page.locator('#menu-create').waitFor({state:'visible'});
+ await page.screenshot({path:'command-review/'+label+'-02a-world-create-click.png'});
+ await page.locator('#createBack').click();
+ await page.locator('#menu-worlds').waitFor({state:'visible'});
+ await page.screenshot({path:'command-review/'+label+'-02b-world-create-back.png'});
+ await page.locator('#worldEdit').click();
+ await page.locator('#menu-edit').waitFor({state:'visible'});
+ await page.screenshot({path:'command-review/'+label+'-02c-world-edit-click.png'});
+ await page.locator('#worldEditBack').click();
+ await page.locator('#menu-worlds').waitFor({state:'visible'});
  await page.locator('#worldPlay').click();
  await page.locator('#overlay:not(.show)').waitFor({state:'attached',timeout:90000});
  await page.screenshot({path:'command-review/'+label+'-03-game.png'});

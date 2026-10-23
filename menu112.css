@@ -206,6 +206,23 @@ html.menu112-assets #overlay .menu-page.menu-vanilla112{
 }
 #overlay .world-actions-top112{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:calc(10px * var(--panel-s))}
 #overlay .world-actions-bottom112{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:calc(4px * var(--panel-s))}
+/* World selection matches the 1.12.2 GuiWorldSelection positions at
+   every integer GUI scale: top -154/+4, bottom -154/-76/+4/+82. */
+#overlay #menu-worlds .world-actions112{
+ width:calc(308px * var(--panel-s));
+}
+#overlay #menu-worlds .world-actions-top112{
+ grid-template-columns:repeat(2,calc(150px * var(--panel-s)));
+ column-gap:calc(8px * var(--panel-s));
+}
+#overlay #menu-worlds .world-actions-bottom112{
+ grid-template-columns:repeat(4,calc(72px * var(--panel-s)));
+ column-gap:calc(6px * var(--panel-s));
+ justify-content:start;
+}
+#overlay #menu-worlds .world-actions-bottom112 > :nth-child(n+3){
+ position:relative;left:calc(2px * var(--panel-s));
+}
 #overlay #menu-settings .options-grid112,
 #overlay .options-grid112.options-sub112{
  position:absolute;top:calc(40px * var(--panel-s));left:50%;
