@@ -710,5 +710,9 @@ function loop(now){requestAnimationFrame(loop);
  }
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
+ // Restore the camera even when a saved dead player cannot tick.
+ camera.position.set(player.x,player.y+1.62,player.z);
+ camera.rotation.set(player.pitch,player.yaw,camera.rotation.z);
+ if(enteredWorld&&!loadingWorld&&!document.body.classList.contains('menu-open')&&survival.dead)showDeath();
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}
 updateUI();requestAnimationFrame(loop);window.addEventListener('beforeunload',()=>{if(listWorlds().some(w=>w.id===runtimeWorldId112))try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()))}catch{}});
