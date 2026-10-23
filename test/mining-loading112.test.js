@@ -37,3 +37,10 @@ test('fallback HUD removes dark colored hearts behind transparent PNG pixels',()
  assert.match(hand,/held\.position\.set\(\.51\+/);
  assert.match(hand,/arm\.visible=view\.kind==='empty'/);
 });
+
+test('world creation controls use pixel-styled widgets instead of native blue browsers',()=>{
+ const css=read('../menu112.css');
+ assert.match(css,/select#worldMode\{/);
+ assert.match(css,/input#worldCheats\{/);
+ assert.match(css,/appearance:none!important/);
+});

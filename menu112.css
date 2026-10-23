@@ -532,3 +532,28 @@ body.touch-ui #touchActions #touchJump{width:clamp(44px,9vh,75px);height:clamp(4
 
 /* Stage 2: keep the visible stream indicator below the mobile top controls. */
 body.touch-ui #chunkStream112{top:calc(53px + env(safe-area-inset-top));font-size:11px;background:#0008;padding:4px 7px}
+
+/* Stage 4: prevent browser-native blue checkbox/dropdown paint on the 1.12.2-style creation menu. */
+#overlay #menu-create .world-create-fields112 select#worldMode{
+ appearance:none!important;-webkit-appearance:none!important;
+ background:#585858!important;color:#fff!important;
+ border:calc(1px * var(--menu-scale,1)) solid #191919!important;
+ border-radius:0!important;
+ box-shadow:inset calc(1px * var(--menu-scale,1)) calc(1px * var(--menu-scale,1)) #ababab,inset calc(-1px * var(--menu-scale,1)) calc(-1px * var(--menu-scale,1)) #343434!important;
+ text-align:center;text-align-last:center;cursor:pointer;
+}
+#overlay #menu-create .world-create-fields112 select#worldMode:hover{background:#737d99!important}
+#overlay #menu-create .world-create-fields112 input#worldCheats{
+ appearance:none!important;-webkit-appearance:none!important;
+ width:calc(10px * var(--menu-scale,1))!important;height:calc(10px * var(--menu-scale,1))!important;
+ min-width:0!important;min-height:0!important;
+ vertical-align:middle;position:relative;cursor:pointer;
+ border:calc(1px * var(--menu-scale,1)) solid #151515!important;
+ border-radius:0!important;background:#595959!important;
+ box-shadow:inset calc(1px * var(--menu-scale,1)) calc(1px * var(--menu-scale,1)) #b5b5b5!important;
+}
+#overlay #menu-create .world-create-fields112 input#worldCheats:checked:after{
+ content:'✓';color:#fff;position:absolute;left:15%;top:0;
+ line-height:calc(8px * var(--menu-scale,1));font:bold calc(8px * var(--menu-scale,1)) monospace;
+ text-shadow:1px 1px #111;
+}
