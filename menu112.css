@@ -603,3 +603,7 @@ html.gui112-assets .option-slider112 input[type=range]::-moz-range-thumb{border:
 #overlay .menu-page.menu-vanilla112 .vanilla-footer112{bottom:calc(7px * var(--panel-s));width:calc(200px * var(--panel-s));}
 #overlay .options-grid112 .option-check112 [data-setting-caption]{display:block!important;width:100%;text-align:center!important;}
 #overlay #menu-video .option-check112{padding:0!important;justify-content:center!important;}
+#keyBindings112{position:absolute;top:calc(16.6667% + 42px * var(--panel-s));bottom:calc(34px * var(--panel-s));left:50%;transform:translateX(-50%);width:calc(310px * var(--panel-s));max-width:95%;overflow-y:auto;background:#0005;padding:calc(4px * var(--panel-s));}
+.binding-row112{display:grid;grid-template-columns:1fr calc(85px * var(--panel-s)) calc(50px * var(--panel-s));gap:calc(5px * var(--panel-s));align-items:center;margin-bottom:calc(4px * var(--panel-s));font-size:calc(8px * var(--panel-s));color:white;}
+#overlay #menu-controls .vanilla-footer112{width:calc(310px * var(--panel-s));}
+#overlay #menu-controls .vanilla-footer112 button{width:calc(150px * var(--panel-s));}

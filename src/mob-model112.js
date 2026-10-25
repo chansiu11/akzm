@@ -19,3 +19,9 @@ export function facingYaw112(vx,vz,previous=0){return Math.hypot(vx,vz)>.01?(Mat
 export function hostileSpawnAllowed112({daylight=true,skyVisible=true,light=15,distance=0}={}){
  return distance>=24&&light<=7&&!(daylight&&skyVisible);
 }
+// ModelBox side faces reverse U relative to Three.js BoxGeometry's row order;
+// top/bottom reverse V. Keep each face inside its own atlas rectangle.
+export function modelFaceCorners112(rect,width=64,height=64,face=0){
+ const [l,t,r,b]=rect,uv=[[l/width,1-t/height],[r/width,1-t/height],[l/width,1-b/height],[r/width,1-b/height]];
+ return (face===2||face===3)?[uv[2],uv[3],uv[0],uv[1]]:[uv[1],uv[0],uv[3],uv[2]];
+}

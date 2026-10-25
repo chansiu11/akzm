@@ -1,3 +1,4 @@
+import {bindingDown112,bindingMatches112} from './keybindings112.js';
 import {blocksBrowserShortcut112,isTextInput112} from './keyboard112.js';
 import {installCreativeInventory112} from './creative-inventory112.js';
 import {ITEM_DEFS} from './item-registry.js';
@@ -10,7 +11,7 @@ import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,deco
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.3';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import {installBundledSiteTheme112} from './site-default112.js?v=1.1';
-import {playerEyeHeight112,sneakMovement112,MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';
+import {verticalMotion112,playerEyeHeight112,sneakMovement112,MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
 import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
@@ -23,7 +24,7 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.6';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.7';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js?v=2';
 import {WeatherCycle} from './environment.js?v=1.4';
@@ -35,7 +36,7 @@ import {Survival} from './survival.js';
 import {shouldAdvanceWorld} from './simulation-state.js';
 import {expandInventory,giveItem,moveStack} from './inventory-utils.js';
 import {restoreInventory,replenishOverflow} from './inventory-restore.js';
-import {createEntityWorld} from './entity-renderer.js?v=4';
+import {createEntityWorld} from './entity-renderer.js?v=5';
 import {createDrops} from './drops.js';
 import {createAudio} from './audio.js?v=1.2';
 import {formatOwnerDeath112} from './death-messages112.js';
@@ -54,7 +55,7 @@ import {GRID_RECIPES,fillRecipe112,emptyCraftGrid,recipeAt,placeCraftIngredient,
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js?v=2.1';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=2.1';
+import {createFirstPerson} from './first-person.js?v=2.2';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
@@ -207,17 +208,17 @@ function moveAxis(axis,delta){
    if(axis!=='y' && player.onGround && !collides(tx,player.y+.6,tz)){
     player.y+=.6;player[axis]=nv;player.onGround=false;continue;
    }
-   if(axis!=='y'&&settings.autoJump&&player.onGround&&!collides(player.x,player.y+1,player.z)&&!collides(tx,player.y+1,tz)){player.vy=MOVE_SPEED112.jump;player.onGround=false;}
-   if(axis!=='y'&&(keys.has('Space')||mobileJump)&&waterContact112(world,player,BLOCK.WATER))player.vy=waterExitLift112(player.vy,{jump:true,inWater:true,blockedByShore:true});
+   if(axis!=='y'&&settings.autoJump&&player.onGround&&!collides(player.x,player.y+1,player.z)&&!collides(tx,player.y+1,tz)){player.vy=MOVE_SPEED112.jump;player.verticalPhase=0;player.onGround=false;}
+   if(axis!=='y'&&(bindingDown112(keys,settings.bindings,'jump')||mobileJump)&&waterContact112(world,player,BLOCK.WATER))player.vy=waterExitLift112(player.vy,{jump:true,inWater:true,blockedByShore:true});
    if(axis==='y'){if(d<0)player.onGround=true;player.vy=0}
    return;
   }
   player[axis]=nv;
  }
 }
-function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak);
+function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(bindingDown112(keys,settings.bindings,'forward')?1:0)-(bindingDown112(keys,settings.bindings,'back')?1:0)+mobileMove.forward,strafe=(bindingDown112(keys,settings.bindings,'right')?1:0)-(bindingDown112(keys,settings.bindings,'left')?1:0)+mobileMove.strafe;const sneaking=(bindingDown112(keys,settings.bindings,'sneak')||mobileSneak);
  const immersed=waterContact112(world,player,BLOCK.WATER);
- const sprinting=keys.has('ControlLeft') && (creative112||survival.hunger>6) && !sneaking && !immersed;
+ const sprinting=bindingDown112(keys,settings.bindings,'sprint') && (creative112||survival.hunger>6) && !sneaking && !immersed;
  let speed=sneaking?MOVE_SPEED112.sneak:sprinting?MOVE_SPEED112.sprint:MOVE_SPEED112.walk;
  if(flight112)speed=sprinting?21.78:10.89;else if(immersed)speed*=.5;
  if(usingFood)speed*=.2;
@@ -229,12 +230,12 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
   const motion=sneakMovement112(player.vx*dt,player.vz*dt,{active:sneaking&&!flight112&&(player.onGround||(player.vy<=0&&collides(player.x,player.y-.01,player.z))),supported:(dx,dz)=>collides(player.x+dx,player.y-1,player.z+dz)});
   moveAxis('x',motion.x);moveAxis('z',motion.z);
  const water=waterContact112(world,player,BLOCK.WATER);
- const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER;
- const jumpPressed=keys.has('Space')||mobileJump;
+ const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(bindingDown112(keys,settings.bindings,'sneak')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER;
+ const jumpPressed=bindingDown112(keys,settings.bindings,'jump')||mobileJump;
  if(flight112){player.vy=(jumpPressed?10.89:0)-(sneaking?10.89:0);moveAxis('y',player.vy*dt);player.onGround=false;fallDistance=0;return;}
  if(jumpPressed&&water)player.vy=waterExitLift112(player.vy,{jump:true,inWater:true});
- else if(jumpPressed&&player.onGround){player.vy=MOVE_SPEED112.jump;player.onGround=false;survival.exert(sprinting?.2:.05);}
- const verticalStep=player.vy;player.onGround=false;moveAxis('y',verticalStep*dt);if(!player.onGround)player.vy=verticalVelocity112(player.vy,dt,{water});
+ else if(jumpPressed&&player.onGround){player.vy=MOVE_SPEED112.jump;player.verticalPhase=0;player.onGround=false;survival.exert(sprinting?.2:.05);}
+ const vertical=verticalMotion112(player.vy,dt,player.verticalPhase??0,{water});const beforeVerticalY=player.y;player.onGround=false;moveAxis('y',vertical.dy);const verticalBlocked=Math.abs(player.y-beforeVerticalY-vertical.dy)>1e-8;if(!player.onGround){player.vy=verticalBlocked?0:vertical.vy;player.verticalPhase=verticalBlocked?0:vertical.phase;}else player.verticalPhase=0;
  if(!player.onGround && player.y<initialY)fallDistance+=initialY-player.y;
  if(player.onGround){if(!creative112&&fallDistance>3){const amount=survival.fall(fallDistance);if(amount){registerHurt('fall');}}fallDistance=0;}
  const healthBeforeTick=survival.health;
@@ -246,7 +247,7 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  if(survival.dead)showDeath();
  if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;if(survival.damage(4)>0)registerHurt('void');}}else voidDamageTime=0;
  if(survival.dead)showDeath();
- camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak)),player.z);
+ camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(bindingDown112(keys,settings.bindings,'sneak')||mobileSneak)),player.z);
  const tilt=hurtTime>0?Math.sin((.55-hurtTime)*24)*.05*(hurtTime/.55):0;
  camera.rotation.set(player.pitch,player.yaw,tilt);}
 const selectOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:'#141818',depthTest:true}));selectOutline.visible=false;scene.add(selectOutline);
@@ -443,7 +444,7 @@ document.addEventListener('mousemove',e=>{
  const dx=e.clientX-mouseDrag112.x,dy=e.clientY-mouseDrag112.y;mouseDrag112.x=e.clientX;mouseDrag112.y=e.clientY;
  if(dx||dy){mouseDrag112.moved=true;clickHold=false;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy*(settings.invertMouse?-1:1),settings.sensitivity/100));}
 });
-window.addEventListener('mouseup',()=>{if(mouseDrag112&&!mouseDrag112.moved&&running&&document.pointerLockElement!==canvas){if(mouseDrag112.button===2)useOrPlace();else{firstPerson.swing();beginMiningInput();}}mouseDrag112=null;});
+window.addEventListener('mouseup',()=>{if(mouseDrag112&&!mouseDrag112.moved&&running&&document.pointerLockElement!==canvas){if(bindingMatches112(settings.bindings,'use','Mouse'+mouseDrag112.button))useOrPlace();else if(bindingMatches112(settings.bindings,'attack','Mouse'+mouseDrag112.button)){firstPerson.swing();beginMiningInput();}}mouseDrag112=null;});
 // Minecraft-style touch: drag to look, tap to use/place, hold a block to mine.
 // Pointer-captured viewport gestures do not interfere with the independent D-pad.
 function endTouchLook(e,cancelled=false){
@@ -472,25 +473,25 @@ canvas.addEventListener('pointermove',e=>{
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
-window.addEventListener('keydown',e=>{const editing=isTextInput112(document.activeElement)||commandUI.isOpen();if(blocksBrowserShortcut112(e,{playing:running||inventoryOpen,editing})){e.preventDefault();if(e.altKey||e.ctrlKey||e.metaKey||['Tab','Backspace','F5','F6'].includes(e.code))return;}if(document.body.classList.contains('menu-open'))return;if(editing){if(e.code==='Escape'&&inventoryOpen)closeInventory();return;}if(e.code==='Space'&&creative112&&running&&!e.repeat){const now=performance.now();if(now-lastJump112<300){flight112=!flight112;player.vy=0;fallDistance=0;}lastJump112=now;}if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
- if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{cancelUsing();keys.clear();clickHold=false;damage=0;breakOverlay.clear()});
+window.addEventListener('keydown',e=>{const editing=isTextInput112(document.activeElement)||commandUI.isOpen();if(blocksBrowserShortcut112(e,{playing:running||inventoryOpen,editing})){e.preventDefault();if(e.altKey||e.metaKey||(e.ctrlKey&&!Object.values(settings.bindings).includes(e.code))||['Tab','Backspace','F5','F6'].includes(e.code))return;}if(document.body.classList.contains('menu-open'))return;if(editing){if(e.code==='Escape'&&inventoryOpen)closeInventory();return;}if(bindingMatches112(settings.bindings,'jump',e.code)&&creative112&&running&&!e.repeat){const now=performance.now();if(now-lastJump112<300){flight112=!flight112;player.vy=0;fallDistance=0;}lastJump112=now;}if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash'||bindingMatches112(settings.bindings,'chat',e.code))){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(bindingMatches112(settings.bindings,'inventory',e.code)&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
+ if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}for(let i=1;i<=9;i++)if(bindingMatches112(settings.bindings,'slot'+i,e.code)){selected=i-1;updateUI();}if(running&&bindingMatches112(settings.bindings,'drop',e.code)&&!e.repeat){const item=inventory[selected];if(item?.id&&item.count>0&&drops.spawn(item.id,player.x-Math.sin(player.yaw),player.y+1.2,player.z-Math.cos(player.yaw),1,1,item.damage)){if(--item.count<=0)item.id=0;updateUI();}}if(running&&bindingMatches112(settings.bindings,'attack',e.code)&&!e.repeat){firstPerson.swing();const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));if(!victim)beginMiningInput();}if(running&&bindingMatches112(settings.bindings,'use',e.code)&&!e.repeat)useOrPlace();keys.add(e.code)});window.addEventListener('keyup',e=>{keys.delete(e.code);if(bindingMatches112(settings.bindings,'attack',e.code))clickHold=false;if(bindingMatches112(settings.bindings,'use',e.code))cancelUsing();});window.addEventListener('blur',()=>{cancelUsing();keys.clear();clickHold=false;damage=0;breakOverlay.clear()});
 function beginMiningInput(){
  clickHold=true;damage=0;mineTickRemainder=0;aimKey='';
  if(gameMode!=='survival'){const block=look();if(block)breakBlock(block);}
 }
 canvas.addEventListener('mousedown',e=>{
  if(!running){if(enteredWorld&&!loadingWorld)requestPlay();return;}
- if(touchMode)return;
- if(document.pointerLockElement!==canvas){mouseDrag112={x:e.clientX,y:e.clientY,button:e.button,moved:false};const gesture=mouseDrag112;if(e.button===0)setTimeout(()=>{if(mouseDrag112===gesture&&!gesture.moved&&running)beginMiningInput();},180);canvas.requestPointerLock?.()?.catch?.(()=>{});return;}
- if(e.button===0){
+ if(touchMode)return;keys.add('Mouse'+e.button);
+ if(document.pointerLockElement!==canvas){mouseDrag112={x:e.clientX,y:e.clientY,button:e.button,moved:false};const gesture=mouseDrag112;if(bindingMatches112(settings.bindings,'attack','Mouse'+e.button))setTimeout(()=>{if(mouseDrag112===gesture&&!gesture.moved&&running)beginMiningInput();},180);canvas.requestPointerLock?.()?.catch?.(()=>{});return;}
+ if(bindingMatches112(settings.bindings,'attack','Mouse'+e.button)){
   firstPerson.swing();
   const victim=entityWorld.attackRay(camera.position,camera.getWorldDirection(new THREE.Vector3()));
   if(victim){effects.emit('crit',[victim.x,victim.y+1.3,victim.z],[.35,.35,.35],.1,9);audio.beep('hit');track('entityHits');survival.exert(.1);}
   else beginMiningInput();
  }
- if(e.button===2)useOrPlace();
+ if(bindingMatches112(settings.bindings,'use','Mouse'+e.button))useOrPlace();
 });
-window.addEventListener('mouseup',e=>{if(e.button===0){clickHold=false;damage=0}if(e.button===2)cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('mouseup',e=>{keys.delete('Mouse'+e.button);if(bindingMatches112(settings.bindings,'attack','Mouse'+e.button)){clickHold=false;damage=0}if(bindingMatches112(settings.bindings,'use','Mouse'+e.button))cancelUsing()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('wheel',e=>{if(!running)return;selected=(selected+(e.deltaY>0?1:8))%9;updateUI();e.preventDefault()},{passive:false});
 // Direction pad and classic touch action buttons. All iconography is original CSS/text.
 const heldDirections=new Set();
@@ -665,7 +666,7 @@ function loop(now){requestAnimationFrame(loop);if(settings.maxFps<260&&now-(loop
    if(survival.health<healthBefore&&hurtTime<=0)registerHurt('generic');track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
    if(usingFood){foodHold+=dt;const food=foodFor(inventory[selected]?.id);if(!food||survival.dead)cancelUsing();else if(foodHold>=food.seconds){if(eatHeld(inventory,selected,survival)){audio.beep('craft');updateUI();notify('음식을 먹었습니다.');saveTimer=0;}cancelUsing();}}
   }
-  else if(!creative112)survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER});
+  else if(!creative112)survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(bindingDown112(keys,settings.bindings,'sneak')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER});
   weatherCycle.update(dt);entityWorld.update(dt,player,{daylight:Math.sin(day*Math.PI*2)>0,difficulty:settings.difficulty});drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
   if(daylightCycle)day=(day+dt/1200)%1;
   nightVisionSeconds=Math.max(0,nightVisionSeconds-dt);effects.update(dt);
@@ -677,7 +678,7 @@ function loop(now){requestAnimationFrame(loop);if(settings.maxFps<260&&now-(loop
     missedMineTime=0;
     const equipped=inventory[selected]??{id:0};
     const conditions={
-     underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER,
+     underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(bindingDown112(keys,settings.bindings,'sneak')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER,
      onGround:player.onGround,haste:player.hasteLevel??0,miningFatigue:player.fatigueLevel??0,
      aquaAffinity:!!player.aquaAffinity
     };
@@ -730,10 +731,10 @@ function loop(now){requestAnimationFrame(loop);if(settings.maxFps<260&&now-(loop
   if(show)stream.textContent='주변 12청크 생성 중 · '+progress.count+' / '+progress.total;
  }
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
- if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,settings.viewBobbing&&running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold,settings.viewBobbing);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
+ if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,settings.viewBobbing&&running&&(bindingDown112(keys,settings.bindings,'forward')||bindingDown112(keys,settings.bindings,'left')||bindingDown112(keys,settings.bindings,'back')||bindingDown112(keys,settings.bindings,'right')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold,settings.viewBobbing);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  canvas.dataset.cameraYaw=String(player.yaw);canvas.dataset.cameraPitch=String(player.pitch);
  // Restore the camera even when a saved dead player cannot tick.
- camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak)),player.z);
+ camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(bindingDown112(keys,settings.bindings,'sneak')||mobileSneak)),player.z);
  camera.rotation.set(player.pitch,player.yaw,camera.rotation.z);
  if(enteredWorld&&!loadingWorld&&!document.body.classList.contains('menu-open')&&survival.dead)showDeath();
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}

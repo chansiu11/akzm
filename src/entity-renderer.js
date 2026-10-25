@@ -1,5 +1,5 @@
 import {mobCollides112,stepMobVertical112} from './mob-physics112.js';
-import {MOB_MODELS112,modelFaceUV112,facingYaw112,hostileSpawnAllowed112} from './mob-model112.js?v=2';
+import {MOB_MODELS112,modelFaceCorners112,modelFaceUV112,facingYaw112,hostileSpawnAllowed112} from './mob-model112.js?v=3';
 // Basic original voxel creatures rendered as simple colored geometry.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {ENTITY_KINDS,spawnEntity,stepEntity} from './entity-ai.js';
@@ -32,7 +32,7 @@ export function createEntityWorld(scene,world,onHit,savedEntities=[]){
   const rects=modelFaceUV112(part);
   const sheetHeight=kind==='wanderer'?64:32;
   rects.forEach(([l,t,r,b],side)=>{
-   [[l/64,1-t/sheetHeight],[r/64,1-t/sheetHeight],[l/64,1-b/sheetHeight],[r/64,1-b/sheetHeight]]
+   modelFaceCorners112([l,t,r,b],64,sheetHeight,side)
     .forEach(([x,y],n)=>uv.setXY(side*4+n,x,y));
   });
   uv.needsUpdate=true;geometry.set(key,geo);return geo;

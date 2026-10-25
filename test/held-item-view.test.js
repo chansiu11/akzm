@@ -68,6 +68,6 @@ test('first-person viewport uses locally imported owner model metadata without a
  assert.match(renderer,/ownerBlockQuads112\(elements\)/);
  assert.match(renderer,/value\/geometryUnits/);
  assert.match(renderer,/ownerHeldTransforms\[view\.id\]/);
- assert.match(renderer,/arm\.rotation\.z=view\.kind==='empty' \? -\.12 : -\.19/);
+ assert.match(renderer,/arm\.rotation\.z=view\.kind==='empty' \? -\.35 : -\.19/);
  assert.match(importer,/a\.firstPersonModels=await readOwnerFirstPersonModels112\(zip,ITEM_DEFS\)/);
 });

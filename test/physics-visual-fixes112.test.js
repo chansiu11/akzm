@@ -64,7 +64,7 @@ test('daytime is materially brighter with a less aggressive face-shadow multipli
 test('physics and terrain refresh code wire into the real game frame',()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.match(main,/horizontalVelocity112\(player\.vx,player\.vz/);
- assert.match(main,/verticalVelocity112\(player\.vy,dt,\{water\}\)/);
+ assert.match(main,/verticalMotion112\(player\.vy,dt,player\.verticalPhase\?\?0,\{water\}\)/);
  assert.match(main,/player\.vx=player\.vz=player\.vy=0/);
  assert.match(main,/showPlacementPreview\(nx,ny,nz\)/);
  assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius,\{nightVision:nightVisionSeconds>0,brightness:settings\.brightness,clouds:settings\.clouds\}\)/);

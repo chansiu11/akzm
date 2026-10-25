@@ -53,3 +53,9 @@ export function fogDistances112(radius,weather='clear'){
  const far=Math.max(65,blocks*1.75*factor);
  return {near:Math.max(18,far*.68),far};
 }
+// Piecewise legacy 20 Hz velocity, integrated without render-rate-dependent height.
+export function verticalMotion112(vy,dt,phase=0,{water=false}={}){
+ let remaining=Math.max(0,Math.min(.25,dt)),dy=0;
+ while(remaining>1e-10){const step=Math.min(remaining,.05-phase);dy+=vy*step;phase+=step;remaining-=step;if(phase>=.05-1e-10){vy=verticalVelocity112(vy,.05,{water});phase=0;}}
+ return {dy,vy,phase};
+}

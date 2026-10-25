@@ -1,3 +1,4 @@
+import {DEFAULT_BINDINGS112,normalizeBindings112,installBindings112} from './keybindings112.js';
 import {normalizeFov112,fovLabel112} from './fov112.js';
 // Original UI implementation inspired by familiar sandbox game menu flows.
 // This does not contain proprietary menu artwork, fonts, or game code.
@@ -29,9 +30,9 @@ export function listWorlds(){
  if(!Array.isArray(worlds))return [{...DEFAULT_WORLD}];
  return worlds.filter(w=>w&&typeof w.id==='string'&&typeof w.name==='string').slice(0,30);
 }
-export const DEFAULT_SETTINGS=Object.freeze({fov:70,renderDistance:12,sensitivity:0.24,showCoordinates:true,brightness:.5,volume:1,viewBobbing:true,invertMouse:false,clouds:true,autoJump:false,guiScale:0,chatOpacity:1,difficulty:2,smoothLighting:true,graphics:true,maxFps:120,particles:0});
+export const DEFAULT_SETTINGS=Object.freeze({bindings:DEFAULT_BINDINGS112,fov:70,renderDistance:12,sensitivity:0.24,showCoordinates:true,brightness:.5,volume:1,viewBobbing:true,invertMouse:false,clouds:true,autoJump:false,guiScale:0,chatOpacity:1,difficulty:2,smoothLighting:true,graphics:true,maxFps:120,particles:0});
 export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
- ...DEFAULT_SETTINGS,
+ ...DEFAULT_SETTINGS,bindings:normalizeBindings112(s?.bindings),
  fov:normalizeFov112(s?.fov),
  renderDistance:Math.max(2,Math.min(16,Math.round(Number(s?.renderDistance)||12))),
  sensitivity:Math.max(0,Math.min(1,Number.isFinite(Number(s?.sensitivity))?Number(s.sensitivity):.24)),
@@ -45,6 +46,7 @@ export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
 export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  const loadedWorldId=activeWorldId();
  const state={page:'title',selection:loadedWorldId,settings:loadSettings(),language:readTitleLanguage()};
+ const bindingUI=installBindings112(document,()=>state.settings.bindings,bindings=>{state.settings.bindings=bindings;write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});applySettings(state.settings);});
  const pages=['title','worlds','create','edit','delete','settings','video','controls','sound','chat','language','resources','help','pause'];
  let settingsBack='title';
  const titleStrings={ko_kr:['싱글플레이','멀티플레이','Minecraft Realms','설정...','게임 종료'],en_us:['Singleplayer','Multiplayer','Minecraft Realms','Options...','Quit Game']};

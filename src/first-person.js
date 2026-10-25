@@ -18,8 +18,9 @@ export function createFirstPerson(renderer,atlasTexture){
  const group=new THREE.Group();scene.add(group);
  const lit=new THREE.AmbientLight('#ffffff',1.35);scene.add(lit);
  const sun=new THREE.DirectionalLight('#fff8e8',1.2);sun.position.set(-2,4,3);scene.add(sun);
- const arm=cube(.25,.75,.25,skin);arm.position.set(.60,-.59,-.79);arm.rotation.z=-.12;group.add(arm);
- const cuff=cube(.27,.30,.27,sleeve);cuff.position.set(.61,-.82,-.80);cuff.rotation.z=-.12;group.add(cuff);
+ const arm=cube(.25,.75,.25,skin);arm.position.set(.55,-.62,-.80);arm.rotation.set(Math.PI-.10,-.25,-.35);group.add(arm);
+ const armLayer=cube(.28125,.78125,.28125,new THREE.MeshLambertMaterial({transparent:true,alphaTest:.1}));armLayer.position.copy(arm.position);armLayer.rotation.copy(arm.rotation);armLayer.visible=false;group.add(armLayer);
+ const cuff=cube(.27,.30,.27,sleeve);cuff.position.set(.68,-.91,-.80);cuff.rotation.z=-.35;group.add(cuff);
  const blockMaterial=new THREE.MeshLambertMaterial({map:atlasTexture,transparent:true,alphaTest:.05});
  const held=cube(.28,.28,.28,blockMaterial);held.position.set(.42,-.30,-.79);held.rotation.set(.20,.78,.10);group.add(held);
  const blockCubeGeometry=held.geometry,nonCubeGeometries=new Map();
@@ -63,12 +64,13 @@ export function createFirstPerson(renderer,atlasTexture){
   texture.magFilter=texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.colorSpace=THREE.SRGBColorSpace;
   ownerSkin?.dispose();ownerSkin=texture;
   // Skin UV top is the shoulder: point it toward the bottom of the view.
-  arm.rotation.z=-.12;
+  arm.rotation.set(Math.PI-.10,-.25,-.35);
   // The texture UVs face outward while the shoulder stays uppermost.
   if(arm.geometry.parameters.width!==.25||arm.geometry.parameters.height!==.75){arm.geometry.dispose();arm.geometry=new THREE.BoxGeometry(.25,.75,.25);}
   const uv=arm.geometry.attributes.uv;
   RIGHT_ARM_UV_RECTS.forEach((rect,face)=>skinRectUV(rect,64,texture.image.height).forEach(([u,v],i)=>uv.setXY(face*4+i,u,v)));uv.needsUpdate=true;
   skin.map=texture;skin.color.set('#ffffff');skin.needsUpdate=true;cuff.visible=false;
+  armLayer.material.map=texture;armLayer.material.needsUpdate=true;const overlayUV=armLayer.geometry.attributes.uv;RIGHT_ARM_UV_RECTS.forEach((rect,face)=>skinRectUV([rect[0],rect[1]+16,rect[2],rect[3]+16],64,texture.image.height).forEach(([u,v],i)=>overlayUV.setXY(face*4+i,u,v)));overlayUV.needsUpdate=true;armLayer.visible=itemId===0&&texture.image.height===64;
  }
 
  function setOwnerModels(heldTransforms={},blockModels={}){
@@ -116,7 +118,7 @@ export function createFirstPerson(renderer,atlasTexture){
   toolGroup.visible=view.kind==='tool'&&!sprite.visible;
   held.visible=view.kind==='block'||(view.kind==='item'&&!sprite.visible);
   // Keep the upper arm near the shoulder and the hand below the held object.
-  arm.rotation.z=view.kind==='empty' ? -.12 : -.19;
+  arm.rotation.z=view.kind==='empty' ? -.35 : -.19;armLayer.rotation.copy(arm.rotation);
   cuff.rotation.z=arm.rotation.z;
   const native=ownerHeldTransforms[view.id]??null;
   if(sprite.visible){
@@ -144,7 +146,7 @@ export function createFirstPerson(renderer,atlasTexture){
    held.scale.set(...pose.scale.map(value=>value/geometryUnits));
   }
   // Item-only view as requested; expose the skin arm when the slot is empty.
-  arm.visible=view.kind==='empty';cuff.visible=view.kind==='empty'&&!ownerSkin;
+  arm.visible=view.kind==='empty';armLayer.visible=arm.visible&&ownerSkin?.image.height===64;cuff.visible=view.kind==='empty'&&!ownerSkin;
   if(view.kind==='tool'){
    const family=toolFamily112(id)??'pickaxe',shape=toolGeometry[family];
    head.geometry=shape.head;tip.geometry=shape.tip;
@@ -168,5 +170,5 @@ export function createFirstPerson(renderer,atlasTexture){
  function render(width,height){if(!width||!height)return;camera.aspect=width/height;camera.fov=firstPersonFov(camera.aspect);camera.updateProjectionMatrix();
   const old=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(scene,camera);renderer.autoClear=old;
  }
- return {setItem,setOwnerItems,setOwnerSkin,setOwnerModels,update,swing,render,dispose(){++itemGeneration;++skinGeneration;ownerSkin?.dispose();placeholderGeometry.dispose();for(const geometry of ownerGeometry.values())geometry.dispose();for(const geometry of nonCubeGeometries.values())geometry.dispose();for(const geometry of ownerBlockGeometry.values())geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();for(const m of [arm,cuff])m.geometry.dispose();blockCubeGeometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of toolMaterials)mat.dispose();shaft.geometry.dispose();for(const type of Object.values(toolGeometry)){type.head.dispose();type.tip.dispose();}skin.dispose();sleeve.dispose();}};
+ return {setItem,setOwnerItems,setOwnerSkin,setOwnerModels,update,swing,render,dispose(){++itemGeneration;++skinGeneration;ownerSkin?.dispose();placeholderGeometry.dispose();for(const geometry of ownerGeometry.values())geometry.dispose();for(const geometry of nonCubeGeometries.values())geometry.dispose();for(const geometry of ownerBlockGeometry.values())geometry.dispose();spriteMaterial.dispose();for(const texture of ownerTextures.values())texture.dispose();armLayer.geometry.dispose();armLayer.material.dispose();for(const m of [arm,cuff])m.geometry.dispose();blockCubeGeometry.dispose();blockMaterial.dispose();stickMat.dispose();for(const mat of toolMaterials)mat.dispose();shaft.geometry.dispose();for(const type of Object.values(toolGeometry)){type.head.dispose();type.tip.dispose();}skin.dispose();sleeve.dispose();}};
 }
