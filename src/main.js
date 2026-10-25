@@ -186,7 +186,7 @@ function rebuildEditedChunkNow(x,z){
  }
 }
 const waterTicks112=createWaterFlow112(world,(x,y,z)=>{updateNearBlock(x,z);saveTimer=0;});
-const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{hideBlockFaces(x,y,z);updateNearBlock(x,z);waterTicks112.notifyChange(x,y,z);waterTicks112.notifyChange(x,toY,z);saveTimer=0;},saved?.fallingBlocks);
+const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{hideBlockFaces(x,y,z);exposeBlockNeighbors(x,y,z);showPlacementPreview(x,toY,z);updateNearBlock(x,z);waterTicks112.notifyChange(x,y,z);waterTicks112.notifyChange(x,toY,z);saveTimer=0;},saved?.fallingBlocks);
 for(const [key,block] of world.changes)if(block.id===BLOCK.WATER)waterTicks112.notifyChange(...key.split(',').map(Number));
 const fallingMeshes=new Map();
 function updateFallingMeshes(){
@@ -300,10 +300,18 @@ function updateUI(){
  layoutContainer112(el('inventory'));creativeUI112?.refresh();
 }
 function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
-function hideBlockFaces(x,y,z){for(const mesh of meshes.get(chunkId(Math.floor(x/16),Math.floor(z/16)))??[]){const geo=mesh.geometry;const blocks=geo.userData.blockPositions;for(let f=0;f<(blocks?.length??0);f+=3)if(blocks[f]===x&&blocks[f+1]===y&&blocks[f+2]===z)for(let i=0;i<6;i++)geo.index.setX(f*2+i,0);geo.index.needsUpdate=true;}}
+function exposeBlockNeighbors(x,y,z){
+ for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){
+  const nx=x+dx,ny=y+dy,nz=z+dz,block=world.getBlock(nx,ny,nz),layer=definition(block.id)?.layer,mat={opaque:solidMat,cutout:leafMat,glass:glassMat,water:waterMat}[layer];if(!mat)continue;
+  const quads=visibleBlockQuads(world,nx,ny,nz).filter(f=>f.d[0]===-dx&&f.d[1]===-dy&&f.d[2]===-dz);if(!quads.length)continue;
+  const cx=Math.floor(nx/16),cz=Math.floor(nz/16),key='exposed:'+nx+','+ny+','+nz+':'+dx+dy+dz,old=placementPreviews.get(key);if(old){scene.remove(old.mesh);old.mesh.geometry.dispose();}
+  const mesh=new THREE.Mesh(makeGeo(quads,createChunkLight(world,cx,cz),layer==='water'),mat);scene.add(mesh);placementPreviews.set(key,{cx,cz,mesh});
+ }
+}
+function hideBlockFaces(x,y,z){const preview=placementPreviews.get([x,y,z].join(','));if(preview){scene.remove(preview.mesh);preview.mesh.geometry.dispose();placementPreviews.delete([x,y,z].join(','));}for(const mesh of meshes.get(chunkId(Math.floor(x/16),Math.floor(z/16)))??[]){const geo=mesh.geometry;const blocks=geo.userData.blockPositions;for(let f=0;f<(blocks?.length??0);f+=3)if(blocks[f]===x&&blocks[f+1]===y&&blocks[f+2]===z)for(let i=0;i<6;i++)geo.index.setX(f*2+i,0);geo.index.needsUpdate=true;}}
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;
- if(world.set(t.x,t.y,t.z,0)){hideBlockFaces(t.x,t.y,t.z);
+ if(world.set(t.x,t.y,t.z,0)){hideBlockFaces(t.x,t.y,t.z);exposeBlockNeighbors(t.x,t.y,t.z);
    const preview=placementPreviews.get(t.x+','+t.y+','+t.z);if(preview){scene.remove(preview.mesh);preview.mesh.geometry.dispose();placementPreviews.delete(t.x+','+t.y+','+t.z);}
   const tile=tiles.items.get(tileKey(t.x,t.y,t.z));
   if(gameMode==='survival')for(const item of tileDrops(tile))drops.spawn(item.id,t.x+.5,t.y+.6,t.z+.5,item.count,0,item.damage);
