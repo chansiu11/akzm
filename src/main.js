@@ -219,7 +219,7 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
   const targetZ=(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*speed;
   const next=horizontalVelocity112(player.vx,player.vz,targetX,targetZ,dt,{ground:player.onGround,water:immersed});
   player.vx=next.x;player.vz=next.z;
-  const motion=sneakMovement112(player.vx*dt,player.vz*dt,{active:sneaking&&player.onGround&&!flight112,supported:(dx,dz)=>collides(player.x+dx,player.y-1,player.z+dz)});
+  const motion=sneakMovement112(player.vx*dt,player.vz*dt,{active:sneaking&&!flight112&&(player.onGround||(player.vy<=0&&collides(player.x,player.y-.01,player.z))),supported:(dx,dz)=>collides(player.x+dx,player.y-1,player.z+dz)});
   moveAxis('x',motion.x);moveAxis('z',motion.z);
  const water=waterContact112(world,player,BLOCK.WATER);
  const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER;
