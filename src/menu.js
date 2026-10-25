@@ -29,17 +29,22 @@ export function listWorlds(){
  if(!Array.isArray(worlds))return [{...DEFAULT_WORLD}];
  return worlds.filter(w=>w&&typeof w.id==='string'&&typeof w.name==='string').slice(0,30);
 }
-export const DEFAULT_SETTINGS=Object.freeze({fov:70,renderDistance:12,sensitivity:0.24,showCoordinates:true});
+export const DEFAULT_SETTINGS=Object.freeze({fov:70,renderDistance:12,sensitivity:0.24,showCoordinates:true,brightness:.5,volume:1,viewBobbing:true,invertMouse:false,clouds:true,autoJump:false,guiScale:0,chatOpacity:1,difficulty:2,smoothLighting:true});
 export function loadSettings(){const s=read(SETTINGS_KEY,{});return {
+ ...DEFAULT_SETTINGS,
  fov:normalizeFov112(s?.fov),
- renderDistance:Math.max(12,Math.min(16,Math.round((s?.renderDistanceV2===true?Number(s?.renderDistance):Math.max(12,Number(s?.renderDistance)||12))||12))),
- sensitivity:Math.max(.08,Math.min(.6,Number(s?.sensitivity)||.24)),
+ renderDistance:Math.max(2,Math.min(16,Math.round(Number(s?.renderDistance)||12))),
+ sensitivity:Math.max(0,Math.min(1,Number.isFinite(Number(s?.sensitivity))?Number(s.sensitivity):.24)),
+ brightness:Math.max(0,Math.min(1,Number(s?.brightness??.5))),volume:Math.max(0,Math.min(1,Number(s?.volume??1))),
+ viewBobbing:s?.viewBobbing!==false,invertMouse:s?.invertMouse===true,clouds:s?.clouds!==false,autoJump:s?.autoJump===true,
+ guiScale:Math.max(0,Math.min(4,Number(s?.guiScale)||0)),chatOpacity:Math.max(0,Math.min(1,Number(s?.chatOpacity??1))),
+ difficulty:Math.max(0,Math.min(3,Number(s?.difficulty??2))),smoothLighting:s?.smoothLighting!==false,
  showCoordinates:s?.showCoordinates!==false
 };}
 export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  const loadedWorldId=activeWorldId();
  const state={page:'title',selection:loadedWorldId,settings:loadSettings(),language:readTitleLanguage()};
- const pages=['title','worlds','create','edit','delete','settings','video','controls','language','resources','help','pause'];
+ const pages=['title','worlds','create','edit','delete','settings','video','controls','sound','chat','language','resources','help','pause'];
  let settingsBack='title';
  const titleStrings={ko_kr:['싱글플레이','멀티플레이','Minecraft Realms','설정...','게임 종료'],en_us:['Singleplayer','Multiplayer','Minecraft Realms','Options...','Quit Game']};
  function localizeTitle(){const labels=titleStrings[state.language]??titleStrings.ko_kr;['menuSingle','menuMultiplayer','menuRealms','menuSettings','menuExit'].forEach((id,i)=>$(id).textContent=labels[i]);$('menuLanguageSelect').value=state.language;}
@@ -129,11 +134,11 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
   open('worlds');
  }
 
- function showSettings(from){settingsBack=from;const s=state.settings;$('settingFov').value=s.fov;$('settingDistance').value=s.renderDistance;$('settingSensitivity').value=s.sensitivity;$('settingCoords').checked=s.showCoordinates;$('menuLanguageSelect').value=state.language;updateSettingLabels();open('settings');}
+ function showSettings(from){settingsBack=from;const s=state.settings;$('settingFov').value=s.fov;$('settingDistance').value=s.renderDistance;$('settingSensitivity').value=s.sensitivity;$('settingCoords').checked=s.showCoordinates;$('menuLanguageSelect').value=state.language;for(const name of ['brightness','volume','viewBobbing','invertMouse','clouds','autoJump','guiScale','chatOpacity','difficulty','smoothLighting']){const e=$('setting_'+name);if(e.type==='checkbox')e.checked=s[name];else e.value=s[name];}updateSettingLabels();open('settings');}
  function updateSettingLabels(){$('fovValue').textContent=fovLabel112($('settingFov').value,state.language);$('settingFov').setAttribute('aria-valuetext',$('fovValue').textContent);$('distanceValue').textContent=$('settingDistance').value+'청크';$('sensitivityValue').textContent=(Number($('settingSensitivity').value)*100).toFixed(0)+'%';}
- function saveSettings(){state.settings={fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});
+ function saveSettings(close=true){state.settings={...state.settings,fov:Number($('settingFov').value),renderDistance:Number($('settingDistance').value),sensitivity:Number($('settingSensitivity').value),showCoordinates:$('settingCoords').checked};for(const name of ['brightness','volume','viewBobbing','invertMouse','clouds','autoJump','guiScale','chatOpacity','difficulty','smoothLighting']){const e=$('setting_'+name);state.settings[name]=e.type==='checkbox'?e.checked:Number(e.value);}write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});
   state.language=$('menuLanguageSelect').value==='en_us'?'en_us':'ko_kr';try{localStorage.setItem(TITLE_LANGUAGE_KEY,state.language)}catch{}
-  localizeTitle();applySettings(state.settings);open(settingsBack);}
+  localizeTitle();applySettings(state.settings);if(close)open(settingsBack);}
  $('menuSingle').addEventListener('click',()=>open('worlds'));
  $('worldPlay').addEventListener('click',continueWorld);
  $('worldCreate').addEventListener('click',()=>{$('worldName').value='새로운 세계';$('worldSeed').value='';$('worldMode').value='survival';$('worldCheats').checked=false;$('worldError').textContent='';open('create')});
@@ -151,13 +156,14 @@ export function setupMenu({play,save,applySettings,onTitle=()=>{}}){
  $('worldName').addEventListener('keydown',e=>{if(e.key==='Enter')createWorld()});
  $('menuSettings').addEventListener('click',()=>showSettings('title'));
  $('menuLanguage').addEventListener('click',()=>{showSettings('title');open('language');$('menuLanguageSelect').focus();});
- for(const [id,page] of [['settingsVideo','video'],['settingsControls','controls'],['settingsLanguage','language'],['settingsResources','resources']])$(id).addEventListener('click',()=>open(page));
- for(const id of ['videoDone','controlsDone','languageDone','resourcesDone'])$(id).addEventListener('click',()=>open('settings'));
+ for(const [id,page] of [['settingsVideo','video'],['settingsControls','controls'],['settingsLanguage','language'],['settingsResources','resources'],['settingsSound','sound'],['settingsChat','chat']])$(id).addEventListener('click',()=>open(page));
+ for(const id of ['videoDone','controlsDone','languageDone','resourcesDone','soundDone','chatDone'])$(id).addEventListener('click',()=>{saveSettings(false);open('settings')});
  $('menuLanguageSelect').addEventListener('change',()=>{state.language=$('menuLanguageSelect').value==='en_us'?'en_us':'ko_kr';});
  $('pauseSettings').addEventListener('click',()=>showSettings('pause'));
  for(const id of ['settingFov','settingDistance','settingSensitivity'])$(id).addEventListener('input',updateSettingLabels);
  $('settingFov').addEventListener('input',()=>{state.settings={...state.settings,fov:normalizeFov112($('settingFov').value)};applySettings(state.settings);write(SETTINGS_KEY,{...state.settings,renderDistanceV2:true});});
- $('settingsSave').addEventListener('click',saveSettings);
+ $('settingsSave').addEventListener('click',()=>saveSettings());
+ for(const id of ['settingFov','settingDistance','settingSensitivity','settingCoords',...['brightness','volume','viewBobbing','invertMouse','clouds','autoJump','guiScale','chatOpacity','difficulty','smoothLighting'].map(n=>'setting_'+n)])$(id).addEventListener('input',()=>{saveSettings(false);updateSettingLabels();});
  const fullscreen=$('settingFullscreen');
  const syncFullscreen=()=>{fullscreen.textContent='전체화면: '+(document.fullscreenElement?'켜짐':'꺼짐');fullscreen.setAttribute('aria-pressed',String(!!document.fullscreenElement));};
  fullscreen.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{fullscreen.textContent='전체화면: 브라우저에서 허용되지 않음';}syncFullscreen();});

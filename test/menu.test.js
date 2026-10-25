@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activeWorldId,worldSaveKey,listWorlds,loadSettings,WORLDS_KEY,SETTINGS_KEY,ACTIVE_WORLD_KEY} from '../src/menu.js';
+import {DEFAULT_SETTINGS,activeWorldId,worldSaveKey,listWorlds,loadSettings,WORLDS_KEY,SETTINGS_KEY,ACTIVE_WORLD_KEY} from '../src/menu.js';
 function mockStorage(){const map=new Map();globalThis.localStorage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,String(v)),removeItem:k=>map.delete(k)};}
 test('world names and player saves stay isolated by selected world',()=>{
  mockStorage();assert.equal(activeWorldId(),'default');assert.equal(worldSaveKey(),'voxel-frontier-save-v1');
@@ -10,13 +10,13 @@ test('world names and player saves stay isolated by selected world',()=>{
  assert.equal(activeWorldId(),'test-new');assert.equal(worldSaveKey(),'voxel-frontier-save-v1-test-new');assert.equal(listWorlds()[0].name,'시험 세계');
 });
 test('settings are sanitized before use',()=>{
- mockStorage();assert.deepEqual(loadSettings(),{fov:70,renderDistance:12,sensitivity:.24,showCoordinates:true});
+ mockStorage();assert.deepEqual(loadSettings(),{...DEFAULT_SETTINGS});
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({fov:10000,renderDistance:99,sensitivity:-2,showCoordinates:false}));
- assert.deepEqual(loadSettings(),{fov:110,renderDistance:16,sensitivity:.08,showCoordinates:false});
+ assert.deepEqual(loadSettings(),{...DEFAULT_SETTINGS,fov:110,renderDistance:16,sensitivity:0,showCoordinates:false});
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({renderDistance:2}));
- assert.equal(loadSettings().renderDistance,12,'upgrade old 2-chunk setting to the required 12 chunks');
+ assert.equal(loadSettings().renderDistance,2,'explicit low distance is respected');
  localStorage.setItem(SETTINGS_KEY,JSON.stringify({renderDistance:2,renderDistanceV2:true}));
- assert.equal(loadSettings().renderDistance,12,'even an explicit setting cannot drop below the 12-chunk preload floor');
+ assert.equal(loadSettings().renderDistance,2,'explicit low distance is respected');
 
 });
 

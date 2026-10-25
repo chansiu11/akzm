@@ -31,12 +31,12 @@ test('horizontal acceleration and friction gradually approach the desired speed'
  assert.ok(Math.abs(verticalVelocity112(0,.05,{water:true})+.32)<1e-8);
  assert.ok(MOVE_SPEED112.sprint>MOVE_SPEED112.walk);
 });
-test('all devices render at least 12 chunks and fog tracks actual world render distance',()=>{
+test('render distance accepts low settings and fog tracks actual world render distance',()=>{
  assert.equal(defaultRenderDistance112(false),12);
  assert.equal(defaultRenderDistance112(true),12);
  assert.equal(sanitizeRenderDistance112(99,false),16);
  assert.equal(sanitizeRenderDistance112(99,true),16);
- assert.equal(sanitizeRenderDistance112(-3,false),12);
+ assert.equal(sanitizeRenderDistance112(-3,false),2);
  const near=fogDistances112(3),far=fogDistances112(8);
  assert.ok(far.far>near.far*2);
  assert.ok(far.near<far.far);
@@ -67,8 +67,8 @@ test('physics and terrain refresh code wire into the real game frame',()=>{
  assert.match(main,/verticalVelocity112\(player\.vy,dt,\{water\}\)/);
  assert.match(main,/player\.vx=player\.vz=player\.vy=0/);
  assert.match(main,/showPlacementPreview\(nx,ny,nz\)/);
- assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius,\{nightVision:nightVisionSeconds>0\}\)/);
- assert.match(main,/activeBuild\?\.cx===cx\+dx/);
+ assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius,\{nightVision:nightVisionSeconds>0,brightness:settings\.brightness,clouds:settings\.clouds\}\)/);
+ assert.match(main,/activeBuild\?\.cx===a/);
 });
 
 import {beginChunk,progressChunkWithinBudget} from '../src/chunk-builder.js';

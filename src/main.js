@@ -1,3 +1,4 @@
+import {blocksBrowserShortcut112,isTextInput112} from './keyboard112.js';
 import {installCreativeInventory112} from './creative-inventory112.js';
 import {ITEM_DEFS} from './item-registry.js';
 import {createWaterFlow112} from './water-flow112.js';
@@ -22,11 +23,11 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.2';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.3';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js';
 import {WeatherCycle} from './environment.js?v=1.4';
-import {createWorldVisuals} from './world-visuals.js?v=1.4';
+import {createWorldVisuals} from './world-visuals.js?v=1.5';
 import {createChunkLight} from './voxel-light.js?v=1.2';
 import {waterQuadUV,waterTileRegion} from './water-visuals.js';
 import {SKY_CAMERA_FAR} from './sky-cycle.js';
@@ -34,9 +35,9 @@ import {Survival} from './survival.js';
 import {shouldAdvanceWorld} from './simulation-state.js';
 import {expandInventory,giveItem,moveStack} from './inventory-utils.js';
 import {restoreInventory,replenishOverflow} from './inventory-restore.js';
-import {createEntityWorld} from './entity-renderer.js?v=3';
+import {createEntityWorld} from './entity-renderer.js?v=4';
 import {createDrops} from './drops.js';
-import {createAudio} from './audio.js?v=1.1';
+import {createAudio} from './audio.js?v=1.2';
 import {formatOwnerDeath112} from './death-messages112.js';
 import {TileStore,processFurnace,depositOne,withdrawOne,tileDrops,tileKey} from './tile-data.js';
 import {Progression,GOALS} from './progression.js';
@@ -48,12 +49,12 @@ import {eatHeld,foodFor} from './food.js';
 import {dropInventoryOnDeath} from './death-drops.js';
 import {giveDamagedItem} from './damaged-items.js';
 import {changeBlockWithLifecycle} from './block-change.js';
-import {createGravityTicks} from './block-gravity.js';
+import {createFallingBlocks112 as createGravityTicks} from './falling-blocks112.js';
 import {GRID_RECIPES,fillRecipe112,emptyCraftGrid,recipeAt,placeCraftIngredient,takeCraftIngredient,craftGridOnce,clearCraftGrid} from './crafting-grid.js';
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js?v=2.1';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=2.0';
+import {createFirstPerson} from './first-person.js?v=2.1';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
@@ -109,19 +110,19 @@ function registerHurt(cause='generic',source=null){
 const breakOverlay=createBreakOverlay112(scene,world);
 const progression=new Progression(saved?.progression);const tiles=new TileStore(saved?.tiles);let activeTile=null;
 let craftingSize=2;let craftingCells=emptyCraftGrid(2);
-const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(creative112)return;if(survival.damage(amount)>0){registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
+const entityWorld=createEntityWorld(scene,world,(amount,e)=>{if(creative112)return;if(survival.damage(settings.difficulty===0?0:settings.difficulty===1?Math.min(amount/2+1,amount):settings.difficulty===3?amount*1.5:amount)>0){registerHurt('mob',e.kind)}if(survival.dead)showDeath()},saved?.entities);
 const drops=createDrops(scene,world,(id,count,damage)=>{const left=Number.isInteger(damage)?giveDamagedItem(inventory,id,count,damage):giveItem(inventory,id,count);if(left<count){updateUI();saveTimer=0;audio.beep('craft')}return left},saved?.drops);
 let fallDistance=0,voidDamageTime=0,usingFood=false,foodHold=0;
 const touchMode=window.matchMedia('(pointer:coarse)').matches && !window.matchMedia('(hover:hover) and (pointer:fine)').matches;
 if(touchMode)document.body.classList.add('touch-ui');
-applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});
+applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode,scale:settings.guiScale});
 const mobileMove={forward:0,strafe:0};const heldControls112=new Map();let mobileJump=false,mobileSneak=false;let activeLook=null;let loadingWorld=false,loadingResumeAuto=false,lastLoadingPercent=-1,lastStreamUpdateAt=0;const size=16;let renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);let lastChunk='';
 function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],colors=[],indexes=[];
  for(const f of store){const base=pos.length/3,rawUV=quadUV(f.id,f.d,f.v),tex=isWater?waterQuadUV(rawUV):rawUV,shade=lightForFace(f);
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
   indexes.push(base,base+1,base+2,base,base+2,base+3);
  }
- const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indexes);g.computeBoundingSphere();return g;
+ const g=new THREE.BufferGeometry();g.userData.blockIndices=new Map();store.forEach((f,i)=>{const key=[f.x,f.y,f.z].join(',');if(!g.userData.blockIndices.has(key))g.userData.blockIndices.set(key,[]);g.userData.blockIndices.get(key).push(i*6);});g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indexes);g.computeBoundingSphere();return g;
 }
 function chunkId(cx,cz){return `${cx},${cz}`}
 function clearPlacementPreviews(cx,cz){
@@ -185,9 +186,14 @@ function rebuildEditedChunkNow(x,z){
  }
 }
 const waterTicks112=createWaterFlow112(world,(x,y,z)=>{updateNearBlock(x,z);saveTimer=0;});
-const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{updateNearBlock(x,z);waterTicks112.notifyChange(x,y,z);waterTicks112.notifyChange(x,toY,z);saveTimer=0;});
+const gravityTicks=createGravityTicks(world,(x,y,z,toY)=>{hideBlockFaces(x,y,z);updateNearBlock(x,z);waterTicks112.notifyChange(x,y,z);waterTicks112.notifyChange(x,toY,z);saveTimer=0;},saved?.fallingBlocks);
 for(const [key,block] of world.changes)if(block.id===BLOCK.WATER)waterTicks112.notifyChange(...key.split(',').map(Number));
-function updateNearBlock(x,z){let cx=Math.floor(x/size),cz=Math.floor(z/size);for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)if(meshes.has(chunkId(cx+dx,cz+dz))||(activeBuild?.cx===cx+dx&&activeBuild?.cz===cz+dz))enqueue(cx+dx,cz+dz,true)}
+const fallingMeshes=new Map();
+function updateFallingMeshes(){
+ const live=new Set();for(const e of gravityTicks.entities){live.add(e.uid);let mesh=fallingMeshes.get(e.uid);if(!mesh){const local={getBlock:(x,y,z)=>({id:x===0&&y===0&&z===0?e.id:0,state:e.state})};mesh=new THREE.Mesh(makeGeo(visibleBlockQuads(local,0,0,0),()=>[1,1,1]),solidMat);scene.add(mesh);fallingMeshes.set(e.uid,mesh);}mesh.position.set(e.x,e.y,e.z);}
+ for(const [id,mesh] of fallingMeshes)if(!live.has(id)){scene.remove(mesh);mesh.geometry.dispose();fallingMeshes.delete(id);}
+}
+function updateNearBlock(x,z){const cx=Math.floor(x/size),cz=Math.floor(z/size),mx=((x%size)+size)%size,mz=((z%size)+size)%size;const near=[[cx,cz]];if(mx===0)near.push([cx-1,cz]);if(mx===15)near.push([cx+1,cz]);if(mz===0)near.push([cx,cz-1]);if(mz===15)near.push([cx,cz+1]);for(const [a,b] of near)if(meshes.has(chunkId(a,b))||(activeBuild?.cx===a&&activeBuild?.cz===b))enqueue(a,b,true);}
 function collides(x,y,z){return playerCollides(world,x,y,z)}
 function moveAxis(axis,delta){
  if(!delta)return;
@@ -201,6 +207,7 @@ function moveAxis(axis,delta){
    if(axis!=='y' && player.onGround && !collides(tx,player.y+.6,tz)){
     player.y+=.6;player[axis]=nv;player.onGround=false;continue;
    }
+   if(axis!=='y'&&settings.autoJump&&player.onGround&&!collides(player.x,player.y+1,player.z)&&!collides(tx,player.y+1,tz)){player.vy=MOVE_SPEED112.jump;player.onGround=false;}
    if(axis!=='y'&&(keys.has('Space')||mobileJump)&&waterContact112(world,player,BLOCK.WATER))player.vy=waterExitLift112(player.vy,{jump:true,inWater:true,blockedByShore:true});
    if(axis==='y'){if(d<0)player.onGround=true;player.vy=0}
    return;
@@ -260,7 +267,7 @@ function look(){
  }
  selectOutline.visible=false;el('target').textContent='';return null;
 }
-function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle,nightVisionSeconds,survival:survival.serialize(),weather:weatherCycle.serialize(),tiles:tiles.save(),progression:progression.serialize(),commandState:commandState.serialize(),entities:entityWorld.serialize(),drops:drops.serialize()};}
+function snapshot(){return {world:world.serialize(),inventory,inventoryOverflow,selected,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},day,daylightCycle,nightVisionSeconds,survival:survival.serialize(),weather:weatherCycle.serialize(),tiles:tiles.save(),progression:progression.serialize(),commandState:commandState.serialize(),entities:entityWorld.serialize(),drops:drops.serialize(),fallingBlocks:gravityTicks.serialize()};}
 function save(){
  if(!listWorlds().some(w=>w.id===runtimeWorldId112))return;
  try{localStorage.setItem(worldSaveKey(runtimeWorldId112),JSON.stringify(snapshot()));notify('월드 저장 완료')}
@@ -293,15 +300,16 @@ function updateUI(){
  layoutContainer112(el('inventory'));creativeUI112?.refresh();
 }
 function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
+function hideBlockFaces(x,y,z){const key=[x,y,z].join(',');for(const mesh of meshes.get(chunkId(Math.floor(x/16),Math.floor(z/16)))??[]){const geo=mesh.geometry;for(const offset of geo.userData.blockIndices?.get(key)??[])for(let i=0;i<6;i++)geo.index.setX(offset+i,0);geo.index.needsUpdate=true;}}
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;
- if(world.set(t.x,t.y,t.z,0)){
+ if(world.set(t.x,t.y,t.z,0)){hideBlockFaces(t.x,t.y,t.z);
    const preview=placementPreviews.get(t.x+','+t.y+','+t.z);if(preview){scene.remove(preview.mesh);preview.mesh.geometry.dispose();placementPreviews.delete(t.x+','+t.y+','+t.z);}
   const tile=tiles.items.get(tileKey(t.x,t.y,t.z));
   if(gameMode==='survival')for(const item of tileDrops(tile))drops.spawn(item.id,t.x+.5,t.y+.6,t.z+.5,item.count,0,item.damage);
   tiles.remove(t.x,t.y,t.z);
   if(t.id===BLOCK.LEVER)recomputeNearbyLamps(world,t.x,t.y,t.z);
-  rebuildEditedChunkNow(t.x,t.z);updateNearBlock(t.x,t.z);gravityTicks.notifyChange(t.x,t.y,t.z);waterTicks112.notifyChange(t.x,t.y,t.z);
+  updateNearBlock(t.x,t.z);gravityTicks.notifyChange(t.x,t.y,t.z);waterTicks112.notifyChange(t.x,t.y,t.z);
   if(gameMode==='survival')for(const drop of blockDrops(t.id,{toolId:inventory[selected]?.id??0})){
     drops.spawn(drop.id,t.x+.5,t.y+.6,t.z+.5,drop.count);
   }
@@ -422,10 +430,10 @@ const onPointer=()=>{
 let mouseDrag112=null;
 document.addEventListener('mousemove',e=>{
  if(!running||touchMode)return;
- if(document.pointerLockElement===canvas){if(discardLockMovement){discardLockMovement=false;return;}Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY,settings.sensitivity/100));return;}
+ if(document.pointerLockElement===canvas){if(discardLockMovement){discardLockMovement=false;return;}Object.assign(player,lookDelta(player.yaw,player.pitch,e.movementX,e.movementY*(settings.invertMouse?-1:1),settings.sensitivity/100));return;}
  if(!mouseDrag112)return;
  const dx=e.clientX-mouseDrag112.x,dy=e.clientY-mouseDrag112.y;mouseDrag112.x=e.clientX;mouseDrag112.y=e.clientY;
- if(dx||dy){mouseDrag112.moved=true;clickHold=false;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100));}
+ if(dx||dy){mouseDrag112.moved=true;clickHold=false;Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy*(settings.invertMouse?-1:1),settings.sensitivity/100));}
 });
 window.addEventListener('mouseup',()=>{if(mouseDrag112&&!mouseDrag112.moved&&running&&document.pointerLockElement!==canvas){if(mouseDrag112.button===2)useOrPlace();else{firstPerson.swing();beginMiningInput();}}mouseDrag112=null;});
 // Minecraft-style touch: drag to look, tap to use/place, hold a block to mine.
@@ -451,13 +459,13 @@ canvas.addEventListener('pointermove',e=>{
  e.preventDefault();const g=activeLook,dx=e.clientX-g.x,dy=e.clientY-g.y;
  g.x=e.clientX;g.y=e.clientY;g.distance+=Math.hypot(dx,dy);
  if(g.distance>10){g.moved=true;/* Swipes only turn the camera; existing holds continue mining. */}
- if(g.moved)Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy,settings.sensitivity/100*1.46));
+ if(g.moved)Object.assign(player,lookDelta(player.yaw,player.pitch,dx,dy*(settings.invertMouse?-1:1),settings.sensitivity/100*1.46));
 });
 canvas.addEventListener('pointerup',e=>endTouchLook(e));
 canvas.addEventListener('pointercancel',e=>endTouchLook(e,true));
 canvas.addEventListener('lostpointercapture',e=>endTouchLook(e,true));
-window.addEventListener('keydown',e=>{if(e.code==='Space'&&creative112&&running&&!e.repeat){const now=performance.now();if(now-lastJump112<300){flight112=!flight112;player.vy=0;fallDistance=0;}lastJump112=now;}if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
- if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();clickHold=false;damage=0;breakOverlay.clear()});
+window.addEventListener('keydown',e=>{const editing=isTextInput112(document.activeElement)||commandUI.isOpen();if(blocksBrowserShortcut112(e,{playing:running||inventoryOpen,editing})){e.preventDefault();if(e.altKey||e.ctrlKey||e.metaKey||['Tab','Backspace','F5','F6'].includes(e.code))return;}if(document.body.classList.contains('menu-open'))return;if(editing){if(e.code==='Escape'&&inventoryOpen)closeInventory();return;}if(e.code==='Space'&&creative112&&running&&!e.repeat){const now=performance.now();if(now-lastJump112<300){flight112=!flight112;player.vy=0;fallDistance=0;}lastJump112=now;}if(e.code==='F3'&&!e.repeat){e.preventDefault();document.body.classList.toggle('debug-overlay');return;}if(commandUI.isOpen())return;if(document.activeElement?.tagName==='INPUT'){if(e.code==='Escape'&&inventoryOpen){e.preventDefault();closeInventory();}return;}if(running&&(e.key==='/'||e.code==='Slash')){e.preventDefault();commandUI.show();return;}if(['Space','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyE'&&!e.repeat){if(inventoryOpen)closeInventory();else openInventory();return}if(e.code==='KeyP'){save();return}if(e.code==='Escape'&&inventoryOpen){closeInventory();return}// Desktop Escape must pause even without an active pointer lock (e.g. after chat).
+ if(e.code==='Escape'&&enteredWorld&&!inventoryOpen&&!survival.dead&&!el('overlay').classList.contains('show')){e.preventDefault();pauseGame();return}if(/Digit[1-9]/.test(e.code)){selected=Number(e.code.slice(-1))-1;updateUI()}keys.add(e.code)});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{cancelUsing();keys.clear();clickHold=false;damage=0;breakOverlay.clear()});
 function beginMiningInput(){
  clickHold=true;damage=0;mineTickRemainder=0;aimKey='';
  if(gameMode!=='survival'){const block=look();if(block)breakBlock(block);}
@@ -565,7 +573,7 @@ el('jar112Input').addEventListener('change',async event=>{
  }catch(error){status.textContent='사이트 기본 그래픽이 적용되었습니다 · 개인 원본 리소스 자동 복원에는 실패했습니다.';}
  finally{button.disabled=false;}
 })();
-const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);applyCameraFov112(camera,settings.fov);canvas.dataset.cameraFov=String(camera.fov);lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
+const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);applyCameraFov112(camera,settings.fov);canvas.dataset.cameraFov=String(camera.fov);audio.setVolume(settings.volume);for(const mat of [solidMat,leafMat,glassMat,waterMat]){mat.vertexColors=settings.smoothLighting;mat.needsUpdate=true;}applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode,scale:settings.guiScale});el('chatHistory112').style.opacity=String(settings.chatOpacity);lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
 installTitleLayout112();
 document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
@@ -640,22 +648,22 @@ palette.addEventListener('click',e=>{if(gameMode==='survival')return;const butto
 el('closeInventory').addEventListener('click',closeInventory);
 el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode});playerPreview112.draw();});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode,scale:settings.guiScale});playerPreview112.draw();});
 function loop(now){requestAnimationFrame(loop);
  if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;beginMiningInput();}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
-  for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);waterTicks112.tick(dt);
+  for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);updateFallingMeshes();waterTicks112.tick(dt);
   if(running){const lastX=player.x,lastZ=player.z,healthBefore=survival.health;stepPhysics(dt);
    if(survival.health<healthBefore&&hurtTime<=0)registerHurt('generic');track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
    if(usingFood){foodHold+=dt;const food=foodFor(inventory[selected]?.id);if(!food||survival.dead)cancelUsing();else if(foodHold>=food.seconds){if(eatHeld(inventory,selected,survival)){audio.beep('craft');updateUI();notify('음식을 먹었습니다.');saveTimer=0;}cancelUsing();}}
   }
   else if(!creative112)survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER});
-  weatherCycle.update(dt);entityWorld.update(dt,player,{daylight:Math.sin(day*Math.PI*2)>0});drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
+  weatherCycle.update(dt);entityWorld.update(dt,player,{daylight:Math.sin(day*Math.PI*2)>0,difficulty:settings.difficulty});drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
   if(daylightCycle)day=(day+dt/1200)%1;
   nightVisionSeconds=Math.max(0,nightVisionSeconds-dt);effects.update(dt);
   const angle=day*Math.PI*2;
   sunlight.position.set(Math.cos(angle)*40,Math.sin(angle)*60,25);
-  worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius,{nightVision:nightVisionSeconds>0});waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){
+  worldVisuals.update(dt,day*24000,weatherCycle.kind,player,sunlight,ambient,renderRadius,{nightVision:nightVisionSeconds>0,brightness:settings.brightness,clouds:settings.clouds});waterTexture.offset.y=(waterTexture.offset.y-dt*.032+1)%1;const t=running?look():null;if(clickHold&&t&&t.id&&definition(t.id)?.hardness>=0&&t.id!==BLOCK.WATER){
     const id=`${t.x},${t.y},${t.z}`;
     if(id!==aimKey){aimKey=id;damage=0;mineTickRemainder=0;}
     missedMineTime=0;
@@ -690,7 +698,7 @@ function loop(now){requestAnimationFrame(loop);
    if(Math.abs(cx-pcx)<=renderRadius&&Math.abs(cz-pcz)<=renderRadius)activeBuild=beginChunk(world,cx,cz);
   }
   if(!activeBuild)break;
-  if(progressChunkWithinBudget(activeBuild,{budgetMs:Math.max(1,chunkBudget-(performance.now()-startBuild)),maxColumns:loadingWorld?256:touchMode?12:48})){
+  if(progressChunkWithinBudget(activeBuild,{budgetMs:Math.max(1,chunkBudget-(performance.now()-startBuild)),maxColumns:loadingWorld?256:touchMode?12:48,batchColumns:1})){
    const finished=activeBuild;activeBuild=null;commitChunk(finished);
   }else break;
  }while(performance.now()-startBuild<chunkBudget);
@@ -714,7 +722,7 @@ function loop(now){requestAnimationFrame(loop);
   if(show)stream.textContent='주변 12청크 생성 중 · '+progress.count+' / '+progress.total;
  }
  if(hurtTime>0)hurtTime=Math.max(0,hurtTime-dt);
- if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
+ if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,settings.viewBobbing&&running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold,settings.viewBobbing);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  canvas.dataset.cameraYaw=String(player.yaw);canvas.dataset.cameraPitch=String(player.pitch);
  // Restore the camera even when a saved dead player cannot tick.
  camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak)),player.z);

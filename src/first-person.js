@@ -157,10 +157,10 @@ export function createFirstPerson(renderer,atlasTexture){
   if(held.visible&&view.kind==='item')held.scale.z*=.08;
  }
  setItem(0);
- function update(dt,moving=false,mining=false){age+=dt;swingRemaining=Math.max(0,swingRemaining-dt);
-  const bob=moving?Math.sin(age*10)*.025:Math.sin(age*2.5)*.006;
+ function update(dt,moving=false,mining=false,bobbing=true){age+=dt;swingRemaining=Math.max(0,swingRemaining-dt);
+  const bob=!bobbing?0:moving?Math.sin(age*10)*.025:Math.sin(age*2.5)*.006;
   group.position.y=bob+(mining?Math.sin(age*25)*.038:0);
-  group.rotation.z=Math.sin(age*(moving?9:2))*(moving?.025:.009);
+  group.rotation.z=(bobbing?1:0)*Math.sin(age*(moving?9:2))*(moving?.025:.009);
   const swing=swingRemaining>0?Math.sin((1-swingRemaining/.27)*Math.PI):0;
   group.rotation.x=-swing*.45-(mining?.07:0);group.rotation.y=swing*.16;
  }

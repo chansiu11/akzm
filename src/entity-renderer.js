@@ -1,5 +1,5 @@
 import {mobCollides112,stepMobVertical112} from './mob-physics112.js';
-import {MOB_MODELS112,modelFaceUV112,facingYaw112,hostileSpawnAllowed112} from './mob-model112.js';
+import {MOB_MODELS112,modelFaceUV112,facingYaw112,hostileSpawnAllowed112} from './mob-model112.js?v=2';
 // Basic original voxel creatures rendered as simple colored geometry.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {ENTITY_KINDS,spawnEntity,stepEntity} from './entity-ai.js';
@@ -69,21 +69,22 @@ export function createEntityWorld(scene,world,onHit,savedEntities=[]){
   group.position.set(x,y,z);scene.add(group);entries.push({entity,group,limbs});return entity;
  }
  for(const record of normalizeEntityRecords(savedEntities))add(record.kind,record.x,record.y,record.z,record);
- function update(dt,player,{daylight=true}={}){spawnTimer-=dt;
+ function update(dt,player,{daylight=true,difficulty=2}={}){spawnTimer-=dt;
   // Restore dormant animals to the active scene when the player comes back.
   for(let i=dormant.length-1;i>=0;i--){const e=dormant[i];
+   if(difficulty===0&&ENTITY_KINDS[e.kind].hostile){dormant.splice(i,1);continue;}
    if(Math.hypot(e.x-player.x,e.z-player.z)>44)continue;
    dormant.splice(i,1);add(e.kind,e.x,e.y,e.z,e);
   }
   if(spawnTimer<=0&&entries.length<14){
    spawnTimer=8+Math.random()*6;
-   const kind=daylight?'grazer':Math.random()<.55?'grazer':Math.random()<.75?'wanderer':'shooter';
+   const kind=daylight||difficulty===0?'grazer':Math.random()<.55?'grazer':Math.random()<.75?'wanderer':'shooter';
    const hostile=ENTITY_KINDS[kind].hostile,theta=Math.random()*Math.PI*2,r=hostile?25+Math.random()*18:8+Math.random()*16;
    const x=Math.floor(player.x+Math.cos(theta)*r),z=Math.floor(player.z+Math.sin(theta)*r),y=world.columnTop(x,z)+1;
    const clear=world.get(x,y,z)===0&&world.get(x,y+1,z)===0&&y>SEA_LEVEL-1;
    if(clear&&(!hostile||hostileSpawnAllowed112({daylight,skyVisible:true,light:daylight?15:4,distance:Math.hypot(x+.5-player.x,z+.5-player.z)})))add(kind,x+.5,y,z+.5);
   }
-  for(let i=entries.length-1;i>=0;i--){const {entity:e,group,limbs}=entries[i];if(e.health<=0){scene.remove(group);entries.splice(i,1);continue;}
+  for(let i=entries.length-1;i>=0;i--){const {entity:e,group,limbs}=entries[i];if(e.health<=0||(difficulty===0&&ENTITY_KINDS[e.kind].hostile)){scene.remove(group);entries.splice(i,1);continue;}
    if(Math.hypot(e.x-player.x,e.z-player.z)>55){dormant.push(e);scene.remove(group);entries.splice(i,1);continue;}
    if(ENTITY_KINDS[e.kind].hostile&&daylight&&world.columnTop(Math.floor(e.x),Math.floor(e.z))<e.y){e.sunBurn=(e.sunBurn??0)+dt;if(e.sunBurn>=1){e.health--;e.sunBurn=0;}}else e.sunBurn=0;
    e.hurtTimer=Math.max(0,(e.hurtTimer||0)-dt);
@@ -106,16 +107,16 @@ export function createEntityWorld(scene,world,onHit,savedEntities=[]){
     stepMobKnockback112(e,dt,solidAt);
    // Grounded AABB motion replaces snapping to the highest block in a column.
    stepMobVertical112(world,e,dt,{moving:Math.hypot(action.vx,action.vz)>.1,blocked:e.x===previousX&&e.z===previousZ});
-   group.position.set(e.x,e.y,e.z);group.rotation.y=facingYaw112(action.vx,action.vz,group.rotation.y);
-    const moving=Math.hypot(action.vx,action.vz)>.1;e.walkPhase=(e.walkPhase??0)+Math.hypot(action.vx,action.vz)*dt*4;
-    for(let k=0;k<limbs.length;k++){const limb=limbs[k],phase=e.walkPhase+((e.kind==='grazer'?[0,1,1,0][k]:k%2)?Math.PI:0);limb.rotation.x=limb.userData.arm&&e.kind==='wanderer'?-Math.PI/2:limb.userData.arm&&e.kind==='shooter'&&action.mode==='ranged'?-Math.PI/2:Math.sin(phase)*(moving?.65:0);}
+   group.position.set(e.x,e.y,e.z);const dx=e.x-previousX,dz=e.z-previousZ;group.rotation.y=facingYaw112(action.mode==='ranged'||action.mode==='attack'?player.x-e.x:dx,action.mode==='ranged'||action.mode==='attack'?player.z-e.z:dz,group.rotation.y);
+    const moving=Math.hypot(dx,dz)>.0001;e.walkPhase=(e.walkPhase??0)+Math.hypot(dx,dz)*4;
+    for(let k=0;k<limbs.length;k++){const limb=limbs[k],phase=e.walkPhase+((e.kind==='grazer'?[0,1,1,0][k]:[0,1,1,0][k])?Math.PI:0);limb.rotation.x=limb.userData.arm&&e.kind==='wanderer'?Math.PI/2:limb.userData.arm&&e.kind==='shooter'&&action.mode==='ranged'?Math.PI/2:Math.sin(phase)*(moving?.65:0);}
    if(!player.invulnerable&&action.attack && clearLineOfSight(world,{x:e.x,y:e.y+1.25,z:e.z},{x:player.x,y:player.y+1.25,z:player.z})){
     if(e.kind==='shooter'&&arrows.length<64){
      const projectile=shootTowards({x:e.x,y:e.y+1.35,z:e.z},{x:player.x,y:player.y+1.2,z:player.z});
      const mesh=new THREE.Group();
-     const shaft=new THREE.Mesh(arrowGeo,arrowMat);mesh.add(shaft);
+     const shaft=new THREE.Mesh(arrowGeo,arrowMat);if(!ownerTexture.has('arrow'))mesh.add(shaft);
      if(ownerTexture.has('arrow'))for(let k=0;k<2;k++){const sprite=new THREE.Mesh(arrowSpriteGeo,arrowSpriteMat);sprite.rotation.y=Math.PI/2;sprite.rotateOnWorldAxis(new THREE.Vector3(0,0,1),k*Math.PI/2);mesh.add(sprite);}
-     for(let k=0;k<2;k++){const fin=new THREE.Mesh(new THREE.PlaneGeometry(.2,.22),featherMat);fin.rotation.x=Math.PI/2;fin.rotation.z=k*Math.PI/2;fin.position.z=-.22;mesh.add(fin);}
+     if(!ownerTexture.has('arrow'))for(let k=0;k<2;k++){const fin=new THREE.Mesh(new THREE.PlaneGeometry(.2,.22),featherMat);fin.rotation.x=Math.PI/2;fin.rotation.z=k*Math.PI/2;fin.position.z=-.22;mesh.add(fin);}
      scene.add(mesh);arrows.push({projectile,mesh,shooter:e});
     }else if(e.kind!=='shooter'&&Math.hypot(e.x-player.x,e.z-player.z)<2&&Math.abs(e.y-player.y)<1.6){onHit?.(2,e);}
    }

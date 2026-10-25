@@ -6,9 +6,9 @@ import {REQUIRED_TILES} from '../src/resource-pack.js';
 
 // No original game's executable generator algorithm is imported or reproduced here.
 test('stage3 world generation uses complete 0..255 coordinate range',()=>{
- assert.equal(MAX_Y,255);assert.equal(SEA_LEVEL,63);assert.equal(GENERATOR_VERSION,4);
+ assert.equal(MAX_Y,255);assert.equal(SEA_LEVEL,63);assert.equal(GENERATOR_VERSION,5);
  const w=new World(null,{seed:314159});
- assert.equal(w.generator,4);assert.equal(w.get(0,0,0),BLOCK.BEDROCK);
+ assert.equal(w.generator,5);assert.equal(w.get(0,0,0),BLOCK.BEDROCK);
  assert.equal(w.get(0,MAX_Y+1,0),BLOCK.AIR);
  assert.ok(w.surfaceHeight(0,0)>0 && w.surfaceHeight(0,0)<MAX_Y);
  assert.equal(w.set(7,255,8,BLOCK.STONE),true);
@@ -84,7 +84,7 @@ test('new world save restores same seed and edits; changing seed changes actual 
  const a=new World(null,{seed:-2488234});
  assert.equal(a.set(10,220,12,BLOCK.GLASS),true);
  const saved=JSON.parse(JSON.stringify(a.serialize()));
- assert.equal(saved.generator,4);assert.equal(saved.seed,-2488234);
+ assert.equal(saved.generator,5);assert.equal(saved.seed,-2488234);
  const b=new World(saved,{seed:13});
  assert.equal(b.get(10,220,12),BLOCK.GLASS);
  assert.equal(b.get(6,20,6),a.get(6,20,6));

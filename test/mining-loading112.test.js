@@ -16,7 +16,7 @@ test('no swipe-only mining: an explicit viewport hold or mining control starts a
  assert.match(main,/function beginMiningInput\(/);
  assert.match(main,/!activeLook\.moved/);
  assert.match(main,/holdAction\('touchMine'/);
- assert.match(main,/rebuildEditedChunkNow\(t\.x,t\.z\)/);
+ assert.match(main,/updateNearBlock\(t\.x,t\.z\)/);
 });
 test('a 5x5 playable core starts first while the requested 625-chunk radius streams',()=>{
  const main=read('../src/main.js'),html=read('../index.html');

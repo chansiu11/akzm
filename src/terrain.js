@@ -2,7 +2,7 @@
 // Generator 1 preserves pre-stage-3 worlds; generator 3 is used for new worlds.
 import {BLOCK,BLOCK_NAMES,definition,normalizeState,isValidState} from './block-registry.js';
 export {BLOCK,BLOCK_NAMES};
-export const SEA_LEVEL=63, MAX_Y=255, SEED=18909, GENERATOR_VERSION=4;
+export const SEA_LEVEL=63, MAX_Y=255, SEED=18909, GENERATOR_VERSION=5;
 export const SOLID=id=>!!definition(id)?.solid;
 const floor=Math.floor, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function hash3(x,y,z,seed=SEED){
@@ -45,6 +45,18 @@ export function heightAt(x,z,seed=SEED){
  if(biome==='snowy')return clamp(floor(82+(broad-.5)*32+(detail-.5)*10),65,118);
  if(biome==='forest')return clamp(floor(72+(broad-.5)*23+(detail-.5)*7),62,100);
  return clamp(floor(69+(broad-.5)*19+(detail-.5)*9),60,92);
+}
+// Continuous coast and ridge weights avoid vertical walls at biome boundaries.
+export function terrainHeight(x,z,seed=SEED,generator=GENERATOR_VERSION){
+ if(generator<5)return heightAt(x,z,seed);
+ const land=noise(x+830,z-480,370,seed+31),ridge=noise(x-670,z-840,260,seed+107);
+ const coast=smooth(clamp((land-.23)/.13,0,1));
+ const hills=(noise(x,z,150,seed+11)-.5)*18+(noise(x+401,z-190,34,seed+13)-.5)*5;
+ const mountain=smooth(clamp((ridge-.57)/.25,0,1))*48;
+ const river=Math.abs(noise(x+221,z-613,190,seed+719)-.5);
+ const valley=(1-smooth(clamp(river/.035,0,1)))*coast;
+ const base=46+coast*(23+hills+mountain);
+ return clamp(Math.floor(base*(1-valley)+Math.min(base,60)*valley),32,150);
 }
 function legacyHeightAt(x,z){return clamp(floor(7+noise(x,z,27)*10+noise(x+132,z-81,10)*5+noise(x-90,z+14,55)*4-5),3,23)}
 function legacySandy(x,z){return legacyHeightAt(x,z)<=9||noise(x+500,z-150,34)<.22}
@@ -90,25 +102,25 @@ function oreAt(x,y,z,seed,biome,version=3){
  if(y<130 && n>.918 && spot>.12)return BLOCK.COAL;
  return BLOCK.STONE;
 }
-function treeAt(x,z,seed){
+function treeAt(x,z,seed,generator=4){
  const tx=floor(x/9)*9, tz=floor(z/9)*9;
  // Tree locations are determined per cell, independent of chunk visitation order.
  const ox=tx+1+floor(hash(tx,tz,seed+293)*7);
  const oz=tz+1+floor(hash(tx,tz,seed+307)*7);
  if(x!==ox||z!==oz)return false;
- const biome=biomeAt(x,z,seed),h=heightAt(x,z,seed);
+ const biome=biomeAt(x,z,seed),h=terrainHeight(x,z,seed,generator);
  if(h<=SEA_LEVEL+1||!['forest','plains','snowy'].includes(biome))return false;
  return hash(tx,tz,seed+311)>(biome==='forest'?.36:biome==='snowy'?.57:.77);
 }
-function treeOverlays(column,x,z,seed){
+function treeOverlays(column,x,z,seed,generator=4){
  // Search neighboring tree cells so leaves cross 16x16 chunk boundaries deterministically.
  const cx=floor(x/9),cz=floor(z/9);
  for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){
   const gx=(cx+dx)*9,gz=(cz+dz)*9;
   const ox=gx+1+floor(hash(gx,gz,seed+293)*7),oz=gz+1+floor(hash(gx,gz,seed+307)*7);
   const offX=x-ox,offZ=z-oz;
-  if(Math.abs(offX)>2||Math.abs(offZ)>2||!treeAt(ox,oz,seed))continue;
-  const root=heightAt(ox,oz,seed);
+  if(Math.abs(offX)>2||Math.abs(offZ)>2||!treeAt(ox,oz,seed,generator))continue;
+  const root=terrainHeight(ox,oz,seed,generator);
   const snowy=biomeAt(ox,oz,seed)==='snowy';
   const height=3+floor(hash(ox,oz,seed+333)*3),leaf=snowy?BLOCK.SPRUCE_LEAVES:BLOCK.LEAVES,log=snowy?BLOCK.SPRUCE_LOG:BLOCK.LOG;
   if(offX===0&&offZ===0)for(let y=root+1;y<=root+height;y++)column[y]=log;
@@ -145,8 +157,8 @@ function ruinOverlays(column,x,z,seed){
  }
 }
 function makeColumn(x,z,seed=SEED,generator=GENERATOR_VERSION){
- const blocks=new Uint8Array(MAX_Y+1),h=heightAt(x,z,seed),biome=biomeAt(x,z,seed);
- const sandy=biome==='desert'||biome==='ocean';
+ const blocks=new Uint8Array(MAX_Y+1),h=terrainHeight(x,z,seed,generator),biome=biomeAt(x,z,seed);
+ const sandy=biome==='desert'||biome==='ocean'||(generator>=5&&h<=SEA_LEVEL+1);
  for(let y=0;y<=Math.max(h,SEA_LEVEL);y++){
   if(y>h){blocks[y]=BLOCK.WATER;continue;}
   if(y===0){blocks[y]=BLOCK.BEDROCK;continue;}
@@ -159,7 +171,7 @@ function makeColumn(x,z,seed=SEED,generator=GENERATOR_VERSION){
  }
  // Generator 3 keeps already-created independent ruins; generator 4 avoids them
  // because they do not exist in the 1.8.9 vanilla structure set.
- treeOverlays(blocks,x,z,seed);if(generator<4)ruinOverlays(blocks,x,z,seed);
+ treeOverlays(blocks,x,z,seed,generator);if(generator<4)ruinOverlays(blocks,x,z,seed);
  return blocks;
 }
 export function naturalBlock(x,y,z,seed=SEED){
@@ -177,9 +189,9 @@ function readKey(s){if(typeof s!=='string'||! /^-?\d+,-?\d+,-?\d+$/.test(s))retu
 export class World {
  constructor(saved,options={}){
   // Keep v1/v2 and v3 natural terrain unchanged when loading old saves.
-  this.generator=saved?.generator===3?3:saved&&(saved.generator===undefined||saved.generator===null||(Number.isInteger(saved.generator)&&saved.generator<3))?1:GENERATOR_VERSION;
+  this.generator=[3,4,5].includes(saved?.generator)?saved.generator:saved&&(saved.generator===undefined||saved.generator===null||(Number.isInteger(saved.generator)&&saved.generator<3))?1:GENERATOR_VERSION;
   this.seed=Number.isSafeInteger(saved?.seed)?saved.seed:Number.isSafeInteger(options.seed)?options.seed:SEED;
-  this.changes=new Map();this.columns=new Map();this.columnLimit=8192;
+  this.changes=new Map();this.columns=new Map();this.columnLimit=131072;
   if(Array.isArray(saved?.edits))for(const entry of saved.edits){
    if(!Array.isArray(entry)||entry.length<2)continue;
    const [k,raw]=entry;if(!readKey(k))continue;const value=fromSaved(raw);if(value)this.changes.set(k,value);
@@ -200,7 +212,7 @@ export class World {
  getBlock(x,y,z){const changed=this.changes.get(key(x,y,z));return changed??{id:this.getNatural(x,y,z),state:{}};}
  get(x,y,z){return this.getBlock(x,y,z).id;}
  getState(x,y,z){return {...this.getBlock(x,y,z).state};}
- surfaceHeight(x,z){return this.generator===1?legacyHeightAt(x,z):heightAt(x,z,this.seed);}
+ surfaceHeight(x,z){return this.generator===1?legacyHeightAt(x,z):terrainHeight(x,z,this.seed,this.generator);}
  biome(x,z){return this.generator===1?'legacy':biomeAt(x,z,this.seed);}
  columnTop(x,z){
   const k=`${x},${z}`;
@@ -219,7 +231,7 @@ export class World {
     if((edit?edit.id:column[y])!==BLOCK.AIR){top=y;break;}
    }
   }
-  if(this.topCache.size>=8192)this.topCache.delete(this.topCache.keys().next().value);
+  if(this.topCache.size>=131072)this.topCache.delete(this.topCache.keys().next().value);
   this.topCache.set(k,top);
   return top;
  }

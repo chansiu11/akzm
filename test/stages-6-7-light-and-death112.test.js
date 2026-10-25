@@ -79,7 +79,7 @@ test('actual game loads all source and UI paths for night vision, lighting, dama
  const ui=readFileSync(new URL('../src/gui112-assets.js',import.meta.url),'utf8');
  assert.match(main,/nightVisionSeconds/);
  assert.match(main,/setNightVision:seconds/);
- assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius,\{nightVision:nightVisionSeconds>0\}\)/);
+ assert.match(main,/worldVisuals\.update\(dt,day\*24000,weatherCycle\.kind,player,sunlight,ambient,renderRadius,\{nightVision:nightVisionSeconds>0,brightness:settings\.brightness,clouds:settings\.clouds\}\)/);
  assert.match(main,/formatOwnerDeath112\(ownerDeathTexts/);
  assert.match(main,/audio\.beep\('hurt'\)/);
  assert.match(visual,/activeLampsNear\(world/);

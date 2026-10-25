@@ -66,13 +66,13 @@
 <h2>설정...</h2>
 <div class="options-grid112">
  <label class="option-slider112 fov-slider112"><span>시야 범위: <output id="fovValue">보통</output></span><input id="settingFov" aria-label="시야 범위" type="range" min="30" max="110" step="1" value="70"></label>
- <button type="button" class="stone-button" disabled title="현재 버전에서는 난이도 설정을 지원하지 않습니다">난이도: 보통</button>
+ <label class="option-check112">난이도 <select id="setting_difficulty" aria-label="난이도"><option value="0">평화로움</option><option value="1">쉬움</option><option value="2">보통</option><option value="3">어려움</option></select></label>
  <button type="button" class="stone-button" disabled title="스킨 세부 설정은 아직 지원되지 않습니다">스킨 사용자 지정...</button>
- <button type="button" class="stone-button" disabled title="음향 세부 설정은 아직 지원되지 않습니다">음악 및 소리...</button>
+ <button type="button" id="settingsSound" class="stone-button">음악 및 소리...</button>
  <button type="button" id="settingsVideo" class="stone-button">비디오 설정...</button>
  <button type="button" id="settingsControls" class="stone-button">조작 설정...</button>
  <button type="button" id="settingsLanguage" class="stone-button">언어...</button>
- <button type="button" class="stone-button" disabled title="채팅 설정은 아직 지원되지 않습니다">채팅 설정...</button>
+ <button type="button" id="settingsChat" class="stone-button">채팅 설정...</button>
  <button type="button" id="settingsResources" class="stone-button">리소스 팩...</button>
  <button type="button" id="menuHelp" class="stone-button">게임 정보...</button>
 </div>
@@ -81,17 +81,21 @@
 <section id="menu-video" class="menu-page menu-vanilla112 hidden" aria-label="비디오 설정">
 <h2>비디오 설정...</h2>
 <div class="options-grid112 options-sub112">
- <label class="option-slider112">렌더 거리: <output id="distanceValue">6청크</output><input id="settingDistance" type="range" min="12" max="16" step="1"></label>
- <button class="stone-button" disabled type="button">그래픽: 기본</button>
+ <label class="option-slider112">렌더 거리: <output id="distanceValue">6청크</output><input id="settingDistance" type="range" min="2" max="16" step="1"></label>
+ <label class="option-slider112">밝기<input id="setting_brightness" aria-label="밝기" type="range" min="0" max="1" step="0.05"></label>
+<label class="option-check112"><input id="setting_viewBobbing" type="checkbox"> 화면 흔들림</label><label class="option-check112"><input id="setting_clouds" type="checkbox"> 구름</label>
+<label class="option-slider112">GUI 크기 (0: 자동)<input id="setting_guiScale" aria-label="GUI 크기" type="range" min="0" max="4" step="1"></label>
  <label class="option-check112"><input id="settingCoords" type="checkbox" checked> 좌표 및 상태 표시</label>
- <button class="stone-button" disabled type="button">부드러운 조명: 켜짐</button>
+ <label class="option-check112"><input id="setting_smoothLighting" type="checkbox"> 부드러운 조명</label>
 </div><div class="vanilla-footer112"><button id="settingFullscreen" type="button" aria-pressed="false">전체화면: 꺼짐</button><button id="videoDone" type="button" class="stone-button">완료</button></div>
 </section>
+<section id="menu-sound" class="menu-page menu-vanilla112 hidden" aria-label="음악 및 소리"><h2>음악 및 소리...</h2><div class="options-grid112"><label class="option-slider112">전체 음량<input id="setting_volume" aria-label="전체 음량" type="range" min="0" max="1" step="0.05"></label></div><div class="vanilla-footer112"><button id="soundDone" class="stone-button">완료</button></div></section>
+<section id="menu-chat" class="menu-page menu-vanilla112 hidden" aria-label="채팅 설정"><h2>채팅 설정...</h2><div class="options-grid112"><label class="option-slider112">채팅 불투명도<input id="setting_chatOpacity" aria-label="채팅 불투명도" type="range" min="0" max="1" step="0.05"></label></div><div class="vanilla-footer112"><button id="chatDone" class="stone-button">완료</button></div></section>
 <section id="menu-controls" class="menu-page menu-vanilla112 hidden" aria-label="조작 설정">
 <h2>조작 설정...</h2>
 <div class="options-grid112 options-sub112">
- <label class="option-slider112">마우스 감도: <output id="sensitivityValue">24%</output><input id="settingSensitivity" type="range" min="0.08" max="0.6" step="0.02"></label>
- <button class="stone-button" disabled type="button">자동 점프: 꺼짐</button>
+ <label class="option-slider112">마우스 감도: <output id="sensitivityValue">24%</output><input id="settingSensitivity" type="range" min="0" max="1" step="0.01"></label>
+ <label class="option-check112"><input id="setting_autoJump" type="checkbox"> 자동 점프</label><label class="option-check112"><input id="setting_invertMouse" type="checkbox"> 마우스 반전</label>
 </div><div class="vanilla-footer112"><button id="controlsDone" type="button" class="stone-button">완료</button></div>
 </section>
 <section id="menu-language" class="menu-page menu-vanilla112 hidden" aria-label="언어">
@@ -141,7 +145,7 @@
 <div class="command-key-hint">Tab: 자동완성 · Tab 반복: 후보 순환 · Shift+Tab: 역순 · ↑↓: 후보 선택 · Enter: 실행 · Esc: 닫기</div>
 <div class="command-entry-actions"><button id="commandHelp" type="button">명령어 도움말</button><button id="commandClose" type="button">닫기 ×</button></div>
 </section>
-<script type="importmap">{"imports":{"./src/atlas.js":"./src/atlas.js?v=1.7","./src/atlas.js?v=1.6":"./src/atlas.js?v=1.7","./src/block-registry.js":"./src/block-registry.js?v=1.1","./src/resource-pack.js":"./src/resource-pack.js?v=1.2","./src/item-registry.js":"./src/item-registry.js?v=1.2","./src/inventory-restore.js":"./src/inventory-restore.js?v=1.2","./src/inventory-utils.js":"./src/inventory-utils.js?v=1.2","./src/vanilla-mining.js":"./src/vanilla-mining.js?v=1.3","./src/tool-durability.js":"./src/tool-durability.js?v=1.2","./src/player-motion112.js":"./src/player-motion112.js?v=1.4","./src/survival.js":"./src/survival.js?v=1.2","./src/menu.js":"./src/menu.js?v=1.2","./src/break-overlay112.js":"./src/break-overlay112.js?v=1.2"}}</script>
-<script type="module" src="./src/main.js?v=3.34"></script></body></html>
+<script type="importmap">{"imports":{"./src/gui112-layout.js":"./src/gui112-layout.js?v=2","./src/terrain.js":"./src/terrain.js?v=5","./src/atlas.js":"./src/atlas.js?v=1.7","./src/atlas.js?v=1.6":"./src/atlas.js?v=1.7","./src/block-registry.js":"./src/block-registry.js?v=1.1","./src/resource-pack.js":"./src/resource-pack.js?v=1.2","./src/item-registry.js":"./src/item-registry.js?v=1.2","./src/inventory-restore.js":"./src/inventory-restore.js?v=1.2","./src/inventory-utils.js":"./src/inventory-utils.js?v=1.2","./src/vanilla-mining.js":"./src/vanilla-mining.js?v=1.3","./src/tool-durability.js":"./src/tool-durability.js?v=1.2","./src/player-motion112.js":"./src/player-motion112.js?v=1.5","./src/survival.js":"./src/survival.js?v=1.2","./src/menu.js":"./src/menu.js?v=1.3","./src/break-overlay112.js":"./src/break-overlay112.js?v=1.2"}}</script>
+<script type="module" src="./src/main.js?v=3.35"></script></body></html>
 
 

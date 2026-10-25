@@ -42,10 +42,10 @@ export function createWorldVisuals(scene,renderer,world=null){
   light.visible=false;scene.add(light);return light;
  });
  let clock=0,lampUpdateTimer=0;
- function update(dt,ticks,weather,player,sun,ambient,renderRadius=6,{nightVision=false}={}){
+ function update(dt,ticks,weather,player,sun,ambient,renderRadius=6,{nightVision=false,brightness=.5,clouds=true}={}){
 
   clock+=dt;const l=lightingInfo(ticks,weather,{nightVision});const sky=new THREE.Color().setRGB(...l.sky.map(v=>v/255),THREE.SRGBColorSpace);scene.background.copy(sky);if(scene.fog){scene.fog.color.copy(sky);const range=fogDistances112(renderRadius,weather);scene.fog.near=range.near;scene.fog.far=range.far}
-  sun.intensity=l.sunIntensity;ambient.intensity=l.ambientIntensity;
+  sun.intensity=l.sunIntensity;ambient.intensity=l.ambientIntensity+brightness*.65;cloudRoot.visible=clouds;
   lampUpdateTimer+=dt;
   if(lampUpdateTimer>=.2 || lampUpdateTimer===dt){
    lampUpdateTimer=0;
