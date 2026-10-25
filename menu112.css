@@ -580,3 +580,17 @@ body:not(.debug-overlay) #chunkStream112{display:none!important}
 @media (orientation:portrait) and (max-width:600px) and (min-height:500px){
  body.touch-ui #touchActions{bottom:max(145px,calc(env(safe-area-inset-bottom) + 137px))}
 }
+
+.option-slider112 input[type=range]::-webkit-slider-runnable-track{height:100%;background:transparent}
+.option-slider112 input[type=range]::-moz-range-track{height:100%;background:transparent}
+.option-slider112 input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:calc(8px * var(--panel-s));height:100%;border:1px solid #222;background:#888;box-shadow:inset 1px 1px #ccc,inset -1px -1px #444;border-radius:0}
+.option-slider112 input[type=range]::-moz-range-thumb{width:calc(8px * var(--panel-s));height:100%;border:1px solid #222;background:#888;border-radius:0}
+html.gui112-assets .option-slider112 input[type=range]::-webkit-slider-thumb{border:0;box-shadow:none;background:var(--owner-slider-thumb112) 0 0/100% 100%;image-rendering:pixelated}
+html.gui112-assets .option-slider112 input[type=range]::-moz-range-thumb{border:0;background:var(--owner-slider-thumb112) 0 0/100% 100%;image-rendering:pixelated}
+
+#overlay .options-grid112 .option-check112:has(input[type=checkbox]){position:relative;justify-content:center;gap:.35em;cursor:pointer;background-image:var(--menu112-button-normal,var(--site112-button-normal));background-size:100% 100%;}
+#overlay .options-grid112 .option-check112 input[type=checkbox]{position:absolute!important;inset:0;width:100%!important;height:100%!important;opacity:0;cursor:pointer;margin:0!important;}
+#overlay .options-grid112 .option-check112:has(input[type=checkbox])::after{content:': 꺼짐'}
+#overlay .options-grid112 .option-check112:has(input:checked)::after{content:': 켜짐'}
+#overlay .options-grid112 .option-check112:hover{color:#ffffa0}
+#overlay .menu-page.menu-vanilla112 .options-grid112 .option-check112:has(input[type=checkbox]){border:calc(3px * var(--panel-s)) solid transparent!important;border-image:var(--owner-death-button-normal,var(--site112-normal)) 3 fill / calc(3px * var(--panel-s)) stretch!important;background:none!important;image-rendering:pixelated;}

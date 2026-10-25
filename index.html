@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1c2428"><title>Minecraft 1.12.2 · 비공식 웹 재현</title><link rel="stylesheet" href="./style.css?v=1.7"><link rel="stylesheet" href="./visual-overhaul.css?v=2.2"><link rel="stylesheet" href="./legacy189-gui.css?v=1.7"><link rel="stylesheet" href="./gui112.css?v=2.0"><link rel="stylesheet" href="./menu112.css?v=3.0"><link rel="stylesheet" href="./play-audit112.css?v=3"></head><body class="menu-open">
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1c2428"><title>Minecraft 1.12.2 · 비공식 웹 재현</title><link rel="stylesheet" href="./style.css?v=1.7"><link rel="stylesheet" href="./visual-overhaul.css?v=2.2"><link rel="stylesheet" href="./legacy189-gui.css?v=1.7"><link rel="stylesheet" href="./gui112.css?v=2.0"><link rel="stylesheet" href="./menu112.css?v=3.1"><link rel="stylesheet" href="./play-audit112.css?v=3"></head><body class="menu-open">
 <canvas id="viewport" aria-label="3D voxel world"></canvas><canvas id="menuPanorama" aria-hidden="true"></canvas>
 <div id="crosshair" aria-hidden="true"></div><div id="miningIndicator" role="progressbar" aria-label="블록 파괴 진행" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div id="target"></div><div id="status"></div><div id="hotbar"></div><div id="gameNotice" role="status"></div><div id="survivalHud" aria-label="체력과 허기"></div><div id="hurtFlash112" aria-hidden="true"></div><div id="chatHistory112" aria-label="게임 채팅 기록"></div>
 <div id="deathScreen" class="hidden" role="dialog" aria-label="사망 화면">
@@ -81,20 +81,20 @@
 <section id="menu-video" class="menu-page menu-vanilla112 hidden" aria-label="비디오 설정">
 <h2>비디오 설정...</h2>
 <div class="options-grid112 options-sub112">
- <label class="option-slider112">렌더 거리: <output id="distanceValue">6청크</output><input id="settingDistance" type="range" min="2" max="16" step="1"></label>
- <label class="option-slider112">밝기<input id="setting_brightness" aria-label="밝기" type="range" min="0" max="1" step="0.05"></label>
+ <label class="option-slider112 fov-slider112"><span>렌더 거리: <output id="distanceValue">6청크</output></span><input id="settingDistance" type="range" min="2" max="16" step="1"></label>
+ <label class="option-slider112 fov-slider112"><span>밝기</span><input id="setting_brightness" aria-label="밝기" type="range" min="0" max="1" step="0.05"></label>
 <label class="option-check112"><input id="setting_viewBobbing" type="checkbox"> 화면 흔들림</label><label class="option-check112"><input id="setting_clouds" type="checkbox"> 구름</label>
-<label class="option-slider112">GUI 크기 (0: 자동)<input id="setting_guiScale" aria-label="GUI 크기" type="range" min="0" max="4" step="1"></label>
+<label class="option-slider112 fov-slider112"><span>GUI 크기 (0: 자동)</span><input id="setting_guiScale" aria-label="GUI 크기" type="range" min="0" max="4" step="1"></label>
  <label class="option-check112"><input id="settingCoords" type="checkbox" checked> 좌표 및 상태 표시</label>
  <label class="option-check112"><input id="setting_smoothLighting" type="checkbox"> 부드러운 조명</label>
-</div><div class="vanilla-footer112"><button id="settingFullscreen" type="button" aria-pressed="false">전체화면: 꺼짐</button><button id="videoDone" type="button" class="stone-button">완료</button></div>
+</div><div class="vanilla-footer112"><button id="settingFullscreen" class="stone-button" type="button" aria-pressed="false">전체화면: 꺼짐</button><button id="videoDone" type="button" class="stone-button">완료</button></div>
 </section>
-<section id="menu-sound" class="menu-page menu-vanilla112 hidden" aria-label="음악 및 소리"><h2>음악 및 소리...</h2><div class="options-grid112"><label class="option-slider112">전체 음량<input id="setting_volume" aria-label="전체 음량" type="range" min="0" max="1" step="0.05"></label></div><div class="vanilla-footer112"><button id="soundDone" class="stone-button">완료</button></div></section>
-<section id="menu-chat" class="menu-page menu-vanilla112 hidden" aria-label="채팅 설정"><h2>채팅 설정...</h2><div class="options-grid112"><label class="option-slider112">채팅 불투명도<input id="setting_chatOpacity" aria-label="채팅 불투명도" type="range" min="0" max="1" step="0.05"></label></div><div class="vanilla-footer112"><button id="chatDone" class="stone-button">완료</button></div></section>
+<section id="menu-sound" class="menu-page menu-vanilla112 hidden" aria-label="음악 및 소리"><h2>음악 및 소리...</h2><div class="options-grid112"><label class="option-slider112 fov-slider112"><span>전체 음량</span><input id="setting_volume" aria-label="전체 음량" type="range" min="0" max="1" step="0.05"></label></div><div class="vanilla-footer112"><button id="soundDone" class="stone-button">완료</button></div></section>
+<section id="menu-chat" class="menu-page menu-vanilla112 hidden" aria-label="채팅 설정"><h2>채팅 설정...</h2><div class="options-grid112"><label class="option-slider112 fov-slider112"><span>채팅 불투명도</span><input id="setting_chatOpacity" aria-label="채팅 불투명도" type="range" min="0" max="1" step="0.05"></label></div><div class="vanilla-footer112"><button id="chatDone" class="stone-button">완료</button></div></section>
 <section id="menu-controls" class="menu-page menu-vanilla112 hidden" aria-label="조작 설정">
 <h2>조작 설정...</h2>
 <div class="options-grid112 options-sub112">
- <label class="option-slider112">마우스 감도: <output id="sensitivityValue">24%</output><input id="settingSensitivity" type="range" min="0" max="1" step="0.01"></label>
+ <label class="option-slider112 fov-slider112"><span>마우스 감도: <output id="sensitivityValue">24%</output></span><input id="settingSensitivity" type="range" min="0" max="1" step="0.01"></label>
  <label class="option-check112"><input id="setting_autoJump" type="checkbox"> 자동 점프</label><label class="option-check112"><input id="setting_invertMouse" type="checkbox"> 마우스 반전</label>
 </div><div class="vanilla-footer112"><button id="controlsDone" type="button" class="stone-button">완료</button></div>
 </section>

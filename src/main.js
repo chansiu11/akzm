@@ -122,7 +122,7 @@ function makeGeo(store,lightForFace,isWater=false){const pos=[],norm=[],uv=[],co
   for(let i=0;i<4;i++){const p=f.v[i];pos.push(f.x+p[0],f.y+p[1],f.z+p[2]);norm.push(...f.d);uv.push(...tex[i]);colors.push(...shade);}
   indexes.push(base,base+1,base+2,base,base+2,base+3);
  }
- const g=new THREE.BufferGeometry();g.userData.blockIndices=new Map();store.forEach((f,i)=>{const key=[f.x,f.y,f.z].join(',');if(!g.userData.blockIndices.has(key))g.userData.blockIndices.set(key,[]);g.userData.blockIndices.get(key).push(i*6);});g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indexes);g.computeBoundingSphere();return g;
+ const g=new THREE.BufferGeometry();g.userData.blockPositions=new Int32Array(store.flatMap(f=>[f.x,f.y,f.z]));g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indexes);g.computeBoundingSphere();return g;
 }
 function chunkId(cx,cz){return `${cx},${cz}`}
 function clearPlacementPreviews(cx,cz){
@@ -300,7 +300,7 @@ function updateUI(){
  layoutContainer112(el('inventory'));creativeUI112?.refresh();
 }
 function slotArtwork(button,item){button.innerHTML=`<i class="tileIcon${iconClass(item.id)}" style="${item.id&&item.count>0?iconOffset(item.id):'visibility:hidden'}"></i><span>${item.count>1?item.count:''}</span>`;button.title=item.id?(itemDefinition(item.id)?.name??String(item.id)):'빈칸';}
-function hideBlockFaces(x,y,z){const key=[x,y,z].join(',');for(const mesh of meshes.get(chunkId(Math.floor(x/16),Math.floor(z/16)))??[]){const geo=mesh.geometry;for(const offset of geo.userData.blockIndices?.get(key)??[])for(let i=0;i<6;i++)geo.index.setX(offset+i,0);geo.index.needsUpdate=true;}}
+function hideBlockFaces(x,y,z){for(const mesh of meshes.get(chunkId(Math.floor(x/16),Math.floor(z/16)))??[]){const geo=mesh.geometry;const blocks=geo.userData.blockPositions;for(let f=0;f<(blocks?.length??0);f+=3)if(blocks[f]===x&&blocks[f+1]===y&&blocks[f+2]===z)for(let i=0;i<6;i++)geo.index.setX(f*2+i,0);geo.index.needsUpdate=true;}}
 function breakBlock(t){
  if(!t||definition(t.id)?.hardness<0||t.id===BLOCK.WATER||!definition(t.id))return;
  if(world.set(t.x,t.y,t.z,0)){hideBlockFaces(t.x,t.y,t.z);
