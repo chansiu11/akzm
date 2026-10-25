@@ -12,4 +12,4 @@ export function gui112Scale(width,height,{touch=false,scale:requested=0}={}){
  if(requested>0)return Math.min(scale,Math.max(1,Math.floor(requested)));
  return touch?Math.max(1,Math.min(2,Math.floor((w-12)/GUI112.hotbar.w),Math.floor(h/206))):scale;
 }
-export function applyGui112Scale(root,width,height,opts={}){const s=gui112Scale(width,height,opts);root?.style?.setProperty('--gui-scale',String(s));return s;}
+export function applyGui112Scale(root,width,height,opts={}){const s=gui112Scale(width,height,opts);root?.style?.setProperty('--gui-scale',String(s));root?.setAttribute?.('data-gui-scale112',String(opts.scale??0));root?.dispatchEvent?.(new Event('gui-scale112'));return s;}

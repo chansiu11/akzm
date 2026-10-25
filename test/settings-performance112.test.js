@@ -23,3 +23,7 @@ test('settings persist zero values and all new toggle states',()=>{
  const data={sensitivity:0,brightness:0,volume:0,chatOpacity:0,viewBobbing:false,clouds:false,invertMouse:true,autoJump:true,guiScale:2,renderDistance:2};
  globalThis.localStorage={getItem:key=>key===SETTINGS_KEY?JSON.stringify(data):null};const actual=loadSettings();for(const [key,value] of Object.entries(data))assert.equal(actual[key],value,key);
 });
+import {titleLayout112} from '../src/title-layout112.js';
+test('GUI size preference changes menu logical dimensions and clamps to the viewport',()=>{
+ assert.equal(titleLayout112(1280,960,1).scale,1);assert.equal(titleLayout112(1280,960,2).width,640);assert.equal(titleLayout112(640,480,4).scale,2);assert.equal(titleLayout112(1280,960,0).scale,4);
+});

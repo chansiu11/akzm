@@ -5,7 +5,7 @@ import {createWaterFlow112} from './water-flow112.js';
 import {applyCameraFov112} from './fov112.js';
 import {renderBlockItemIcons} from './block-item-icons.js';
 import {createPlayerPreview112} from './player-preview112.js?v=1.1';
-import {installTitleLayout112} from './title-layout112.js';
+import {installTitleLayout112} from './title-layout112.js?v=2';
 import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,decodePrivateAtlas} from './private-resource-cache.js?v=12';
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.3';
 import {applyMenu112,pngData} from './menu112-assets.js';
@@ -23,7 +23,7 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.4';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.5';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js?v=2';
 import {WeatherCycle} from './environment.js?v=1.4';
