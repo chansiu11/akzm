@@ -1,7 +1,7 @@
 import {extrudeItemPixels,RIGHT_ARM_UV_RECTS,skinRectUV} from './item-extrusion.js';
 import {visibleBlockQuads,quadUV} from './block-mesh.js';
 import {definition} from './block-registry.js';
-import {ownerBlockQuads112,firstPersonPose112} from './item-model112.js?v=1.1';
+import {ownerBlockQuads112,firstPersonPose112} from './item-model112.js?v=1.2';
 // Independent low-poly voxel hand and held-block view model. Three.js is loaded by the game.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {uvFor} from './atlas.js?v=1.7';
@@ -121,9 +121,9 @@ export function createFirstPerson(renderer,atlasTexture){
   const native=ownerHeldTransforms[view.id]??null;
   if(sprite.visible){
    const pose=firstPersonPose112(native,{item:true});
-   sprite.position.set(.49+pose.offset[0]*.45,-.32+pose.offset[1]*.45,-.81+pose.offset[2]*.45);
+   sprite.position.set(.49+pose.offset[0],-.32+pose.offset[1],-.81+pose.offset[2]);
    sprite.rotation.set(pose.rotation[0],pose.rotation[1],pose.rotation[2]);
-   sprite.scale.set(...pose.scale.map(v=>v*.42));
+   sprite.scale.set(...pose.scale);
   }
   if(toolGroup.visible){
    toolGroup.position.set(.50,-.37,-.82);
@@ -135,13 +135,13 @@ export function createFirstPerson(renderer,atlasTexture){
    if(held.geometry===blockCubeGeometry)textureBoxUV(held,view.tiles);
    const pose=firstPersonPose112(native,{item:false});
    // Place an equipped block to the lower-right of the crosshair, not in front of it.
-    held.position.set(.51+pose.offset[0]*.45,-.40+pose.offset[1]*.45,-.83+pose.offset[2]*.45);
+    held.position.set(.51+pose.offset[0],-.40+pose.offset[1],-.83+pose.offset[2]);
    held.rotation.set(...pose.rotation);
    // Native model JSON element vertices are 16/16 = 1 whole block, while
    // this first-person item's legacy cube geometry was only 0.28 wide.
    // Normalize the owner element geometry to the same held-object anchor.
-   const nativeBlock=ownerBlockGeometry.get(view.id)===held.geometry;
-   held.scale.set(...pose.scale.map(value=>value*(nativeBlock?.24:.85)));
+   const geometryUnits=held.geometry===blockCubeGeometry?.28:1;
+   held.scale.set(...pose.scale.map(value=>value/geometryUnits));
   }
   // Item-only view as requested; expose the skin arm when the slot is empty.
   arm.visible=view.kind==='empty';cuff.visible=view.kind==='empty'&&!ownerSkin;

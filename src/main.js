@@ -9,7 +9,7 @@ import {PRIVATE_RESOURCE_VERSION,readPrivateResources,writePrivateResources,deco
 import {applyBitmapFont112} from './bitmap-font112.js?v=1.3';
 import {applyMenu112,pngData} from './menu112-assets.js';
 import {installBundledSiteTheme112} from './site-default112.js?v=1.1';
-import {MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';
+import {playerEyeHeight112,sneakMovement112,MOVE_SPEED112,horizontalVelocity112,verticalVelocity112,sanitizeRenderDistance112,waterContact112,waterExitLift112} from './player-motion112.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {BLOCK,BLOCK_NAMES,SOLID,World,MAX_Y,heightAt,SEA_LEVEL} from './terrain.js';
 import {createAtlas,tileFor,ATLAS_ROWS} from './atlas.js?v=1.7';
@@ -53,7 +53,7 @@ import {GRID_RECIPES,fillRecipe112,emptyCraftGrid,recipeAt,placeCraftIngredient,
 import {CommandWorldState} from './command-worldstate.js';
 import {createHud,mineProgress} from './hud-view.js?v=2.1';
 import {startMenuPanorama} from './menu-panorama.js?v=1.1';
-import {createFirstPerson} from './first-person.js?v=1.9';
+import {createFirstPerson} from './first-person.js?v=2.0';
 import {installRecipeBook112} from './recipe-book112.js?v=1.1';
 import {layoutContainer112} from './container112.js';
 import {applyGui112Scale} from './gui112-layout.js';
@@ -208,7 +208,7 @@ function moveAxis(axis,delta){
   player[axis]=nv;
  }
 }
-function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=keys.has('ShiftLeft')||mobileSneak;
+function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z;let front=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+mobileMove.forward,strafe=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+mobileMove.strafe;const sneaking=(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak);
  const immersed=waterContact112(world,player,BLOCK.WATER);
  const sprinting=keys.has('ControlLeft') && (creative112||survival.hunger>6) && !sneaking && !immersed;
  let speed=sneaking?MOVE_SPEED112.sneak:sprinting?MOVE_SPEED112.sprint:MOVE_SPEED112.walk;
@@ -219,9 +219,10 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
   const targetZ=(-Math.cos(player.yaw)*front-Math.sin(player.yaw)*strafe)*speed;
   const next=horizontalVelocity112(player.vx,player.vz,targetX,targetZ,dt,{ground:player.onGround,water:immersed});
   player.vx=next.x;player.vz=next.z;
-  moveAxis('x',player.vx*dt);moveAxis('z',player.vz*dt);
+  const motion=sneakMovement112(player.vx*dt,player.vz*dt,{active:sneaking&&player.onGround&&!flight112,supported:(dx,dz)=>collides(player.x+dx,player.y-1,player.z+dz)});
+  moveAxis('x',motion.x);moveAxis('z',motion.z);
  const water=waterContact112(world,player,BLOCK.WATER);
- const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER;
+ const headUnderwater=world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER;
  const jumpPressed=keys.has('Space')||mobileJump;
  if(flight112){player.vy=(jumpPressed?10.89:0)-(sneaking?10.89:0);moveAxis('y',player.vy*dt);player.onGround=false;fallDistance=0;return;}
  if(jumpPressed&&water)player.vy=waterExitLift112(player.vy,{jump:true,inWater:true});
@@ -238,7 +239,7 @@ function stepPhysics(dt){const initialY=player.y,startX=player.x,startZ=player.z
  if(survival.dead)showDeath();
  if(player.y<-64){voidDamageTime+=dt;while(voidDamageTime>=.5&&!survival.dead){voidDamageTime-=.5;if(survival.damage(4)>0)registerHurt('void');}}else voidDamageTime=0;
  if(survival.dead)showDeath();
- camera.position.set(player.x,player.y+1.62,player.z);
+ camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak)),player.z);
  const tilt=hurtTime>0?Math.sin((.55-hurtTime)*24)*.05*(hurtTime/.55):0;
  camera.rotation.set(player.pitch,player.yaw,tilt);}
 const selectOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:'#141818',depthTest:true}));selectOutline.visible=false;scene.add(selectOutline);
@@ -648,7 +649,7 @@ function loop(now){requestAnimationFrame(loop);
    if(survival.health<healthBefore&&hurtTime<=0)registerHurt('generic');track('walked',Math.hypot(player.x-lastX,player.z-lastZ));
    if(usingFood){foodHold+=dt;const food=foodFor(inventory[selected]?.id);if(!food||survival.dead)cancelUsing();else if(foodHold>=food.seconds){if(eatHeld(inventory,selected,survival)){audio.beep('craft');updateUI();notify('음식을 먹었습니다.');saveTimer=0;}cancelUsing();}}
   }
-  else if(!creative112)survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER});
+  else if(!creative112)survival.tick(dt,{underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER});
   weatherCycle.update(dt);entityWorld.update(dt,player,{daylight:Math.sin(day*Math.PI*2)>0});drops.update(dt,player);if(activeTile?.kind==='furnace' && inventoryOpen && Math.floor(now/250)!==Math.floor((now-dt*1000)/250))renderTile();
   if(daylightCycle)day=(day+dt/1200)%1;
   nightVisionSeconds=Math.max(0,nightVisionSeconds-dt);effects.update(dt);
@@ -660,7 +661,7 @@ function loop(now){requestAnimationFrame(loop);
     missedMineTime=0;
     const equipped=inventory[selected]??{id:0};
     const conditions={
-     underwater:world.get(Math.floor(player.x),Math.floor(player.y+1.62),Math.floor(player.z))===BLOCK.WATER,
+     underwater:world.get(Math.floor(player.x),Math.floor(player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak))),Math.floor(player.z))===BLOCK.WATER,
      onGround:player.onGround,haste:player.hasteLevel??0,miningFatigue:player.fatigueLevel??0,
      aquaAffinity:!!player.aquaAffinity
     };
@@ -716,7 +717,7 @@ function loop(now){requestAnimationFrame(loop);
  if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)el('gameNotice').textContent=''}hud.update(survival.health,survival.hunger,survival.air);firstPerson.update(dt,running&&(keys.has('KeyW')||keys.has('KeyA')||keys.has('KeyS')||keys.has('KeyD')||mobileMove.forward!==0||mobileMove.strafe!==0),clickHold);const dayLabel=Math.sin(day*Math.PI*2)>.0?'낮':'밤';el('status').textContent=`Minecraft 1.12.2 · 웹 재현\n좌표 ${player.x.toFixed(1)} / ${player.y.toFixed(1)} / ${player.z.toFixed(1)}\n${dayLabel} · 청크 ${meshes.size} · 바이옴 ${world.biome(Math.floor(player.x),Math.floor(player.z))} · 시드 ${world.seed} · 변경 블록 ${world.changes.size}`;
  canvas.dataset.cameraYaw=String(player.yaw);canvas.dataset.cameraPitch=String(player.pitch);
  // Restore the camera even when a saved dead player cannot tick.
- camera.position.set(player.x,player.y+1.62,player.z);
+ camera.position.set(player.x,player.y+playerEyeHeight112(!flight112&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||mobileSneak)),player.z);
  camera.rotation.set(player.pitch,player.yaw,camera.rotation.z);
  if(enteredWorld&&!loadingWorld&&!document.body.classList.contains('menu-open')&&survival.dead)showDeath();
  renderer.render(scene,camera);if(enteredWorld&&!document.body.classList.contains('menu-open')&&!survival.dead&&!inventoryOpen&&!commandUI.isOpen())firstPerson.render(innerWidth,innerHeight)}

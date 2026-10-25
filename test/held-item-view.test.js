@@ -47,8 +47,8 @@ test('the user-owned 1.12.2 JSON handheld display is resolved through parent inh
   {id:7,blockId:7,key:'minecraft:planks'}]);
  assert.deepEqual(poses[119].rotation,[0,-90,25]);
  assert.deepEqual(poses[7].rotation,[0,45,0]);
- assert.deepEqual(firstPersonPose112(poses[7]).scale,[1,1,1]);
- assert.deepEqual(firstPersonPose112(poses[119],{item:true}).scale,[1,1,1]);
+ assert.deepEqual(firstPersonPose112(poses[7]).scale,[.4,.4,.4]);
+ assert.deepEqual(firstPersonPose112(poses[119],{item:true}).scale,[.68,.68,.68]);
  assert.ok(firstPersonPose112(poses[119],{item:true}).rotation.every(Number.isFinite));
 });
 test('invalid/unsafe owner display transforms are rejected',()=>{
@@ -66,7 +66,7 @@ test('first-person viewport uses locally imported owner model metadata without a
  const importer=readFileSync(new URL('../src/gui112-assets.js',import.meta.url),'utf8');
  assert.match(renderer,/function setOwnerModels\(heldTransforms=\{\},blockModels=\{\}\)/);
  assert.match(renderer,/ownerBlockQuads112\(elements\)/);
- assert.match(renderer,/nativeBlock\?\.24:\.85/);
+ assert.match(renderer,/value\/geometryUnits/);
  assert.match(renderer,/ownerHeldTransforms\[view\.id\]/);
  assert.match(renderer,/arm\.rotation\.z=view\.kind==='empty' \? -\.12 : -\.19/);
  assert.match(importer,/a\.firstPersonModels=await readOwnerFirstPersonModels112\(zip,ITEM_DEFS\)/);

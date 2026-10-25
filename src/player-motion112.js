@@ -2,6 +2,17 @@
 // Speeds are blocks/second; movement accelerates and slows smoothly.
 // Legacy Java tick constants: 0.42 block/tick jump; 0.08/t gravity and .98 drag.
 export const MOVE_SPEED112=Object.freeze({walk:4.317,sprint:5.612,sneak:1.296,jump:8.4,gravity:32,terminal:78.4});
+export const playerEyeHeight112=sneaking=>sneaking?1.54:1.62;
+// Probe the translated player box one block below, including diagonal motion.
+// Restrict only grounded sneaking; jumping and creative flight remain free.
+export function sneakMovement112(dx,dz,{active=false,supported}={}){
+ if(!active)return {x:dx,z:dz};
+ const reduce=v=>Math.abs(v)<=.05?0:v-Math.sign(v)*.05;
+ while(dx!==0&&!supported(dx,0))dx=reduce(dx);
+ while(dz!==0&&!supported(0,dz))dz=reduce(dz);
+ while(dx!==0&&dz!==0&&!supported(dx,dz)){dx=reduce(dx);dz=reduce(dz);}
+ return {x:dx,z:dz};
+}
 export function horizontalVelocity112(vx,vz,targetX,targetZ,dt,{ground=true,water=false}={}){
  const blend=1-Math.exp(-Math.max(0,dt)*(water?8:ground?18:5));
  return {x:vx+(targetX-vx)*blend,z:vz+(targetZ-vz)*blend};
