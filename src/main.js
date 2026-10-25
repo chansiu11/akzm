@@ -23,7 +23,7 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.5';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.6';
 import {setupCommandUI} from './command-ui.js?v=1.2';
 import {createParticles} from './particles.js?v=2';
 import {WeatherCycle} from './environment.js?v=1.4';
