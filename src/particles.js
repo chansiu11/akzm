@@ -6,8 +6,8 @@ export function createParticles(scene){
  const pos=new Float32Array(MAX_PARTICLES*3),colors=new Float32Array(MAX_PARTICLES*3);
  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',new THREE.BufferAttribute(colors,3));geo.setDrawRange(0,0);
  const points=new THREE.Points(geo,new THREE.PointsMaterial({size:.13,vertexColors:true,transparent:true,opacity:.92,depthWrite:false,sizeAttenuation:true}));points.frustumCulled=false;scene.add(points);
- const entities=[];
- function emit(type,origin,spread=[.2,.2,.2],speed=.1,count=10){const color=TYPES[type]||TYPES.block;
+ const entities=[];let density=0;
+ function emit(type,origin,spread=[.2,.2,.2],speed=.1,count=10){count=Math.ceil(count*(density===2?.1:density===1?.5:1));const color=TYPES[type]||TYPES.block;
   for(let i=0;i<Math.min(240,count);i++){
    if(entities.length>=MAX_PARTICLES)entities.shift();
    const p=origin.map((n,idx)=>n+(Math.random()*2-1)*(spread[idx]||0));
@@ -24,5 +24,5 @@ export function createParticles(scene){
   }
   geo.setDrawRange(0,j);geo.attributes.position.needsUpdate=true;geo.attributes.color.needsUpdate=true;
  }
- return {emit,update,count:()=>entities.length};
+ return {setDensity:v=>density=v,emit,update,count:()=>entities.length};
 }

@@ -594,3 +594,12 @@ html.gui112-assets .option-slider112 input[type=range]::-moz-range-thumb{border:
 #overlay .options-grid112 .option-check112:has(input:checked)::after{content:': 켜짐'}
 #overlay .options-grid112 .option-check112:hover{color:#ffffa0}
 #overlay .menu-page.menu-vanilla112 .options-grid112 .option-check112:has(input[type=checkbox]){border:calc(3px * var(--panel-s)) solid transparent!important;border-image:var(--owner-death-button-normal,var(--site112-normal)) 3 fill / calc(3px * var(--panel-s)) stretch!important;background:none!important;image-rendering:pixelated;}
+#overlay .options-grid112 .option-check112:has([data-setting-caption])::after{content:none!important;display:none!important}
+#overlay .options-grid112 .option-check112 [data-setting-caption]{pointer-events:none}
+/* Java 1.12-style logical sizes: 150x20 controls, 10px gutter, 24px rows. */
+#overlay #menu-video .options-grid112{top:calc(16.6667% - 12px * var(--panel-s));grid-auto-rows:calc(20px * var(--panel-s));gap:calc(4px * var(--panel-s)) calc(10px * var(--panel-s))!important;}
+#overlay .menu-page.menu-vanilla112 h2{font-size:calc(8px * var(--panel-s))!important;line-height:1!important;top:calc(15px * var(--panel-s));}
+#overlay #menu-video h2{top:calc(20px * var(--panel-s));}
+#overlay .menu-page.menu-vanilla112 .vanilla-footer112{bottom:calc(7px * var(--panel-s));width:calc(200px * var(--panel-s));}
+#overlay .options-grid112 .option-check112 [data-setting-caption]{display:block!important;width:100%;text-align:center!important;}
+#overlay #menu-video .option-check112{padding:0!important;justify-content:center!important;}

@@ -23,9 +23,9 @@ import {restoreLocalAtlas,loadLocalResourcePack,saveLocalAtlas} from './resource
 import {loadAutomaticTextures} from './auto-resources.js';
 import {lookDelta} from './touch.js';
 import {playerCollides,findSafeSpawn,restoreSafePlayerPosition,obstructingBlockTarget} from './player-spawn.js';
-import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.3';
+import {setupMenu,activeWorldId,activeWorldSeed,activeWorldMode,activeWorldCheats,worldSaveKey,loadSettings,listWorlds} from './menu.js?v=2.4';
 import {setupCommandUI} from './command-ui.js?v=1.2';
-import {createParticles} from './particles.js';
+import {createParticles} from './particles.js?v=2';
 import {WeatherCycle} from './environment.js?v=1.4';
 import {createWorldVisuals} from './world-visuals.js?v=1.5';
 import {createChunkLight} from './voxel-light.js?v=1.2';
@@ -581,7 +581,7 @@ el('jar112Input').addEventListener('change',async event=>{
  }catch(error){status.textContent='사이트 기본 그래픽이 적용되었습니다 · 개인 원본 리소스 자동 복원에는 실패했습니다.';}
  finally{button.disabled=false;}
 })();
-const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);applyCameraFov112(camera,settings.fov);canvas.dataset.cameraFov=String(camera.fov);audio.setVolume(settings.volume);for(const mat of [solidMat,leafMat,glassMat,waterMat]){mat.vertexColors=settings.smoothLighting;mat.needsUpdate=true;}applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode,scale:settings.guiScale});el('chatHistory112').style.opacity=String(settings.chatOpacity);lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
+const menus=setupMenu({play:requestPlay,save,onTitle:()=>{worldPaused=true;enteredWorld=false;running=false;},applySettings:(next)=>{settings=next;renderRadius=sanitizeRenderDistance112(settings.renderDistance,touchMode);applyCameraFov112(camera,settings.fov);canvas.dataset.cameraFov=String(camera.fov);audio.setVolume(settings.volume);effects.setDensity(settings.particles);leafMat.alphaTest=settings.graphics?.5:0;leafMat.needsUpdate=true;for(const mat of [solidMat,leafMat,glassMat,waterMat]){mat.vertexColors=settings.smoothLighting;mat.needsUpdate=true;}applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode,scale:settings.guiScale});el('chatHistory112').style.opacity=String(settings.chatOpacity);lastChunk='';if(!settings.showCoordinates)document.body.classList.remove('debug-overlay');}});
 installTitleLayout112();
 document.documentElement.dataset.appReady='true';
 const palette=el('blockCatalog');
@@ -657,7 +657,7 @@ el('closeInventory').addEventListener('click',closeInventory);
 el('hotbar').addEventListener('click',e=>{const s=e.target.closest('[data-i]');if(s){selected=Number(s.dataset.i);updateUI()}});
 el('invItems').addEventListener('click',e=>{const slot=e.target.closest('[data-i]');if(!slot)return;const i=Number(slot.dataset.i);if(i>=9){moveStack(inventory,i,selected);saveTimer=0;}else selected=i;updateUI();updateRecipes();});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);applyGui112Scale(document.documentElement,innerWidth,innerHeight,{touch:touchMode,scale:settings.guiScale});playerPreview112.draw();});
-function loop(now){requestAnimationFrame(loop);
+function loop(now){requestAnimationFrame(loop);if(settings.maxFps<260&&now-(loop.lastFrame??-Infinity)<1000/settings.maxFps)return;loop.lastFrame=now;
  if(touchMode&&running&&activeLook&&!activeLook.moved&&!activeLook.mining&&now-activeLook.start>=420){activeLook.mining=true;beginMiningInput();}const dt=Math.min(.05,(now-(loop.prev??now))/1000);loop.prev=now;
  if(shouldAdvanceWorld({enteredWorld,paused:worldPaused,dead:survival.dead})){
   for(const t of tiles.items.values())if(t.kind==='furnace')processFurnace(t,dt);gravityTicks.tick(dt);updateFallingMeshes();waterTicks112.tick(dt);
